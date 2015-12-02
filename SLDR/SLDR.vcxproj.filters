@@ -1,0 +1,628 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="头文件\view">
+      <UniqueIdentifier>{5d573d17-1022-49cb-be4a-0cc189dc48b5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\view">
+      <UniqueIdentifier>{22619fab-ca93-4f77-95b1-bc5f7b44ed01}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\model">
+      <UniqueIdentifier>{6b16a61f-74b5-4dcc-ac03-ed18b8efa363}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\model">
+      <UniqueIdentifier>{02f53edf-cc7e-4999-90cc-86268e93ed5c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\module">
+      <UniqueIdentifier>{78094552-b32d-4b62-a789-08441428dfd5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\module">
+      <UniqueIdentifier>{95cada14-93d0-43c7-859f-fb848671ca9e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\utils">
+      <UniqueIdentifier>{ef1f67b6-2b3d-4e7d-897a-66b113b104e9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\utils">
+      <UniqueIdentifier>{22d29563-5d88-42c0-9315-bf9b86565ba2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\module\FaceIdentification">
+      <UniqueIdentifier>{2ef7ab62-416b-4591-a80d-4ead750033ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\module\FaceIdentification">
+      <UniqueIdentifier>{6597069f-b542-4af9-b1dc-bd93cb0a29d2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\module\Log">
+      <UniqueIdentifier>{54392914-b350-4454-97fb-979032e55354}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\module\Log">
+      <UniqueIdentifier>{bbabc0df-9352-44b7-a6e7-c50dbebf5f3b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\module\BodyDecomposition">
+      <UniqueIdentifier>{c4d71b71-9b26-4154-8dc4-8e03874e09fb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\module\BodyDecomposition">
+      <UniqueIdentifier>{23c0a3b6-118e-414e-b7ad-cd3835992c32}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\module\FaceClassification">
+      <UniqueIdentifier>{ca2c5f69-2f17-41d4-8c52-ad8216bab62a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\module\FaceClassification">
+      <UniqueIdentifier>{bdf08fc9-a354-4468-98bf-33e9da3a04e9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\module\Reconstruction">
+      <UniqueIdentifier>{3e7656b5-aea7-4c01-a779-c8eb2dd075b6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\module\Reconstruction">
+      <UniqueIdentifier>{67f038f8-a291-482a-a5fa-b73e51ce39a9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\module\Reconstruction\CubicCorner">
+      <UniqueIdentifier>{46dc00e6-dfe5-4ded-8233-e4eebd4f9a1c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\module\Reconstruction\CubicCorner">
+      <UniqueIdentifier>{f8697d6b-7a3e-4d4a-b63b-1ace7c2cd3c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\module\Reconstruction\DepthEstimation">
+      <UniqueIdentifier>{7f7eecd3-bde2-45fc-84e1-d5d8e6d7e446}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\module\Reconstruction\DepthEstimation\DBScan">
+      <UniqueIdentifier>{542e1590-6ec5-455f-8ba4-2cf4431447e9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\module\Reconstruction\DepthEstimation">
+      <UniqueIdentifier>{74810580-ecb2-4bcc-b6a6-a2a9a9a7fc13}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\module\Reconstruction\DepthEstimation\DBScan">
+      <UniqueIdentifier>{05a7a1d5-0c02-4244-9bef-51c55d9fb9e8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\module\Reconstruction\HillClimb">
+      <UniqueIdentifier>{52012145-a0a0-4528-aa37-b52df99b2e07}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\utils\objfac">
+      <UniqueIdentifier>{49cadd68-3fbf-4fd2-bced-4f01595c679a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\utils\objfac">
+      <UniqueIdentifier>{fa68ff5b-3277-41d8-afaf-1eb1359d898d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\geometric">
+      <UniqueIdentifier>{52cf3c29-203c-4192-a2fd-615c9f03c48c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\geometic">
+      <UniqueIdentifier>{b66f8db2-33ea-4f82-883d-8e88a57000cc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\math">
+      <UniqueIdentifier>{fa77acab-19e5-40bb-a013-4f9c3f02fefd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\math">
+      <UniqueIdentifier>{d9fc63ce-785d-4824-a61b-f42dc0dbee6e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\module\Reconstruction\HillClimb">
+      <UniqueIdentifier>{4e4d5571-ba8d-440b-b175-280e91eca50c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\module\FCCR">
+      <UniqueIdentifier>{328d8d7c-f6f9-4654-b4b8-81be668d7d9c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\module\FCCR">
+      <UniqueIdentifier>{fdcb07e2-d4f3-4fcb-8fe0-7aea2d056776}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ReadMe.txt" />
+    <None Include="res\buttons.bmp">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\filelarge.bmp">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\filesmall.bmp">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\main.bmp">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\writelarge.bmp">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\writesmall.bmp">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\ribbon.mfcribbon-ms">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\SLDR.rc2">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\SLDRDoc.ico">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\SLDR.ico">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\Toolbar.bmp">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\Toolbar256.bmp">
+      <Filter>资源文件</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="SLDR.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="MainFrm.h">
+      <Filter>头文件\view</Filter>
+    </ClInclude>
+    <ClInclude Include="SLDRView.h">
+      <Filter>头文件\view</Filter>
+    </ClInclude>
+    <ClInclude Include="SLDRDoc.h">
+      <Filter>头文件\view</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>头文件\view</Filter>
+    </ClInclude>
+    <ClInclude Include="CP_PointVector.h">
+      <Filter>头文件\model</Filter>
+    </ClInclude>
+    <ClInclude Include="CP_Topology.h">
+      <Filter>头文件\model</Filter>
+    </ClInclude>
+    <ClInclude Include="CP_Curve.h">
+      <Filter>头文件\model</Filter>
+    </ClInclude>
+    <ClInclude Include="CP_Surface.h">
+      <Filter>头文件\model</Filter>
+    </ClInclude>
+    <ClInclude Include="CF_BodyUtils.h">
+      <Filter>头文件\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="CP_UCS.h">
+      <Filter>头文件\model</Filter>
+    </ClInclude>
+    <ClInclude Include="CConstants.h">
+      <Filter>头文件\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="CP_HomogenousCSys.h">
+      <Filter>头文件\model</Filter>
+    </ClInclude>
+    <ClInclude Include="CMatrix4.h">
+      <Filter>头文件\model</Filter>
+    </ClInclude>
+    <ClInclude Include="CtrlPane.h">
+      <Filter>头文件\view</Filter>
+    </ClInclude>
+    <ClInclude Include="CtrlDialog.h">
+      <Filter>头文件\view</Filter>
+    </ClInclude>
+    <ClInclude Include="CP_TopologyExt.h">
+      <Filter>头文件\model</Filter>
+    </ClInclude>
+    <ClInclude Include="CTreeSelectedItem.h">
+      <Filter>头文件\model</Filter>
+    </ClInclude>
+    <ClInclude Include="BodyDecomposition.h">
+      <Filter>头文件\module\BodyDecomposition</Filter>
+    </ClInclude>
+    <ClInclude Include="IDecomposition.h">
+      <Filter>头文件\module\BodyDecomposition</Filter>
+    </ClInclude>
+    <ClInclude Include="CCopyPool.h">
+      <Filter>头文件\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="FaceClassification.h">
+      <Filter>头文件\module\FaceClassification</Filter>
+    </ClInclude>
+    <ClInclude Include="Reconstruction.h">
+      <Filter>头文件\module\Reconstruction</Filter>
+    </ClInclude>
+    <ClInclude Include="Axis3D.h">
+      <Filter>头文件\view</Filter>
+    </ClInclude>
+    <ClInclude Include="CFileReader.h">
+      <Filter>头文件\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="CFaceLoopPool.h">
+      <Filter>头文件\module\FaceIdentification</Filter>
+    </ClInclude>
+    <ClInclude Include="CLog.h">
+      <Filter>头文件\module\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="CFaceCombination.h">
+      <Filter>头文件\module\FaceIdentification</Filter>
+    </ClInclude>
+    <ClInclude Include="CFaceClipping.h">
+      <Filter>头文件\module\FaceIdentification</Filter>
+    </ClInclude>
+    <ClInclude Include="FaceIdentification.h">
+      <Filter>头文件\module\FaceIdentification</Filter>
+    </ClInclude>
+    <ClInclude Include="CPseudoDecomposition.h">
+      <Filter>头文件\module\BodyDecomposition</Filter>
+    </ClInclude>
+    <ClInclude Include="CCavityDecomposition.h">
+      <Filter>头文件\module\BodyDecomposition</Filter>
+    </ClInclude>
+    <ClInclude Include="CCluster.h">
+      <Filter>头文件\module\Reconstruction\DepthEstimation\DBScan</Filter>
+    </ClInclude>
+    <ClInclude Include="CDBScan.h">
+      <Filter>头文件\module\Reconstruction\DepthEstimation\DBScan</Filter>
+    </ClInclude>
+    <ClInclude Include="CVectorDataBlock.h">
+      <Filter>头文件\module\Reconstruction\DepthEstimation\DBScan</Filter>
+    </ClInclude>
+    <ClInclude Include="AbstractDataBlock.h">
+      <Filter>头文件\module\Reconstruction\DepthEstimation\DBScan</Filter>
+    </ClInclude>
+    <ClInclude Include="cubiccorner.h">
+      <Filter>头文件\module\Reconstruction\CubicCorner</Filter>
+    </ClInclude>
+    <ClInclude Include="est_vtattroper.h">
+      <Filter>头文件\module\Reconstruction\DepthEstimation</Filter>
+    </ClInclude>
+    <ClInclude Include="facecls_utils.h">
+      <Filter>头文件\module\FaceClassification</Filter>
+    </ClInclude>
+    <ClInclude Include="faceident_utils.h">
+      <Filter>头文件\module\FaceIdentification</Filter>
+    </ClInclude>
+    <ClInclude Include="rec_utils.h">
+      <Filter>头文件\module\Reconstruction</Filter>
+    </ClInclude>
+    <ClInclude Include="AbstractCurveEstimation.h">
+      <Filter>头文件\module\Reconstruction\DepthEstimation</Filter>
+    </ClInclude>
+    <ClInclude Include="CBSplineEstimation.h">
+      <Filter>头文件\module\Reconstruction\DepthEstimation</Filter>
+    </ClInclude>
+    <ClInclude Include="CArcEstimation.h">
+      <Filter>头文件\module\Reconstruction\DepthEstimation</Filter>
+    </ClInclude>
+    <ClInclude Include="est_surface.h">
+      <Filter>头文件\module\Reconstruction\DepthEstimation</Filter>
+    </ClInclude>
+    <ClInclude Include="est_comparator.h">
+      <Filter>头文件\module\Reconstruction\DepthEstimation</Filter>
+    </ClInclude>
+    <ClInclude Include="CDepthEstimation.h">
+      <Filter>头文件\module\Reconstruction\DepthEstimation</Filter>
+    </ClInclude>
+    <ClInclude Include="est_refplane.h">
+      <Filter>头文件\module\Reconstruction\DepthEstimation</Filter>
+    </ClInclude>
+    <ClInclude Include="CTimer.h">
+      <Filter>头文件\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="propertiesnames.h">
+      <Filter>头文件\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="rec_bodyassembly.h">
+      <Filter>头文件\module\Reconstruction</Filter>
+    </ClInclude>
+    <ClInclude Include="rec_surface.h">
+      <Filter>头文件\module\Reconstruction</Filter>
+    </ClInclude>
+    <ClInclude Include="topo_geometricoper.h">
+      <Filter>头文件\geometric</Filter>
+    </ClInclude>
+    <ClInclude Include="base_geometricoper.h">
+      <Filter>头文件\geometric</Filter>
+    </ClInclude>
+    <ClInclude Include="CBoundBox2D.h">
+      <Filter>头文件\model</Filter>
+    </ClInclude>
+    <ClInclude Include="curve_basic.h">
+      <Filter>头文件\geometric</Filter>
+    </ClInclude>
+    <ClInclude Include="surface_basic.h">
+      <Filter>头文件\geometric</Filter>
+    </ClInclude>
+    <ClInclude Include="CObjectFactory.h">
+      <Filter>头文件\utils\objfac</Filter>
+    </ClInclude>
+    <ClInclude Include="CCopierRegister.h">
+      <Filter>头文件\utils\objfac</Filter>
+    </ClInclude>
+    <ClInclude Include="rec_curve.h">
+      <Filter>头文件\module\Reconstruction</Filter>
+    </ClInclude>
+    <ClInclude Include="mathlib.h">
+      <Filter>头文件\math</Filter>
+    </ClInclude>
+    <ClInclude Include="CP_Mesh.h">
+      <Filter>头文件\model</Filter>
+    </ClInclude>
+    <ClInclude Include="surface_triangulation.h">
+      <Filter>头文件\geometric</Filter>
+    </ClInclude>
+    <ClInclude Include="CHillClimb.h">
+      <Filter>头文件\module\Reconstruction\HillClimb</Filter>
+    </ClInclude>
+    <ClInclude Include="CObjectiveFuncCalculator.h">
+      <Filter>头文件\module\Reconstruction\HillClimb</Filter>
+    </ClInclude>
+    <ClInclude Include="IObjectiveFuncCalculator.h">
+      <Filter>头文件\module\Reconstruction\HillClimb</Filter>
+    </ClInclude>
+    <ClInclude Include="CBinaryHeep.h">
+      <Filter>头文件\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="UCSEditorPane.h">
+      <Filter>头文件\view</Filter>
+    </ClInclude>
+    <ClInclude Include="UCSEditor.h">
+      <Filter>头文件\view</Filter>
+    </ClInclude>
+    <ClInclude Include="FCCRCtrlPane.h">
+      <Filter>头文件\view</Filter>
+    </ClInclude>
+    <ClInclude Include="FCCR.h">
+      <Filter>头文件\module\FCCR</Filter>
+    </ClInclude>
+    <ClInclude Include="CP_FlowComplex.h">
+      <Filter>头文件\model</Filter>
+    </ClInclude>
+    <ClInclude Include="FCCRCtrlDialog.h">
+      <Filter>头文件\view</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="SLDR.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="MainFrm.cpp">
+      <Filter>源文件\view</Filter>
+    </ClCompile>
+    <ClCompile Include="SLDRDoc.cpp">
+      <Filter>源文件\view</Filter>
+    </ClCompile>
+    <ClCompile Include="SLDRView.cpp">
+      <Filter>源文件\view</Filter>
+    </ClCompile>
+    <ClCompile Include="CP_PointVector.cpp">
+      <Filter>源文件\model</Filter>
+    </ClCompile>
+    <ClCompile Include="CP_Topology.cpp">
+      <Filter>源文件\model</Filter>
+    </ClCompile>
+    <ClCompile Include="CP_Curve.cpp">
+      <Filter>源文件\model</Filter>
+    </ClCompile>
+    <ClCompile Include="CP_Surface.cpp">
+      <Filter>源文件\model</Filter>
+    </ClCompile>
+    <ClCompile Include="CF_BodyUtils.cpp">
+      <Filter>源文件\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="CP_UCS.cpp">
+      <Filter>源文件\model</Filter>
+    </ClCompile>
+    <ClCompile Include="CP_HomogenousCSys.cpp">
+      <Filter>源文件\model</Filter>
+    </ClCompile>
+    <ClCompile Include="CMatrix4.cpp">
+      <Filter>源文件\model</Filter>
+    </ClCompile>
+    <ClCompile Include="CtrlDialog.cpp">
+      <Filter>源文件\view</Filter>
+    </ClCompile>
+    <ClCompile Include="CtrlPane.cpp">
+      <Filter>源文件\view</Filter>
+    </ClCompile>
+    <ClCompile Include="FaceIdentification.cpp">
+      <Filter>源文件\module\FaceIdentification</Filter>
+    </ClCompile>
+    <ClCompile Include="CP_TopologyExt.cpp">
+      <Filter>源文件\model</Filter>
+    </ClCompile>
+    <ClCompile Include="CTreeSelectedItem.cpp">
+      <Filter>源文件\model</Filter>
+    </ClCompile>
+    <ClCompile Include="BodyDecomposition.cpp">
+      <Filter>源文件\module\BodyDecomposition</Filter>
+    </ClCompile>
+    <ClCompile Include="CCopyPool.cpp">
+      <Filter>源文件\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="FaceClassification.cpp">
+      <Filter>源文件\module\FaceClassification</Filter>
+    </ClCompile>
+    <ClCompile Include="Reconstruction.cpp">
+      <Filter>源文件\module\Reconstruction</Filter>
+    </ClCompile>
+    <ClCompile Include="Axis3D.cpp">
+      <Filter>源文件\view</Filter>
+    </ClCompile>
+    <ClCompile Include="CFileReader.cpp">
+      <Filter>源文件\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="CFaceClipping.cpp">
+      <Filter>源文件\module\FaceIdentification</Filter>
+    </ClCompile>
+    <ClCompile Include="CFaceCombination.cpp">
+      <Filter>源文件\module\FaceIdentification</Filter>
+    </ClCompile>
+    <ClCompile Include="CFaceLoopPool.cpp">
+      <Filter>源文件\module\FaceIdentification</Filter>
+    </ClCompile>
+    <ClCompile Include="CCavityDecomposition.cpp">
+      <Filter>源文件\module\BodyDecomposition</Filter>
+    </ClCompile>
+    <ClCompile Include="CPseudoDecomposition.cpp">
+      <Filter>源文件\module\BodyDecomposition</Filter>
+    </ClCompile>
+    <ClCompile Include="CLog.cpp">
+      <Filter>源文件\module\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="CDBScan.cpp">
+      <Filter>源文件\module\Reconstruction\DepthEstimation\DBScan</Filter>
+    </ClCompile>
+    <ClCompile Include="CVectorDataBlock.cpp">
+      <Filter>源文件\module\Reconstruction\DepthEstimation\DBScan</Filter>
+    </ClCompile>
+    <ClCompile Include="cubiccorner.cpp">
+      <Filter>源文件\module\Reconstruction\CubicCorner</Filter>
+    </ClCompile>
+    <ClCompile Include="est_vertexattroper.cpp">
+      <Filter>源文件\module\Reconstruction\DepthEstimation</Filter>
+    </ClCompile>
+    <ClCompile Include="facecls_utils.cpp">
+      <Filter>源文件\module\FaceClassification</Filter>
+    </ClCompile>
+    <ClCompile Include="faceident_utils.cpp">
+      <Filter>源文件\module\FaceIdentification</Filter>
+    </ClCompile>
+    <ClCompile Include="rec_utils.cpp">
+      <Filter>源文件\module\Reconstruction</Filter>
+    </ClCompile>
+    <ClCompile Include="AbstractCurveEstimation.cpp">
+      <Filter>源文件\module\Reconstruction\DepthEstimation</Filter>
+    </ClCompile>
+    <ClCompile Include="CBSplineEstimation.cpp">
+      <Filter>源文件\module\Reconstruction\DepthEstimation</Filter>
+    </ClCompile>
+    <ClCompile Include="CArcEstimation.cpp">
+      <Filter>源文件\module\Reconstruction\DepthEstimation</Filter>
+    </ClCompile>
+    <ClCompile Include="est_surface.cpp">
+      <Filter>源文件\module\Reconstruction\DepthEstimation</Filter>
+    </ClCompile>
+    <ClCompile Include="CDepthEstimation.cpp">
+      <Filter>源文件\module\Reconstruction\DepthEstimation</Filter>
+    </ClCompile>
+    <ClCompile Include="est_refplane.cpp">
+      <Filter>源文件\module\Reconstruction\DepthEstimation</Filter>
+    </ClCompile>
+    <ClCompile Include="rec_bodyassembly.cpp">
+      <Filter>源文件\module\Reconstruction</Filter>
+    </ClCompile>
+    <ClCompile Include="rec_surface.cpp">
+      <Filter>源文件\module\Reconstruction</Filter>
+    </ClCompile>
+    <ClCompile Include="topo_geometricoper.cpp">
+      <Filter>源文件\geometic</Filter>
+    </ClCompile>
+    <ClCompile Include="base_geometricoper.cpp">
+      <Filter>源文件\geometic</Filter>
+    </ClCompile>
+    <ClCompile Include="CBoundBox2D.cpp">
+      <Filter>源文件\model</Filter>
+    </ClCompile>
+    <ClCompile Include="curve_convert.cpp">
+      <Filter>源文件\geometic</Filter>
+    </ClCompile>
+    <ClCompile Include="CHillClimb.cpp">
+      <Filter>源文件\module\Reconstruction\HillClimb</Filter>
+    </ClCompile>
+    <ClCompile Include="CObjectiveFuncCalculator.cpp">
+      <Filter>源文件\module\Reconstruction\HillClimb</Filter>
+    </ClCompile>
+    <ClCompile Include="IObjectiveFuncCalculator.cpp">
+      <Filter>源文件\module\Reconstruction\HillClimb</Filter>
+    </ClCompile>
+    <ClCompile Include="curve_basic.cpp">
+      <Filter>源文件\geometic</Filter>
+    </ClCompile>
+    <ClCompile Include="surface_basic.cpp">
+      <Filter>源文件\geometic</Filter>
+    </ClCompile>
+    <ClCompile Include="CObjectFactory.cpp">
+      <Filter>源文件\utils\objfac</Filter>
+    </ClCompile>
+    <ClCompile Include="rec_curve.cpp">
+      <Filter>源文件\module\Reconstruction</Filter>
+    </ClCompile>
+    <ClCompile Include="equationsystem.cpp">
+      <Filter>源文件\math</Filter>
+    </ClCompile>
+    <ClCompile Include="CP_MeshTriangle3D.cpp">
+      <Filter>源文件\model</Filter>
+    </ClCompile>
+    <ClCompile Include="CP_Mesh3D.cpp">
+      <Filter>源文件\model</Filter>
+    </ClCompile>
+    <ClCompile Include="surface_triangulation.cpp">
+      <Filter>源文件\geometic</Filter>
+    </ClCompile>
+    <ClCompile Include="CP_MeshVertex.cpp">
+      <Filter>源文件\model</Filter>
+    </ClCompile>
+    <ClCompile Include="CP_GeneralPolygon.cpp">
+      <Filter>源文件\model</Filter>
+    </ClCompile>
+    <ClCompile Include="rec_loopdirect.cpp">
+      <Filter>源文件\module\Reconstruction</Filter>
+    </ClCompile>
+    <ClCompile Include="est_comparator.cpp">
+      <Filter>源文件\module\Reconstruction\DepthEstimation</Filter>
+    </ClCompile>
+    <ClCompile Include="UCSEditor.cpp">
+      <Filter>源文件\view</Filter>
+    </ClCompile>
+    <ClCompile Include="UCSEditorPane.cpp">
+      <Filter>源文件\view</Filter>
+    </ClCompile>
+    <ClCompile Include="FCCRCtrlDialog.cpp">
+      <Filter>源文件\view</Filter>
+    </ClCompile>
+    <ClCompile Include="FCCRCtrlPane.cpp">
+      <Filter>源文件\view</Filter>
+    </ClCompile>
+    <ClCompile Include="CP_FlowComplex.cpp">
+      <Filter>源文件\model</Filter>
+    </ClCompile>
+    <ClCompile Include="FCCR.cpp">
+      <Filter>源文件\module\FCCR</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="SLDR.rc">
+      <Filter>资源文件</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\bitmap1.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="C:\Users\Administrator\Desktop\test.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="C:\Users\Administrator\Desktop\x.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="C:\Users\Administrator\Desktop\z.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\x.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\z.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\Project1.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\2015073109573166_easyicon_net_60.900726392252.png">
+      <Filter>资源文件</Filter>
+    </Image>
+  </ItemGroup>
+</Project>

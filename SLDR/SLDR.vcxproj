@@ -1,0 +1,296 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{4D732679-104D-4CD6-BC24-FEC27576613E}</ProjectGuid>
+    <RootNamespace>SLDR</RootNamespace>
+    <Keyword>MFCProj</Keyword>
+    <ProjectName>LR</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <PlatformToolset>v110</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+    <UseOfMfc>Dynamic</UseOfMfc>
+    <PlatformToolset>v110</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <IncludePath>include;D:\CGAL-4.4\include;D:\CGAL-4.4\auxiliary\gmp\include;D:\boost_1_55_0;$(IncludePath)</IncludePath>
+    <LibraryPath>lib;D:\CGAL-4.4\lib\Debug;D:\CGAL-4.4\auxiliary\gmp\lib;D:\boost_1_55_0\boost_1_55_0\boost_vc_110\lib;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>include;D:\boost_1_55_0;D:\CGAL-4.4\include;D:\CGAL-4.4\auxiliary\gmp\include;$(IncludePath)</IncludePath>
+    <LibraryPath>lib;D:\CGAL-4.4\lib;D:\CGAL-4.4\auxiliary\gmp\lib;D:\boost_1_55_0\boost_1_55_0\boost_vc_110\lib;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ExceptionHandling>Async</ExceptionHandling>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>OpenGL32.Lib;GlU32.Lib;CGAL_Core-vc110-mt-gd-4.4.lib;CGAL_ImageIO-vc110-mt-gd-4.4.lib;libgmp-10.lib;libmpfr-4.lib;CGAL-vc110-mt-gd-4.4.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <StackReserveSize>16000000</StackReserveSize>
+    </Link>
+    <Midl>
+      <MkTypLibCompatible>false</MkTypLibCompatible>
+      <ValidateAllParameters>true</ValidateAllParameters>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0804</Culture>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>OpenGL32.Lib;GlU32.Lib;CGAL_Core-vc110-mt-4.4.lib;CGAL_ImageIO-vc110-mt-4.4.lib;libmpfr-4.lib;libgmp-10.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+    </Link>
+    <Midl>
+      <MkTypLibCompatible>false</MkTypLibCompatible>
+      <ValidateAllParameters>true</ValidateAllParameters>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0804</Culture>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <None Include="ReadMe.txt" />
+    <None Include="res\buttons.bmp" />
+    <None Include="res\filelarge.bmp" />
+    <None Include="res\filesmall.bmp" />
+    <None Include="res\main.bmp" />
+    <None Include="res\ribbon.mfcribbon-ms" />
+    <None Include="res\SLDR.ico" />
+    <None Include="res\SLDR.rc2" />
+    <None Include="res\SLDRDoc.ico" />
+    <None Include="res\Toolbar.bmp" />
+    <None Include="res\Toolbar256.bmp" />
+    <None Include="res\writelarge.bmp" />
+    <None Include="res\writesmall.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AbstractCurveEstimation.h" />
+    <ClInclude Include="Axis3D.h" />
+    <ClInclude Include="CBinaryHeep.h" />
+    <ClInclude Include="BodyDecomposition.h" />
+    <ClInclude Include="CArcEstimation.h" />
+    <ClInclude Include="CBSplineEstimation.h" />
+    <ClInclude Include="CCavityDecomposition.h" />
+    <ClInclude Include="CBoundBox2D.h" />
+    <ClInclude Include="CConstants.h" />
+    <ClInclude Include="CCopyPool.h" />
+    <ClInclude Include="base_geometricoper.h" />
+    <ClInclude Include="CHillClimb.h" />
+    <ClInclude Include="CCluster.h" />
+    <ClInclude Include="CDBScan.h" />
+    <ClInclude Include="CMatrix4.h" />
+    <ClInclude Include="CCopierRegister.h" />
+    <ClInclude Include="CP_FlowComplex.h" />
+    <ClInclude Include="curve_basic.h" />
+    <ClInclude Include="FCCR.h" />
+    <ClInclude Include="FCCRCtrlDialog.h" />
+    <ClInclude Include="FCCRCtrlPane.h" />
+    <ClInclude Include="mathlib.h" />
+    <ClInclude Include="propertiesnames.h" />
+    <ClInclude Include="CP_HomogenousCSys.h" />
+    <ClInclude Include="CP_TopologyExt.h" />
+    <ClInclude Include="CP_UCS.h" />
+    <ClInclude Include="CP_Curve.h" />
+    <ClInclude Include="CP_Surface.h" />
+    <ClInclude Include="CF_BodyUtils.h" />
+    <ClInclude Include="CTimer.h" />
+    <ClInclude Include="CP_Mesh.h" />
+    <ClInclude Include="rec_bodyassembly.h" />
+    <ClInclude Include="est_comparator.h" />
+    <ClInclude Include="est_refplane.h" />
+    <ClInclude Include="est_surface.h" />
+    <ClInclude Include="est_vtattroper.h" />
+    <ClInclude Include="IObjectiveFuncCalculator.h" />
+    <ClInclude Include="rec_curve.h" />
+    <ClInclude Include="rec_surface.h" />
+    <ClInclude Include="surface_basic.h" />
+    <ClInclude Include="surface_triangulation.h" />
+    <ClInclude Include="topo_geometricoper.h" />
+    <ClInclude Include="cubiccorner.h" />
+    <ClInclude Include="CVectorDataBlock.h" />
+    <ClInclude Include="Reconstruction.h" />
+    <ClInclude Include="CTreeSelectedItem.h" />
+    <ClInclude Include="CtrlDialog.h" />
+    <ClInclude Include="CtrlPane.h" />
+    <ClInclude Include="FaceClassification.h" />
+    <ClInclude Include="CFaceClipping.h" />
+    <ClInclude Include="facecls_utils.h" />
+    <ClInclude Include="CFaceCombination.h" />
+    <ClInclude Include="FaceIdentification.h" />
+    <ClInclude Include="faceident_utils.h" />
+    <ClInclude Include="CFaceLoopPool.h" />
+    <ClInclude Include="CFileReader.h" />
+    <ClInclude Include="IDecomposition.h" />
+    <ClInclude Include="CLog.h" />
+    <ClInclude Include="MainFrm.h" />
+    <ClInclude Include="CP_PointVector.h" />
+    <ClInclude Include="CObjectFactory.h" />
+    <ClInclude Include="CObjectiveFuncCalculator.h" />
+    <ClInclude Include="CPseudoDecomposition.h" />
+    <ClInclude Include="rec_utils.h" />
+    <ClInclude Include="Resource.h" />
+    <ClInclude Include="SLDR.h" />
+    <ClInclude Include="SLDRDoc.h" />
+    <ClInclude Include="SLDRView.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="targetver.h" />
+    <ClInclude Include="CP_Topology.h" />
+    <ClInclude Include="AbstractDataBlock.h" />
+    <ClInclude Include="CDepthEstimation.h" />
+    <ClInclude Include="UCSEditor.h" />
+    <ClInclude Include="UCSEditorPane.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="AbstractCurveEstimation.cpp" />
+    <ClCompile Include="Axis3D.cpp" />
+    <ClCompile Include="BodyDecomposition.cpp" />
+    <ClCompile Include="CArcEstimation.cpp" />
+    <ClCompile Include="CBSplineEstimation.cpp" />
+    <ClCompile Include="CCavityDecomposition.cpp" />
+    <ClCompile Include="CBoundBox2D.cpp" />
+    <ClCompile Include="CCopyPool.cpp" />
+    <ClCompile Include="base_geometricoper.cpp" />
+    <ClCompile Include="CHillClimb.cpp" />
+    <ClCompile Include="CDBScan.cpp" />
+    <ClCompile Include="CMatrix4.cpp" />
+    <ClCompile Include="CP_FlowComplex.cpp" />
+    <ClCompile Include="CP_GeneralPolygon.cpp" />
+    <ClCompile Include="CP_HomogenousCSys.cpp" />
+    <ClCompile Include="CP_Mesh3D.cpp" />
+    <ClCompile Include="CP_MeshVertex.cpp" />
+    <ClCompile Include="CP_TopologyExt.cpp" />
+    <ClCompile Include="CP_UCS.cpp" />
+    <ClCompile Include="CP_Curve.cpp" />
+    <ClCompile Include="CP_Surface.cpp" />
+    <ClCompile Include="CF_BodyUtils.cpp" />
+    <ClCompile Include="curve_convert.cpp" />
+    <ClCompile Include="curve_basic.cpp" />
+    <ClCompile Include="equationsystem.cpp" />
+    <ClCompile Include="CP_MeshTriangle3D.cpp" />
+    <ClCompile Include="est_comparator.cpp" />
+    <ClCompile Include="FCCR.cpp" />
+    <ClCompile Include="FCCRCtrlDialog.cpp" />
+    <ClCompile Include="FCCRCtrlPane.cpp" />
+    <ClCompile Include="rec_bodyassembly.cpp" />
+    <ClCompile Include="est_refplane.cpp" />
+    <ClCompile Include="est_surface.cpp" />
+    <ClCompile Include="est_vertexattroper.cpp" />
+    <ClCompile Include="IObjectiveFuncCalculator.cpp" />
+    <ClCompile Include="rec_curve.cpp" />
+    <ClCompile Include="rec_loopdirect.cpp" />
+    <ClCompile Include="rec_surface.cpp" />
+    <ClCompile Include="surface_basic.cpp" />
+    <ClCompile Include="surface_triangulation.cpp" />
+    <ClCompile Include="topo_geometricoper.cpp" />
+    <ClCompile Include="cubiccorner.cpp" />
+    <ClCompile Include="CVectorDataBlock.cpp" />
+    <ClCompile Include="Reconstruction.cpp" />
+    <ClCompile Include="CTreeSelectedItem.cpp" />
+    <ClCompile Include="CtrlDialog.cpp" />
+    <ClCompile Include="CtrlPane.cpp" />
+    <ClCompile Include="FaceClassification.cpp" />
+    <ClCompile Include="CFaceClipping.cpp" />
+    <ClCompile Include="facecls_utils.cpp" />
+    <ClCompile Include="CFaceCombination.cpp" />
+    <ClCompile Include="FaceIdentification.cpp" />
+    <ClCompile Include="faceident_utils.cpp" />
+    <ClCompile Include="CFaceLoopPool.cpp" />
+    <ClCompile Include="CFileReader.cpp" />
+    <ClCompile Include="CLog.cpp" />
+    <ClCompile Include="MainFrm.cpp" />
+    <ClCompile Include="CP_PointVector.cpp" />
+    <ClCompile Include="CObjectFactory.cpp" />
+    <ClCompile Include="CObjectiveFuncCalculator.cpp" />
+    <ClCompile Include="CPseudoDecomposition.cpp" />
+    <ClCompile Include="rec_utils.cpp" />
+    <ClCompile Include="SLDR.cpp" />
+    <ClCompile Include="SLDRDoc.cpp" />
+    <ClCompile Include="SLDRView.cpp" />
+    <ClCompile Include="stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="CP_Topology.cpp" />
+    <ClCompile Include="CDepthEstimation.cpp" />
+    <ClCompile Include="UCSEditor.cpp" />
+    <ClCompile Include="UCSEditorPane.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="SLDR.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="C:\Users\Administrator\Desktop\test.bmp" />
+    <Image Include="C:\Users\Administrator\Desktop\x.bmp" />
+    <Image Include="C:\Users\Administrator\Desktop\z.bmp" />
+    <Image Include="res\2015073109573166_easyicon_net_60.900726392252.png" />
+    <Image Include="res\bitmap1.bmp" />
+    <Image Include="res\Project1.bmp" />
+    <Image Include="res\x.bmp" />
+    <Image Include="res\z.bmp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties RESOURCE_FILE="SLDR.rc" />
+    </VisualStudio>
+  </ProjectExtensions>
+</Project>
