@@ -19,7 +19,6 @@
 #include "gl/GLU.h"
 #include "glut.h"
 
-#include "arcball.h"
 #include "CP_PointVector.h"
 #include "CBoundBox2D.h"
 #include <string>
