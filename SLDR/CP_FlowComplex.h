@@ -76,7 +76,6 @@ public:
 	vector<CP_PolyLine3D> m_PolyLine;
 	vector<CP_LineSegment3D> seg;
 	vector<CP_Triganle3D*> tricells;
-	vector<CP_Triganle3D*> visitedtri;
 	vector<CP_Triganle3D*> ctri;//中心三角形
 	CP_Point3D cp;//中心点
 	vector<CP_Point3D> vjoint;

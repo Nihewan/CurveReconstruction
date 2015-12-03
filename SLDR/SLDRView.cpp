@@ -367,7 +367,7 @@ void CSLDRView::OnDraw(CDC* pDC)
 		}
 
 		glColor3f(0.0, 1.0, 1.0);
-		glPointSize(10.0f);
+		glPointSize(7.0f);
 		for (int j = 0; j < pDoc->m_FlowComplex->vjoint.size(); j++)
 		{
 			glBegin(GL_POINTS);//必须是加上s，要不然显示不了
@@ -378,7 +378,7 @@ void CSLDRView::OnDraw(CDC* pDC)
 		//0cells!IsDelauny
 		if(!IsDelauny){
 			glColor3f(1.0, 0.0, 0.0);
-			glPointSize(4.0f);
+			glPointSize(3.0f);
 			for (int j = 0; j < pDoc->m_FlowComplex->m_0cells.size(); j++)
 			{
 				glBegin(GL_POINTS);//必须是加上s，要不然显示不了
@@ -398,12 +398,6 @@ void CSLDRView::OnDraw(CDC* pDC)
 			}
 		}
 
-		glColor4f(0.7,0.0,0.0,1);
-		for (int i = 0; i <pDoc->m_FlowComplex->visitedtri.size(); i++)
-		{
-			CP_Triganle3D *pTri = pDoc->m_FlowComplex->visitedtri[i];
-			drawMeshTri(pTri);
-		}
 		int numm=0;
 		for (int i = 0; i <pDoc->m_FlowComplex->m_2cells.size(); i++)
 		{

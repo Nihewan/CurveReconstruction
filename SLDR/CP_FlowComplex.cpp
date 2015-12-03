@@ -47,6 +47,8 @@ CP_FlowComplex::~CP_FlowComplex()
 		delete delauny2cells[i];
 	for(int i=0;i<tricells.size();i++)
 		delete tricells[i];
+	for(int i=0;i<ctri.size();i++)
+		delete ctri[i];
 }
 
 bool CP_FlowComplex::IsSmallAngle(CP_Point3D &po,CP_Point3D &pa,CP_Point3D &pb)
@@ -90,41 +92,43 @@ void CP_FlowComplex::Gabrielize()
 
 	//两线间小角度冲突问题
 	//在交汇点冲突时应该以此为joint点等距细分，这样后边不会再需要投影了
-	
-	//for(int i=0;i<m_PolyLine.size();i++)
-	//{
-	//	for(int j=0;j<m_PolyLine[i].m_points.size()-1;j++)
-	//	{//线段j，j+1
-	//		if(j==0||j==m_PolyLine[i].m_points.size()-2){
-	//		double m_x=(m_PolyLine[i].m_points[j].m_x+m_PolyLine[i].m_points[j+1].m_x)/2;
-	//		double m_y=(m_PolyLine[i].m_points[j].m_y+m_PolyLine[i].m_points[j+1].m_y)/2;
-	//		double m_z=(m_PolyLine[i].m_points[j].m_z+m_PolyLine[i].m_points[j+1].m_z)/2;
-	//		CP_Point3D midPoint(m_x,m_y,m_z);//圆心
-	//		double radius_pq=dist(m_PolyLine[i].m_points[j],m_PolyLine[i].m_points[j+1])/2;//半径
+	for(int i=0;i<m_PolyLine.size();i++)
+	{
+		for(int j=0;j<m_PolyLine[i].m_points.size()-1;j++)
+		{//线段j，j+1
+			if(j==0||j==m_PolyLine[i].m_points.size()-2){
+			double m_x=(m_PolyLine[i].m_points[j].m_x+m_PolyLine[i].m_points[j+1].m_x)/2;
+			double m_y=(m_PolyLine[i].m_points[j].m_y+m_PolyLine[i].m_points[j+1].m_y)/2;
+			double m_z=(m_PolyLine[i].m_points[j].m_z+m_PolyLine[i].m_points[j+1].m_z)/2;
+			CP_Point3D midPoint(m_x,m_y,m_z);//圆心
+			double radius_pq=dist(m_PolyLine[i].m_points[j],m_PolyLine[i].m_points[j+1])/2;//半径
 
-	//		for(int m=0;m<m_PolyLine.size();m++)
-	//		{
-	//			if(i==m)
-	//				;
-	//			else 
-	//			{
-	//				//只检查交汇点处
-	//				if(!IsGabriel(midPoint,m_PolyLine[m].m_points[1],radius_pq))
-	//				{
-	//					if(!ExistPoint(vjoint,m_PolyLine[m].m_points[0]))
-	//						vjoint.push_back(m_PolyLine[m].m_points[0]);
-	//				}//while Gabriel
+			for(int m=0;m<m_PolyLine.size();m++)
+			{
+				if(i==m)
+					;
+				else 
+				{
+					//只检查交汇点处
+					if(!IsGabriel(midPoint,m_PolyLine[m].m_points[1],radius_pq))
+					{
+						if(!ExistPoint(vjoint,m_PolyLine[m].m_points[0]))
+							vjoint.push_back(m_PolyLine[m].m_points[0]);
+					}//while Gabriel
 
-	//				if(!IsGabriel(midPoint,m_PolyLine[m].m_points[m_PolyLine[m].m_points.size()-2],radius_pq))
-	//				{
-	//					if(!ExistPoint(vjoint,m_PolyLine[m].m_points[m_PolyLine[m].m_points.size()-1]))
-	//						vjoint.push_back(m_PolyLine[m].m_points[m_PolyLine[m].m_points.size()-1]);
-	//				}//while Gabriel
-	//			}//i==m else
-	//		}//for m
-	//		}//j==0||m_point.size-2
-	//	}//j
-	//}//i
+					if(!IsGabriel(midPoint,m_PolyLine[m].m_points[m_PolyLine[m].m_points.size()-2],radius_pq))
+					{
+						if(!ExistPoint(vjoint,m_PolyLine[m].m_points[m_PolyLine[m].m_points.size()-1]))
+							vjoint.push_back(m_PolyLine[m].m_points[m_PolyLine[m].m_points.size()-1]);
+					}//while Gabriel
+				}//i==m else
+			}//for m
+			}//j==0||m_point.size-2
+		}//j
+	}//i
+
+	for(int i=0;i<vjoint.size();i++)
+		subdivideSegsJointV(vjoint[i]);
 
 	//gabriel and 1-cells 可在三角形中表示
 	for(int i=0;i<m_PolyLine.size();i++)
@@ -168,37 +172,7 @@ void CP_FlowComplex::Gabrielize()
 						if(!IsGabriel(midPoint,m_PolyLine[m].m_points[n],radius_pq))
 						{
 							//在交汇点冲突时应该以此为joint点等距细分，这样后边不会再需要投影了
-							if(j==0&&(n==m_PolyLine[m].m_points.size()-2))
-							{
-								double k=dist(m_PolyLine[m].m_points[n],m_PolyLine[m].m_points[n+1])/2;
-								//每次m曲线被插入中间点时需要回溯检查这个点，与其交汇的线都插入等距离的点，防止只有部分满足Gabriel
-								m_PolyLine[m].m_points.insert(m_PolyLine[m].m_points.begin()+n+1,CP_Point3D((m_PolyLine[m].m_points[n].m_x+m_PolyLine[m].m_points[n+1].m_x)/2.0,(m_PolyLine[m].m_points[n].m_y+m_PolyLine[m].m_points[n+1].m_y)/2.0,(m_PolyLine[m].m_points[n].m_z+m_PolyLine[m].m_points[n+1].m_z)/2.0));
-								//backTrackM(m_PolyLine[i].m_points[j],i,k);
-								m_PolyLine[i].m_points.insert(m_PolyLine[i].m_points.begin()+j+1,equalDisPoint(k,m_PolyLine[i].m_points[j],m_PolyLine[i].m_points[j+1]));
-							}
-							else if(j==0&&n==1)
-							{
-								double k=dist(m_PolyLine[m].m_points[n],m_PolyLine[m].m_points[n-1])/2;
-								m_PolyLine[m].m_points.insert(m_PolyLine[m].m_points.begin()+n,CP_Point3D((m_PolyLine[m].m_points[n].m_x+m_PolyLine[m].m_points[n-1].m_x)/2.0,(m_PolyLine[m].m_points[n].m_y+m_PolyLine[m].m_points[n-1].m_y)/2.0,(m_PolyLine[m].m_points[n].m_z+m_PolyLine[m].m_points[n-1].m_z)/2.0));
-								//backTrackM(m_PolyLine[i].m_points[j],i,k);
-								m_PolyLine[i].m_points.insert(m_PolyLine[i].m_points.begin()+j+1,equalDisPoint(k,m_PolyLine[i].m_points[j],m_PolyLine[i].m_points[j+1]));
-							}
-							else if((j==m_PolyLine[i].m_points.size()-2)&&n==1)
-							{
-								double k=dist(m_PolyLine[m].m_points[n],m_PolyLine[m].m_points[n-1])/2;
-								m_PolyLine[m].m_points.insert(m_PolyLine[m].m_points.begin()+n,CP_Point3D((m_PolyLine[m].m_points[n].m_x+m_PolyLine[m].m_points[n-1].m_x)/2.0,(m_PolyLine[m].m_points[n].m_y+m_PolyLine[m].m_points[n-1].m_y)/2.0,(m_PolyLine[m].m_points[n].m_z+m_PolyLine[m].m_points[n-1].m_z)/2.0));
-								//backTrackM(m_PolyLine[i].m_points[j+1],i,k);
-								m_PolyLine[i].m_points.insert(m_PolyLine[i].m_points.begin()+j+1,equalDisPoint(k,m_PolyLine[i].m_points[j+1],m_PolyLine[i].m_points[j]));
-							}
-							else if((j==m_PolyLine[i].m_points.size()-2)&&(n==m_PolyLine[m].m_points.size()-2))
-							{
-								double k=dist(m_PolyLine[m].m_points[n],m_PolyLine[m].m_points[n+1])/2;
-								m_PolyLine[m].m_points.insert(m_PolyLine[m].m_points.begin()+n+1,CP_Point3D((m_PolyLine[m].m_points[n].m_x+m_PolyLine[m].m_points[n+1].m_x)/2.0,(m_PolyLine[m].m_points[n].m_y+m_PolyLine[m].m_points[n+1].m_y)/2.0,(m_PolyLine[m].m_points[n].m_z+m_PolyLine[m].m_points[n+1].m_z)/2.0));
-								//backTrackM(m_PolyLine[i].m_points[j+1],i,k);
-								m_PolyLine[i].m_points.insert(m_PolyLine[i].m_points.begin()+j+1,equalDisPoint(k,m_PolyLine[i].m_points[j+1],m_PolyLine[i].m_points[j]));
-							}
-							else
-								m_PolyLine[i].m_points.insert(m_PolyLine[i].m_points.begin()+j+1,ProjectionPoint(m_PolyLine[i].m_points[j],m_PolyLine[i].m_points[j+1],m_PolyLine[m].m_points[n]));
+							m_PolyLine[i].m_points.insert(m_PolyLine[i].m_points.begin()+j+1,ProjectionPoint(m_PolyLine[i].m_points[j],m_PolyLine[i].m_points[j+1],m_PolyLine[m].m_points[n]));
 							midPoint.m_x=(m_PolyLine[i].m_points[j].m_x+m_PolyLine[i].m_points[j+1].m_x)/2;
 							midPoint.m_y=(m_PolyLine[i].m_points[j].m_y+m_PolyLine[i].m_points[j+1].m_y)/2;
 							midPoint.m_z=(m_PolyLine[i].m_points[j].m_z+m_PolyLine[i].m_points[j+1].m_z)/2;
@@ -230,13 +204,35 @@ void CP_FlowComplex::subdivideSegsJointV(CP_Point3D & vp)
 {
 	//mep（m end point） 交汇点，polym  所在折线编号
 	//只需插入相同距离的点即可
-	double d=MAX_DISTANCE;
+	double dmin=MAX_DISTANCE;
 	map<int,int> polymap;//所在polyline，value 0开头，！=0结尾；同一曲线的头或尾只有一端出现在一个交汇点处，所以key不会重复
 	for(int i=0;i<m_PolyLine.size();i++)
 	{
-		//if(m_PolyLine[i].m_points[0]==vp)
-
+		int pnum=m_PolyLine[i].m_points.size();
+		if(m_PolyLine[i].m_points[0]==vp)
+		{
+			polymap.insert(pair<int,int>(i,0));
+			double k=dist(m_PolyLine[i].m_points[0],m_PolyLine[i].m_points[1])/2;
+			if(k<dmin)
+				dmin=k;
+		}
+		if(m_PolyLine[i].m_points[pnum-1]==vp)
+		{
+			polymap.insert(pair<int,int>(i,pnum-1));
+			double k=dist(m_PolyLine[i].m_points[pnum-1],m_PolyLine[i].m_points[pnum-2])/2;
+			if(k<dmin)
+				dmin=k;	
+		}
 	}//i
+
+	map<int,int>::iterator it;
+	for(it=polymap.begin();it!=polymap.end();it++)
+	{
+		if(it->second==0)
+			m_PolyLine[it->first].m_points.insert(m_PolyLine[it->first].m_points.begin()+1,equalDisPoint(dmin,m_PolyLine[it->first].m_points[0],m_PolyLine[it->first].m_points[1]));
+		else
+			m_PolyLine[it->first].m_points.insert(m_PolyLine[it->first].m_points.begin()+it->second,equalDisPoint(dmin,m_PolyLine[it->first].m_points[it->second],m_PolyLine[it->first].m_points[it->second-1]));
+	}
 }
 
 //O---->A----->B
