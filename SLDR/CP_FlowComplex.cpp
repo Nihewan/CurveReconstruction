@@ -277,7 +277,6 @@ int CP_FlowComplex::ExistTriangle(vector<CP_Triganle3D*> &v,CP_Triganle3D &t)
 				if (t.m_points[j]==v[i]->m_points[k])
 					abc++;
 			}
-
 		}
 		if (abc == 3)
 		return i;

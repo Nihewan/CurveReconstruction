@@ -369,7 +369,12 @@ void FCCR::addrVoroFace(Edge e,int vIntersect,Triangle tri,int _2cell)
 	int ciindex=m_FlowComplex->LocatePoint(pci);
 	int ci1index=m_FlowComplex->LocatePoint(pci1);
 	int num=0;
-	bool nextRecur=true;
+	//narrowly miss的三角形数据
+	bool narrowmis=false;
+	int MaxEdgeIndexmis=-1;
+	Cell_handle cmis;
+	Triangle trimis;
+	int trivermis[3]={-1,-1,-1};
 	do
 	{
 		if(!T.is_infinite(*facet_cir)&&!tric.is_degenerate())
@@ -406,8 +411,6 @@ void FCCR::addrVoroFace(Edge e,int vIntersect,Triangle tri,int _2cell)
 								pTriangle0->_2cell=_2cell;
 								pTriangle1->_2cell=_2cell;
 
-								if(num==1)
-									cout<<"error11"<<endl;
 								num++;
 								//找出新三角形其余两边
 								int trivertice[3]={0};
@@ -466,20 +469,13 @@ void FCCR::addrVoroFace(Edge e,int vIntersect,Triangle tri,int _2cell)
 								}//for(int i=0;i<3;i++)
 								if(segEqual(T.segment(e),T.segment(facet_cir->first,trivertice[lenMaxEdgeIndex%3],trivertice[(lenMaxEdgeIndex+1)%3])))
 								{
-									if(num==1)
-										cout<<"error12"<<endl;
-									num++;
-									//nextRecur=false;
-									
+									narrowmis=true;
+									//num++;
+									MaxEdgeIndexmis=lenMaxEdgeIndex;
+									cmis=facet_cir->first;
+									trimis=tricir;
 									for(int i=0;i<3;i++)
-									{//对每条edge,其邻接面dual voronoi edge与此面相交，加入cells；不相交，加入cells
-										if(i!=lenMaxEdgeIndex)
-										{
-											Edge ecir(facet_cir->first,trivertice[i%3],trivertice[(i+1)%3]);
-											addrVoroFace(ecir,vIntersect,tricir,_2cell);
-										}	
-									}//for(int i=0;i<3;i++)
-									cout<<"钝角triangle mis"<<endl;
+										trivermis[i]=trivertice[i];
 								}//segequal
 							}//obtuse
 						}//intersect else
@@ -510,8 +506,6 @@ void FCCR::addrVoroFace(Edge e,int vIntersect,Triangle tri,int _2cell)
 							pTriangle0->_2cell=_2cell;
 							pTriangle1->_2cell=_2cell;
 
-							if(num==1)
-								cout<<"error21"<<endl;
 							num++;
 							//找出新三角形其余两边
 							int trivertice[3]={0};
@@ -570,50 +564,37 @@ void FCCR::addrVoroFace(Edge e,int vIntersect,Triangle tri,int _2cell)
 								}//for(int i=0;i<3;i++)
 								if(segEqual(T.segment(e),T.segment(facet_cir->first,trivertice[lenMaxEdgeIndex%3],trivertice[(lenMaxEdgeIndex+1)%3])))
 								{
-									if(num==1)
-										cout<<"error22"<<endl;
-									//nextRecur=false;
-									num++;
-									
-									/*CP_Point3D p1(to_double(facet_cir->first->vertex(trivertice[lenMaxEdgeIndex%3])->point().hx()), to_double(facet_cir->first->vertex(trivertice[lenMaxEdgeIndex%3])->point().hy()), to_double(facet_cir->first->vertex(trivertice[lenMaxEdgeIndex%3])->point().hz()));
-									CP_Point3D p2(to_double(facet_cir->first->vertex(trivertice[(lenMaxEdgeIndex+1)%3])->point().hx()), to_double(facet_cir->first->vertex(trivertice[(lenMaxEdgeIndex+1)%3])->point().hy()), to_double(facet_cir->first->vertex(trivertice[(lenMaxEdgeIndex+1)%3])->point().hz()));
-									int v1=m_FlowComplex->LocatePoint(p1);
-									int v2=m_FlowComplex->LocatePoint(p2);
-									m_FlowComplex->seg.push_back(CP_LineSegment3D(m_FlowComplex->m_0cells[v1],m_FlowComplex->m_0cells[v2]));*/
-
-									/*Point mid=facet_cir->first->vertex(trivertice[(lenMaxEdgeIndex+2)%3])->point();
-									CP_Point3D midp(to_double(mid.hx()), to_double(mid.hy()), to_double(mid.hz()));
-									int midpindex=m_FlowComplex->LocatePoint(midp);
-									CP_Triganle3D *pTriangle0 =new CP_Triganle3D(ciindex, vIntersect, midpindex);
-									CP_Triganle3D *pTriangle1 =new CP_Triganle3D(ci1index, vIntersect, midpindex);
-
-									m_FlowComplex->tricells.push_back(pTriangle0);
-									m_FlowComplex->tricells.push_back(pTriangle1);
-									pTriangle0->_2cell=_2cell;
-									pTriangle1->_2cell=_2cell;*/
-									
+									narrowmis=true;
+									//num++;
+									MaxEdgeIndexmis=lenMaxEdgeIndex;
+									cmis=facet_cir->first;
+									trimis=tricir;
 									for(int i=0;i<3;i++)
-									{//对每条edge,其邻接面dual voronoi edge与此面相交，加入cells；不相交，加入cells
-										if(i!=lenMaxEdgeIndex)
-										{
-											Edge ecir(facet_cir->first,trivertice[i%3],trivertice[(i+1)%3]);
-											addrVoroFace(ecir,vIntersect,tricir,_2cell);
-										}	
-									}//for(int i=0;i<3;i++)
-									cout<<"钝角triangle mis"<<endl;
+										trivermis[i]=trivertice[i];
 								}//segequal
 							}//obtuse
 						}//intersect else
 				}//else Ray
 			}//if(!triEqual(tri,tricir))
 		}//if(T.is_infinite(*facet_cir))
-	}while(++facet_cir!=done);
-	if(num==0&&nextRecur)
+	}while(++facet_cir!=done);//此Voronoi面最多只有一边满足条件
+
+	if(num==0&&narrowmis)
+	{
+		num++;
+		for(int i=0;i<3;i++)
+		{//对每条edge,其邻接面dual voronoi edge与此面相交，加入cells；不相交，加入cells
+			if(i!=MaxEdgeIndexmis)
+			{
+				Edge ecir(cmis,trivermis[i%3],trivermis[(i+1)%3]);
+				addrVoroFace(ecir,vIntersect,trimis,_2cell);
+			}	
+		}//for(int i=0;i<3;i++)
+	}else if(num==0&&!narrowmis)
 	{
 		CP_Triganle3D *pTriangle =new CP_Triganle3D(ciindex, ci1index, vIntersect);
 		m_FlowComplex->tricells.push_back(pTriangle);
 		pTriangle->_2cell=_2cell;
-		//m_FlowComplex->visitedtri.push_back(pTriangle);
 	}
 }
 
