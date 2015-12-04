@@ -265,25 +265,6 @@ int CP_FlowComplex::LocatePoint(const CP_Point3D &p)
 	return -1;
 }
 
-int CP_FlowComplex::ExistTriangle(vector<CP_Triganle3D*> &v,CP_Triganle3D &t)
-{
-	for (int i = 0; i < v.size(); i++)
-	{
-		int abc = 0;
-		for (int j = 0; j < 3; j++)
-		{
-			for (int k = 0; k < 3; k++)
-			{
-				if (t.m_points[j]==v[i]->m_points[k])
-					abc++;
-			}
-		}
-		if (abc == 3)
-		return i;
-	}
-	return -1;
-}
-
 bool CP_FlowComplex::noCover(CP_Triganle3D &ltri,CP_Triganle3D &rtri)
 {
 	int abc = 0;

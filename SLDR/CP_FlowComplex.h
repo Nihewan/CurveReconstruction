@@ -90,7 +90,6 @@ public:
 	bool IsSmallAngle(CP_Point3D &po,CP_Point3D &pa,CP_Point3D &pb);
 	bool ExistPoint(vector<CP_Point3D> &v,CP_Point3D& p);
 	int LocatePoint(const CP_Point3D &p);
-	int ExistTriangle(vector<CP_Triganle3D*> &v,CP_Triganle3D &t);
 	bool noCover(CP_Triganle3D &ltri,CP_Triganle3D &rtri);
 	int LocateSegment(vector<CurveSegment*> &curveVec,CurveSegment& line);//若存在，返回线段的下标,否则返回-1
 	int Locate2cell(int _2cell);

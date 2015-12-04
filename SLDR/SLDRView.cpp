@@ -198,11 +198,11 @@ void  CSLDRView::drawScene() {
 	glDisable(GL_DEPTH_TEST);
 
 	glBegin (GL_QUADS);
-	glColor3f(0.6,0.7,0.7);
+	glColor3f(0.7,0.8,0.8);
 	glVertex3f (-1.0f, -1.0f, -1.0f); 
 	glVertex3f (1.0f, -1.0f, -1.0f); 
 
-	glColor3f(0.4,0.5,0.5);
+	glColor3f(0.5,0.6,0.6);
 	glVertex3f (1.0f, 1.0f, -1.0f); 
 	glVertex3f (-1.0f, 1.0f, -1.0f); 
 	glEnd ();
@@ -338,7 +338,6 @@ void CSLDRView::OnDraw(CDC* pDC)
 					glLineWidth(2);
 					glColor3f(0.9, 0.68, 0.24);
 				}
-				
 				pDoc->m_FlowComplex->m_PolyLine[i].Draw();
 			}
 		}else
@@ -363,16 +362,6 @@ void CSLDRView::OnDraw(CDC* pDC)
 					glColor3f(0.9, 0.68, 0.24);*/
 				(*pDoc->VT_PolyLine)[i].Draw();
 			}
-
-		}
-
-		glColor3f(0.0, 1.0, 1.0);
-		glPointSize(7.0f);
-		for (int j = 0; j < pDoc->m_FlowComplex->vjoint.size(); j++)
-		{
-			glBegin(GL_POINTS);//必须是加上s，要不然显示不了
-			glVertex3f(pDoc->m_FlowComplex->vjoint[j].m_x, pDoc->m_FlowComplex->vjoint[j].m_y,pDoc->m_FlowComplex->vjoint[j].m_z);
-			glEnd();
 		}
 
 		//0cells!IsDelauny
@@ -385,7 +374,6 @@ void CSLDRView::OnDraw(CDC* pDC)
 				glVertex3f(pDoc->m_FlowComplex->m_0cells[j].m_x, pDoc->m_FlowComplex->m_0cells[j].m_y,pDoc->m_FlowComplex->m_0cells[j].m_z);
 				glEnd();
 			}
-			
 		}
 
 		if(!IsFC&&IsDelauny)
@@ -429,10 +417,10 @@ void CSLDRView::OnDraw(CDC* pDC)
 			{
 				glPushAttrib (GL_ALL_ATTRIB_BITS);
 				glEnable(GL_POLYGON_OFFSET_LINE);
-				glPolygonOffset(-1.0f, -1.0f);
+				glPolygonOffset(-1.5f, -1.0f);
 				for(int j=0;j<p2cell->m_boundary.size();j++)
 				{
-					glLineWidth(5);glColor3f(0.8, 1.0, 0.0);
+					glLineWidth(3);glColor3f(0.8, 1.0, 0.0);
 					glBegin(GL_LINE_STRIP);
 					glVertex3d(pDoc->m_FlowComplex->m_0cells[p2cell->m_boundary[j].sp].m_x,pDoc->m_FlowComplex->m_0cells[p2cell->m_boundary[j].sp].m_y,pDoc->m_FlowComplex->m_0cells[p2cell->m_boundary[j].sp].m_z);
 					glVertex3d(pDoc->m_FlowComplex->m_0cells[p2cell->m_boundary[j].ep].m_x,pDoc->m_FlowComplex->m_0cells[p2cell->m_boundary[j].ep].m_y,pDoc->m_FlowComplex->m_0cells[p2cell->m_boundary[j].ep].m_z);
@@ -443,17 +431,7 @@ void CSLDRView::OnDraw(CDC* pDC)
 				glPopAttrib();
 			}
 			}//flag
-		}
-
-		for(int i=0;i<pDoc->m_FlowComplex->seg.size();i++)
-		{
-			glLineWidth(3);glColor3f(1, 0, 0);
-			glBegin(GL_LINE_STRIP);
-			glVertex3d(pDoc->m_FlowComplex->seg[i].m_startPt.m_x,pDoc->m_FlowComplex->seg[i].m_startPt.m_y,pDoc->m_FlowComplex->seg[i].m_startPt.m_z);
-			glVertex3d(pDoc->m_FlowComplex->seg[i].m_endPt.m_x,pDoc->m_FlowComplex->seg[i].m_endPt.m_y,pDoc->m_FlowComplex->seg[i].m_endPt.m_z);
-			glEnd();
-		}
-
+		}//2cell
 		drawData();
 	}
 
@@ -492,6 +470,7 @@ void CSLDRView::drawMeshTri(CP_Triganle3D* pTri)
 	glEnable(GL_POLYGON_OFFSET_FILL);
 	glPolygonOffset(1.0f, 0.0f);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	//glColor3f(1.0, 1.0, 1.0);
 	glBegin(GL_POLYGON);
 	glNormal3f(ntmp.m_x, ntmp.m_y, ntmp.m_z);
 	glVertex3f(pDoc->m_FlowComplex->m_0cells[pTri->m_points[0]].m_x, pDoc->m_FlowComplex->m_0cells[pTri->m_points[0]].m_y, pDoc->m_FlowComplex->m_0cells[pTri->m_points[0]].m_z);
@@ -500,17 +479,23 @@ void CSLDRView::drawMeshTri(CP_Triganle3D* pTri)
 	glNormal3f(ntmp.m_x, ntmp.m_y, ntmp.m_z);
 	glVertex3f(pDoc->m_FlowComplex->m_0cells[pTri->m_points[2]].m_x, pDoc->m_FlowComplex->m_0cells[pTri->m_points[2]].m_y, pDoc->m_FlowComplex->m_0cells[pTri->m_points[2]].m_z);
 	glEnd();
+
 	glDisable(GL_POLYGON_OFFSET_FILL);
 	
 	if(!pMain->m_ctrlPaneFCCR->m_dialog.triboundary)
 	{
-		glLineWidth(1);glColor3f(0.0, 0.0, 0.0);
+		//glEnable(GL_POLYGON_OFFSET_LINE);
+		//glPolygonOffset(-1.0f, -1.0f);
+		glLineWidth(1);
+		glColor3f(0.0, 0.0, 0.0);
+		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		glBegin(GL_LINE_LOOP);
 		for (int j = 0; j < 3; j++)
 			glVertex3f(pDoc->m_FlowComplex->m_0cells[pTri->m_points[j]].m_x, pDoc->m_FlowComplex->m_0cells[pTri->m_points[j]].m_y, pDoc->m_FlowComplex->m_0cells[pTri->m_points[j]].m_z);
 		glEnd();
-		glPopAttrib ();
+		//glDisable(GL_POLYGON_OFFSET_LINE);
 	}
+	glPopAttrib ();
 }
 
 void CSLDRView::SetModelViewMatrix() 
@@ -540,8 +525,8 @@ void CSLDRView::InitMaterial() {
 void CSLDRView::InitLight0() {
 	const GLfloat pos = 400;
 	GLfloat light_ambient [] = { 0.0, 0.0, 0.0, 1.0 };
-	GLfloat light_diffuse [] = { 0.8, 0.8, 0.8, 1.0 };
-	GLfloat light_specular[] = { 0.9, 0.9, 0.9, 1.0 };
+	GLfloat light_diffuse [] = { 0.6, 0.6, 0.6, 1.0 };
+	GLfloat light_specular[] = { 0.4, 0.4, 0.4, 1.0 };
 	GLfloat light_position[] = { 0.0, 110.0, 110.0, 1.0 };
 	//glLightfv(GL_LIGHT0, GL_POSITION, light_position);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE , light_diffuse );
