@@ -232,6 +232,7 @@ BOOL CSLDRDoc::OnOpenDocument(LPCTSTR lpszPathName)
 
 		pMain->m_ctrlPaneFCCR->m_dialog.SetItems(m_FlowComplex,VT_PolyLine);
 		pView->format="curve";
+		pView->showvoid=0;
 		pView->m_Scale = 15.0f;
 		pView->Invalidate();
 

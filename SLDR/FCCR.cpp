@@ -2,11 +2,11 @@
 #include "FCCR.h"
 #include <iostream>
 #include <fstream>
-const double epsilon=0.055;
 FCCR::FCCR(void)
 {
 	maxhd=0;
 	voids=0;
+	epsilon=0.055;
 }
 
 
@@ -87,17 +87,16 @@ void FCCR::ToPolyLine()
 				start = 0;
 				poly.m_points.push_back((*m_VT_PolyLine)[i].m_points[j]);
 			}
+			else if (j == (*m_VT_PolyLine)[i].m_points.size() - 1)//曲线终点不足minhd但是必须连起来
+			{
+				poly.m_points.push_back((*m_VT_PolyLine)[i].m_points[j]);
+				m_FlowComplex->m_PolyLine.push_back(poly);
+			}
 			else{
 				if (dist((*m_VT_PolyLine)[i].m_points[start], (*m_VT_PolyLine)[i].m_points[j])>minhd)
 				{
 					poly.m_points.push_back((*m_VT_PolyLine)[i].m_points[j]);
 					start = j;
-				}
-				if (j == (*m_VT_PolyLine)[i].m_points.size() - 1)//曲线终点不足minhd但是必须连起来
-				{
-					if(!dist((*m_VT_PolyLine)[i].m_points[j],poly.m_points[poly.m_points.size()-1])<TOL)
-						poly.m_points.push_back((*m_VT_PolyLine)[i].m_points[j]);
-					m_FlowComplex->m_PolyLine.push_back(poly);
 				}
 			}//else
 		}//j
@@ -140,8 +139,7 @@ void FCCR::ToPolyLine()
 			}
 		}//j
 	}//i
-	/*cout<<m_FlowComplex->m_0cells.size()<<endl;
-	cout<<num<<endl;*/
+	
 	double x=0,y=0,z=0;
 	for(int i=0;i<m_FlowComplex->m_0cells.size();i++)
 	{
@@ -228,35 +226,38 @@ void FCCR::addrFacet(Facet f)
 						if(nocover){
 							m_FlowComplex->ctri.push_back(pTriangle);
 
-						Point intersec;
-						assign(intersec, intersecObject);
-						
-						CP_Point3D pIntersec(to_double(intersec.hx()), to_double(intersec.hy()), to_double(intersec.hz()));
-						
-						m_FlowComplex->m_0cells.push_back(pIntersec);
-						int vIntersect=m_FlowComplex->m_0cells.size()-1; 
-							CP_2cell *p2cell=new CP_2cell();
-						m_FlowComplex->m_2cells.push_back(p2cell);
-						p2cell->p_critical=vIntersect;
-						int _2cell=m_FlowComplex->m_2cells.size()-1;
-						p2cell->index=_2cell;
-						
-						/*m_FlowComplex->tricells.push_back(pTriangle);
-						pTriangle->_2cell=_2cell;*/
-						//另外3个顶点,方便得到EDGE
-						int trivertice[3]={0};
-						int verindex=0;
-						for(int i=0;i<4;i++)
-						{
-							if(i!=f.second)
-								trivertice[verindex++]=i;
-						}
+							Point intersec;
+							assign(intersec, intersecObject);
 
-						for(int i=0;i<3;i++)
-						{//对每条edge,其邻接面dual voronoi edge与此面相交，加入cells；不相交，加入cells
-							Edge e(c,trivertice[i%3],trivertice[(i+1)%3]);
-							addrVoroFace(e,vIntersect,tri,_2cell);
-						}//for(int i=0;i<3;i++)
+							CP_Point3D pIntersec(to_double(intersec.hx()), to_double(intersec.hy()), to_double(intersec.hz()));
+
+							m_FlowComplex->m_0cells.push_back(pIntersec);
+							int vIntersect=m_FlowComplex->m_0cells.size()-1; 
+							CP_2cell *p2cell=new CP_2cell();
+							m_FlowComplex->m_2cells.push_back(p2cell);
+							p2cell->p_critical=vIntersect;
+							int _2cell=m_FlowComplex->m_2cells.size()-1;
+							p2cell->index=_2cell;
+
+							//Point pcc=c->circumcenter();
+							//CP_Point3D pccenter(to_double(pcc.hx()), to_double(pcc.hy()), to_double(pcc.hz()));//外心
+							//p2cell->dis3cell=dist(pccenter,p0);
+							/*m_FlowComplex->tricells.push_back(pTriangle);
+							pTriangle->_2cell=_2cell;*/
+							//另外3个顶点,方便得到EDGE
+							int trivertice[3]={0};
+							int verindex=0;
+							for(int i=0;i<4;i++)
+							{
+								if(i!=f.second)
+									trivertice[verindex++]=i;
+							}
+
+							for(int i=0;i<3;i++)
+							{//对每条edge,其邻接面dual voronoi edge与此面相交，加入cells；不相交，加入cells
+								Edge e(c,trivertice[i%3],trivertice[(i+1)%3]);
+								addrVoroFace(e,vIntersect,tri,_2cell);
+							}//for(int i=0;i<3;i++)
 
 						}
 					}//if (CGAL::object_cast<Point>(&intersecObject))
@@ -286,36 +287,39 @@ void FCCR::addrFacet(Facet f)
 					}
 					if(nocover){
 						m_FlowComplex->ctri.push_back(pTriangle);
-					Point intersec;
-					assign(intersec, intersecObject);
-					CP_Point3D pIntersec(to_double(intersec.hx()), to_double(intersec.hy()), to_double(intersec.hz()));
-					
-					m_FlowComplex->m_0cells.push_back(pIntersec);
-					int vIntersect=m_FlowComplex->m_0cells.size()-1;
+						Point intersec;
+						assign(intersec, intersecObject);
+						CP_Point3D pIntersec(to_double(intersec.hx()), to_double(intersec.hy()), to_double(intersec.hz()));
 
-					CP_2cell *p2cell=new CP_2cell();
-					m_FlowComplex->m_2cells.push_back(p2cell);
-					p2cell->p_critical=vIntersect;
-					int _2cell=m_FlowComplex->m_2cells.size()-1;
-					p2cell->index=_2cell;
+						m_FlowComplex->m_0cells.push_back(pIntersec);
+						int vIntersect=m_FlowComplex->m_0cells.size()-1;
 
-					/*m_FlowComplex->tricells.push_back(pTriangle);
-					pTriangle->_2cell=_2cell;*/
-					//另外3个顶点,方便得到EDGE
-					int trivertice[3]={0};
-					int verindex=0;
-					for(int i=0;i<4;i++)
-					{
-						if(i!=f.second)
-							trivertice[verindex++]=i;
-					}
+						CP_2cell *p2cell=new CP_2cell();
+						m_FlowComplex->m_2cells.push_back(p2cell);
+						p2cell->p_critical=vIntersect;
+						int _2cell=m_FlowComplex->m_2cells.size()-1;
+						p2cell->index=_2cell;
 
-					for(int i=0;i<3;i++)
-					{//对每条edge,其邻接面dual voronoi edge与此面相交，加入cells；不相交，加入cells
-						Edge e(c,trivertice[i%3],trivertice[(i+1)%3]);
-						addrVoroFace(e,vIntersect,tri,_2cell);
-					}//for(int i=0;i<3;i++)
-					
+						//Point pcc=c->circumcenter();
+						//CP_Point3D pccenter(to_double(c->circumcenter().hx()), to_double(c->circumcenter().hy()), to_double(c->circumcenter().hz()));//外心
+						//p2cell->dis3cell=dist(pccenter,p0);
+						/*m_FlowComplex->tricells.push_back(pTriangle);
+						pTriangle->_2cell=_2cell;*/
+						//另外3个顶点,方便得到EDGE
+						int trivertice[3]={0};
+						int verindex=0;
+						for(int i=0;i<4;i++)
+						{
+							if(i!=f.second)
+								trivertice[verindex++]=i;
+						}
+
+						for(int i=0;i<3;i++)
+						{//对每条edge,其邻接面dual voronoi edge与此面相交，加入cells；不相交，加入cells
+							Edge e(c,trivertice[i%3],trivertice[(i+1)%3]);
+							addrVoroFace(e,vIntersect,tri,_2cell);
+						}//for(int i=0;i<3;i++)
+
 					}
 				}//if (CGAL::object_cast<Point>(&intersecObject))
 			}//if(CGAL::do_intersect(r,tri))
@@ -331,7 +335,7 @@ bool  segEqual(Segment s1,Segment s2)
 		return false;
 }
 
-bool triEqual(Triangle tri,Triangle tricir)
+bool triEqual(Triangle &tri,Triangle &tricir)
 {
 	int abc = 0;
 	for (int j = 0; j < 3; j++)
@@ -661,6 +665,11 @@ bool typeCmp(CP_2cell* l,CP_2cell* r)
 	return l->type<r->type;
 }
 
+bool dis3cellCmp(CP_2cell* l,CP_2cell* r)
+{
+	return l->dis3cell<r->dis3cell;
+}
+
 void FCCR::ToFlowcomplex()
 {
 	//Delauny面中构造Flow Complex结构并重新计算法向
@@ -762,7 +771,8 @@ void FCCR::ToFlowcomplex()
 	int desN=0;
 	for (int i = 0; i <m_FlowComplex->m_2cells.size(); i++)
 	{
-		if(m_FlowComplex->m_2cells[i]->type==0)
+		CP_2cell *p2cell=m_FlowComplex->m_2cells[i];
+		if(p2cell->type==0)
 			desN++;
 	}
 	m_FlowComplex->desN=desN;
@@ -770,8 +780,19 @@ void FCCR::ToFlowcomplex()
 
 	////2-cells按distance增序
 	sort(m_FlowComplex->m_2cells.begin(),m_FlowComplex->m_2cells.begin()+desN,distanceCmp);
-	sort(m_FlowComplex->m_2cells.begin()+desN,m_FlowComplex->m_2cells.end(),distanceCmp);
-	
+	//sort(m_FlowComplex->m_2cells.begin()+desN,m_FlowComplex->m_2cells.end(),distanceCmp);
+
+	//为creator设置paired 3cells
+	m_FlowComplex->setpaired3cells();
+	//计算3cell的大小
+	for (int i = m_FlowComplex->desN; i < m_FlowComplex->m_2cells.size(); i++)
+	{
+		m_FlowComplex->calc3cellVolume(*m_FlowComplex->m_2cells[i]);
+		cout<<i<<"的体积"<<m_FlowComplex->m_2cells[i]->dis3cell<<endl;
+	}
+
+	sort(m_FlowComplex->m_2cells.begin()+desN,m_FlowComplex->m_2cells.end(),dis3cellCmp);
+
 	m_FlowComplex->SetAdjTriangle();
 	m_FlowComplex->_2cellNormalConsensus();
 	//m_FlowComplex->SetNormals();
@@ -783,7 +804,8 @@ void FCCR::OnCollapse()
 	{
 		m_FlowComplex->m_2cells[i]->flag=false;
 	}
-
+	//除creator之外的都加入1cell
+	//for(int i=0;i<m_FlowComplex->desN;i++)
 	for(int i=0;i<m_FlowComplex->m_2cells.size();i++)
 	{
 		if(m_FlowComplex->m_2cells[i]->flag)
@@ -808,6 +830,9 @@ void FCCR::OnCollapse()
 			}//j
 		}//if type
 	}//i
+
+	//扩展最大的creator
+	//m_FlowComplex->expand2cell(*m_FlowComplex->m_2cells[m_FlowComplex->m_2cells.size()-1]);
 
 	for (int i = 0; i < m_FlowComplex->m_1cells.size(); i++)
 	{
@@ -869,19 +894,7 @@ void FCCR::OnCollapse()
 		}
 	}
 	
-	/*for(int i=0;i<m_FlowComplex->m_0cells.size();i++)
-	{
-		vector<int>().swap(m_FlowComplex->m_0cells[i].m_adjTriangle);
-	}
-	for(int i=0;i<m_FlowComplex->tricells.size();i++)
-	{
-		vector<int>().swap(m_FlowComplex->tricells[i]->m_adjTriangle);
-		m_FlowComplex->tricells[i]->normalsetted=false;
-	}
-	m_FlowComplex->SetAdjTriangle();*/
 	m_FlowComplex->Set2cellNormal();
-	
-	//m_FlowComplex->SetNormals();
 	generOBJ();
 }
 

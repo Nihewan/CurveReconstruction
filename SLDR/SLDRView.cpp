@@ -77,7 +77,7 @@ CSLDRView::CSLDRView()
 	IsPoly=false;
 	ctrlDown=false;
 	zDown=false;
-	
+	showvoid=0;
 }
 
 CSLDRView::~CSLDRView()
@@ -386,16 +386,35 @@ void CSLDRView::OnDraw(CDC* pDC)
 			}
 		}
 
+		if(pMain->m_ctrlPaneFCCR->m_dialog.randomColor){
+		if(showvoid!=0&&(pDoc->m_FlowComplex->desN+showvoid-1)<pDoc->m_FlowComplex->m_2cells.size())
+		{
+			int creator=pDoc->m_FlowComplex->desN+showvoid-1;
+			CP_2cell *pc2cell = pDoc->m_FlowComplex->m_2cells[creator];
+			cout<<showvoid<<"的体积"<<fabs(pc2cell->dis3cell)<<endl;
+			for(int i=0;i<pc2cell->m_triangle.size();i++)
+			{
+				CP_Triganle3D *pTri = pDoc->m_FlowComplex->tricells[pc2cell->m_triangle[i]];
+				drawMeshTri(pTri);
+			}
+			for(int j=0;j<pDoc->m_FlowComplex->m_2cells[creator]->p3cell.size();j++)
+			{
+				int nowi=pDoc->m_FlowComplex->Locate2cell(pDoc->m_FlowComplex->m_2cells[creator]->p3cell[j]);
+				CP_2cell *p2cell = pDoc->m_FlowComplex->m_2cells[nowi];
+				glColor4f(0.74,0.74,0.74,1);
+				for(int j=0;j<p2cell->m_triangle.size();j++)
+				{
+					CP_Triganle3D *pTri = pDoc->m_FlowComplex->tricells[p2cell->m_triangle[j]];
+					drawMeshTri(pTri);
+				}
+			}//j
+		}
+		}else{
 		int numm=0;
 		for (int i = 0; i <pDoc->m_FlowComplex->m_2cells.size(); i++)
 		{
 			CP_2cell *p2cell = pDoc->m_FlowComplex->m_2cells[i];
 			if(p2cell->flag){
-			if(p2cell->type==1){
-					glColor4f(0.24,0.74,0.24,1);
-					cout<<i<<":"<<p2cell->distance<<endl;
-					numm++;
-				}
 			for(int j=0;j<p2cell->m_triangle.size();j++)
 			{
 				CP_Triganle3D *pTri = pDoc->m_FlowComplex->tricells[p2cell->m_triangle[j]];
@@ -432,6 +451,7 @@ void CSLDRView::OnDraw(CDC* pDC)
 			}
 			}//flag
 		}//2cell
+		}
 		drawData();
 	}
 
@@ -471,6 +491,7 @@ void CSLDRView::drawMeshTri(CP_Triganle3D* pTri)
 	glPolygonOffset(1.0f, 0.0f);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	//glColor3f(1.0, 1.0, 1.0);
+
 	glBegin(GL_POLYGON);
 	glNormal3f(ntmp.m_x, ntmp.m_y, ntmp.m_z);
 	glVertex3f(pDoc->m_FlowComplex->m_0cells[pTri->m_points[0]].m_x, pDoc->m_FlowComplex->m_0cells[pTri->m_points[0]].m_y, pDoc->m_FlowComplex->m_0cells[pTri->m_points[0]].m_z);
@@ -730,6 +751,10 @@ void CSLDRView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 	case VK_CONTROL: ctrlDown=true;
 		break;
 	case 'Z':	zDown=true;
+		break;
+	case 'N':	showvoid++;
+		break;
+	case 'P':	showvoid--;
 		break;
 	}
 	
@@ -1023,7 +1048,7 @@ void CSLDRView::FindPolyLine(CPoint point)
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
 	wglMakeCurrent(NULL, NULL);
-}
+} 
 
 void CSLDRView::OnLButtonDown(UINT nFlags, CPoint point)
 {
@@ -1053,8 +1078,8 @@ void CSLDRView::OnLButtonDown(UINT nFlags, CPoint point)
 	{
 		pMain->m_ctrlPaneFCCR->m_dialog.SetTreeItems(selectedTriangle-pDoc->VT_PolyLine->size());//2cell在集合中的下标，非标号
 		//(*pDoc->VT_PolyLine)[selectedTriangle].cut=1;
-		//pDoc->m_FlowComplex->m_2cells[selectedTriangle-pDoc->VT_PolyLine->size()]->flag=false;
-		//cout<<"line index:"<<selectedTriangle<<endl;
+		pDoc->m_FlowComplex->m_2cells[selectedTriangle-pDoc->VT_PolyLine->size()]->flag=false;  
+		//cout<<"line index:"<<selectedTriangle<<endl; 
 	}
 
 	if(pDoc->format=="curve"&&ctrlDown){

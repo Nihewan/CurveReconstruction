@@ -31,8 +31,6 @@ void FCCRCtrlDialog::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_INFOTREE, m_treeCtrl);
-	DDX_Control(pDX, IDC_COMBOVOIDS, m_CComboBox);
-	DDX_Control(pDX, IDC_COMBOVOIDS, m_CComboBox);
 }
 
 
@@ -43,7 +41,8 @@ BEGIN_MESSAGE_MAP(FCCRCtrlDialog, CDialogEx)
 	ON_BN_CLICKED(IDC_CHECK_TRI, &FCCRCtrlDialog::OnBnClickedCheckTri)
 	ON_BN_CLICKED(IDC_CHECK_2CELL, &FCCRCtrlDialog::OnBnClickedCheck2cell)
 	ON_BN_CLICKED(IDC_SEARCH, &FCCRCtrlDialog::OnBnClickedSearch)
-	ON_CBN_EDITCHANGE(IDC_COMBOVOIDS, &FCCRCtrlDialog::OnCbnEditchangeCombovoid)
+	ON_EN_CHANGE(IDC_EDIT_VOIDS, &FCCRCtrlDialog::OnEnChangeEditVoids)
+	ON_EN_CHANGE(IDC_EDIT_EPSILON, &FCCRCtrlDialog::OnEnChangeEditEpsilon)
 END_MESSAGE_MAP()
 
 
@@ -158,19 +157,37 @@ BOOL FCCRCtrlDialog::OnInitDialog()
 	CDialogEx::OnInitDialog();
 
 	// TODO:  在此添加额外的初始化
-
-	m_CComboBox.SetCurSel(0);
+	GetDlgItem(IDC_EDIT_EPSILON)->SetWindowText("0.055");
+	GetDlgItem(IDC_EDIT_VOIDS)->SetWindowText("0");
+	GetDlgItem(IDC_COMBO_SHOWCELL)->SetWindowText("2cell");
+	GetDlgItem(IDC_SHOWNUM)->SetWindowText("0");
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// 异常: OCX 属性页应返回 FALSE
 }
 
-
-void FCCRCtrlDialog::OnCbnEditchangeCombovoid()
+void FCCRCtrlDialog::OnEnChangeEditVoids()
 {
-	// TODO: 在此添加控件通知处理程序代码
-	CString str;   
-	int nSel;   
+	// TODO:  如果该控件是 RICHEDIT 控件，它将不
+	// 发送此通知，除非重写 CDialogEx::OnInitDialog()
+	// 函数并调用 CRichEditCtrl().SetEventMask()，
+	// 同时将 ENM_CHANGE 标志“或”运算到掩码中。
 
-	GetDlgItemText(IDC_COMBOVOIDS,str);
+	// TODO:  在此添加控件通知处理程序代码
+	CString str;   
+	GetDlgItemText(IDC_EDIT_VOIDS,str);
 	fccr.voids=_ttoi(str);
+}
+
+
+void FCCRCtrlDialog::OnEnChangeEditEpsilon()
+{
+	// TODO:  如果该控件是 RICHEDIT 控件，它将不
+	// 发送此通知，除非重写 CDialogEx::OnInitDialog()
+	// 函数并调用 CRichEditCtrl().SetEventMask()，
+	// 同时将 ENM_CHANGE 标志“或”运算到掩码中。
+
+	// TODO:  在此添加控件通知处理程序代码
+	CString str;   
+	GetDlgItemText(IDC_EDIT_EPSILON,str);
+	fccr.epsilon=atof(str);
 }

@@ -57,6 +57,7 @@ public:
 	int selectedPolyline;
 	bool ctrlDown;
 	bool zDown;
+	int showvoid;
 // ²Ù×÷
 public:
 	void ReSet();

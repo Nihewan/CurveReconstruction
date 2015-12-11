@@ -96,7 +96,7 @@ void CP_FlowComplex::Gabrielize()
 	{
 		for(int j=0;j<m_PolyLine[i].m_points.size()-1;j++)
 		{//线段j，j+1
-			if(j==0||j==m_PolyLine[i].m_points.size()-2){
+			if(j==0||j==(m_PolyLine[i].m_points.size()-2)){
 			double m_x=(m_PolyLine[i].m_points[j].m_x+m_PolyLine[i].m_points[j+1].m_x)/2;
 			double m_y=(m_PolyLine[i].m_points[j].m_y+m_PolyLine[i].m_points[j+1].m_y)/2;
 			double m_z=(m_PolyLine[i].m_points[j].m_z+m_PolyLine[i].m_points[j+1].m_z)/2;
@@ -384,9 +384,7 @@ void CP_FlowComplex::convert2cellNormal(CP_2cell& _2cell)
 {
 	for(int i=0;i<_2cell.m_triangle.size();i++)
 	{
-		int temp=tricells[_2cell.m_triangle[i]]->m_points[0];
-		tricells[_2cell.m_triangle[i]]->m_points[0]=tricells[_2cell.m_triangle[i]]->m_points[2];
-		tricells[_2cell.m_triangle[i]]->m_points[2]=temp;
+		swap(tricells[_2cell.m_triangle[i]]->m_points[0],tricells[_2cell.m_triangle[i]]->m_points[2]);
 	}
 }
 
@@ -447,10 +445,8 @@ void CP_FlowComplex::spread2cellTri(int _2cell,CP_Triganle3D* tri)
 			tricells[tri->m_adjTriangle[i]]->normalsetted=true;
 			int rsri=CommonEdgeReverse(*tri,*tricells[tri->m_adjTriangle[i]]);
 			if(rsri!=-1)
-			{
-				int temp=tricells[tri->m_adjTriangle[i]]->m_points[(rsri+1)%3];
-				tricells[tri->m_adjTriangle[i]]->m_points[(rsri+1)%3]=tricells[tri->m_adjTriangle[i]]->m_points[(rsri+2)%3];
-				tricells[tri->m_adjTriangle[i]]->m_points[(rsri+2)%3]=temp;
+			{   //stl swap
+				swap(tricells[tri->m_adjTriangle[i]]->m_points[(rsri+1)%3],tricells[tri->m_adjTriangle[i]]->m_points[(rsri+2)%3]);
 			}
 			spread2cellTri(_2cell,tricells[tri->m_adjTriangle[i]]);
 		}//normalsetted
@@ -511,9 +507,6 @@ void CP_FlowComplex::Set2cellNormal()
 			if(ntri*ncp<0)
 				convert2cellNormal(*m_2cells[i]);
 			spread2cellNormal(*m_2cells[i]);
-			/*sort(m_2cells[i]->m_adj2cell.begin(),m_2cells[i]->m_adj2cell.end());
-			vector<int>::iterator iter = unique(m_2cells[i]->m_adj2cell.begin(),m_2cells[i]->m_adj2cell.end());
-			m_2cells[i]->m_adj2cell.erase(iter,m_2cells[i]->m_adj2cell.end());*/
 		}//flag normalsetted
 	}//i
 }
@@ -581,6 +574,14 @@ void CP_FlowComplex::SetCreatorAndDestoryer()
 		//重置所有flag true
 		Reset2cellFlag(i);
 	}//i
+
+	//所有vboundary的数据归零
+	for(int i=0;i<vboundary.size();i++)
+	{
+		vboundary[i]->degree=0;
+		vboundary[i]->tmpdegree=0;
+		vector<int>().swap(vboundary[i]->incident2cell);
+	}//i
 }
 
 void CP_FlowComplex::cutBranch(vector<CurveSegment*> &vboundary,CurveSegment& curve)
@@ -607,6 +608,68 @@ void CP_FlowComplex::cutBranch(vector<CurveSegment*> &vboundary,CurveSegment& cu
 	}//i
 }
 
+void CP_FlowComplex::setpaired3cells()
+{
+	vector<CurveSegment*> vboundary;
+	for (int i = 0; i < desN; i++)
+	{
+		for(int j=0;j<m_2cells[i]->m_boundary.size();j++)
+		{
+			int curve=LocateSegment(vboundary,m_2cells[i]->m_boundary[j]);
+			if(curve==-1)
+			{
+				vboundary.push_back(&m_2cells[i]->m_boundary[j]);
+				m_2cells[i]->m_boundary[j].degree=1;
+				m_2cells[i]->m_boundary[j].incident2cell.push_back(i);
+			}else
+			{
+				vboundary[curve]->degree++;
+				vboundary[curve]->incident2cell.push_back(i);
+			}
+		}//j
+	}//i
+
+	//所有destoryer每次和一个creator去cutBranch，得到每个creator的3cell
+	for(int i=desN;i<m_2cells.size();i++)
+	{
+		int _2cell=i;    
+		//考虑此creator与所有destoryer
+		for(int j=0;j<m_2cells[_2cell]->m_boundary.size();j++)
+		{//边加入vboundary
+			int curve=LocateSegment(vboundary,m_2cells[_2cell]->m_boundary[j]);
+			vboundary[curve]->degree++;
+			vboundary[curve]->incident2cell.push_back(_2cell);
+		}//j
+
+		for(int  j=0;j<vboundary.size();j++)
+		{//重置tmpdegree
+			vboundary[j]->ResetDegreee();
+		}
+
+		for(int j=0;j<vboundary.size();j++)
+		{//剪边操作
+			if(vboundary[j]->tmpdegree==1)
+				cutBranch(vboundary,*vboundary[j]);
+		}
+
+		for(int j=0;j<desN;j++)
+		{//记录剩下的2cell为构成此creator的paired 3cell的面片
+			if(m_2cells[j]->flag)
+				m_2cells[_2cell]->p3cell.push_back(m_2cells[j]->index);
+		}
+
+		//重置
+		for(int j=0;j<m_2cells[_2cell]->m_boundary.size();j++)
+		{//重置vboundary
+			int curve=LocateSegment(vboundary,m_2cells[_2cell]->m_boundary[j]);
+			vboundary[curve]->degree--;
+			vboundary[curve]->incident2cell.pop_back();
+		}//j
+		//重置
+		Reset2cellFlag(_2cell);
+	}//i
+}
+
 int CP_FlowComplex::CheckClosedVoid(vector<CurveSegment*> &vboundary,int len)
 {
 	////剪枝法判断边集
@@ -623,11 +686,6 @@ int CP_FlowComplex::CheckClosedVoid(vector<CurveSegment*> &vboundary,int len)
 			num++;
 	}
 	
-	//重置所有curve degree
-	for(int  i=0;i<vboundary.size();i++)
-	{
-		vboundary[i]->ResetDegreee();
-	}
 	return num;
 }
 
@@ -639,18 +697,89 @@ void CP_FlowComplex::Reset2cellFlag(int len)
 	}
 };
 
-//CurveSegment::CurveSegment(const CP_Point3D& s, const CP_Point3D& e,int d)
-//{
-//	m_startPt.m_x=s.m_x;
-//	m_startPt.m_y = s.m_y;
-//	m_startPt.m_z = s.m_z;
-//
-//	m_endPt.m_x = e.m_x;
-//	m_endPt.m_y = e.m_y;
-//	m_endPt.m_z = e.m_z;
-//
-//	degree = d;
-//}
+
+bool CP_FlowComplex::ExistTriangle(vector<CP_Triganle3D*> visitedtri,CP_Triganle3D &tri)
+{
+	for (int i = 0; i < visitedtri.size(); i++)
+	{
+		int abc = 0;
+		for (int j = 0; j < 3; j++)
+		{
+			for (int k = 0; k < 3; k++)
+			{
+				if (visitedtri[i]->m_points[j]==tri.m_points[k])
+					abc++;
+			}
+
+		}
+		if (abc == 3)
+			return true;
+	}
+	return false;
+}
+
+double CP_FlowComplex::calcTriVolume_projection(const CP_Triganle3D &tri)
+{
+	double average_height;
+	double projected_area;
+	double projected_vec1_x,projected_vec1_y;
+	double projected_vec2_x,projected_vec2_y;
+	double temp_volume;
+	average_height=(m_0cells[tri.m_points[0]].m_z+m_0cells[tri.m_points[1]].m_z+m_0cells[tri.m_points[2]].m_z)/3.0;
+
+	average_height=fabs(average_height);
+
+	projected_vec1_x=m_0cells[tri.m_points[1]].m_x-m_0cells[tri.m_points[0]].m_x;
+	projected_vec1_y=m_0cells[tri.m_points[1]].m_y-m_0cells[tri.m_points[0]].m_y;
+	projected_vec2_x=m_0cells[tri.m_points[2]].m_x-m_0cells[tri.m_points[0]].m_x;
+	projected_vec2_y=m_0cells[tri.m_points[2]].m_y-m_0cells[tri.m_points[0]].m_y;
+
+	projected_area=(projected_vec1_x*projected_vec2_y-projected_vec2_x*projected_vec1_y)/2.0;
+
+	temp_volume=projected_area*average_height;
+	return fabs(temp_volume);
+}
+
+void CP_FlowComplex::calc3cellVolume(CP_2cell& pc2cell)
+{//计算creator 3cell的大小
+	double sum_volume=0;
+	//
+	int tri_num=pc2cell.m_triangle.size();
+	for (int j = 0; j < tri_num; j++)
+	{
+		sum_volume+=calcTriVolume_projection(*tricells[pc2cell.m_triangle[j]]);
+	}
+	for(int i=0;i<pc2cell.p3cell.size();i++)
+	{
+		int nowi=Locate2cell(pc2cell.p3cell[i]);
+		CP_2cell *p2cell = m_2cells[nowi];
+		tri_num=p2cell->m_triangle.size();
+		for (int j = 0; j < tri_num; j++)
+		{
+			sum_volume+=calcTriVolume_projection(*tricells[p2cell->m_triangle[j]]);
+		}
+	}//i
+	pc2cell.dis3cell=sum_volume;
+}
+
+void CP_FlowComplex::expand2cell(CP_2cell& p2cell)
+{
+	for(int i=0;i<p2cell.m_boundary.size();i++)
+	{
+		int curve=LocateSegment(m_1cells,p2cell.m_boundary[i]);
+		if(m_1cells[curve]->degree==1)
+		{
+			//incident 2cell 加入到p2cell中
+			int _2cell=m_1cells[curve]->incident2cell[0];
+			for(int j=0;j<m_2cells[_2cell]->m_triangle.size();j++)
+			{
+				p2cell.m_triangle.push_back(m_2cells[_2cell]->m_triangle[j]);
+				cout<<"asdf"<<endl;
+			}
+			expand2cell(*m_2cells[_2cell]);
+		}//degree 1
+	}//i
+}
 
 void CurveSegment::ResetDegreee()
 {
@@ -677,8 +806,12 @@ CP_2cell::CP_2cell(void)
 {
 	index=-1;
 	normalsetted=false;
+	distance=0.0;
+	dis3cell=0.0;
+	persistence=0.0;
 	flag=true;
 	type=0;
+
 }
 
 

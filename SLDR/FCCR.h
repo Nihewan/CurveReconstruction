@@ -31,10 +31,10 @@ public:
 	double maxhd;
 	CString filename;
 	int voids;
+	double epsilon;
 	Delaunay T;
 	CP_FlowComplex *m_FlowComplex;
 	vector<CP_PolyLine3D> *m_VT_PolyLine;
-	//queue<Edge,CP_MeshVertex3D,Triangle> q;
 	int nn;
 public:
 	FCCR(void);

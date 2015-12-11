@@ -37,7 +37,7 @@ class CurveSegment :public CP_LineSegment3D
 public:
 	int sp,ep;
 	int degree,tmpdegree;//-1:curve,1~：边，0度数为0
-	vector<int> incident2cell;//the index of incident 2cell 
+	vector<int> incident2cell;//the index of incident 2cell 目前编号
 	int _triangle;//the index of incident triangle in 2cell
 	int m_adj2cell;//the index of adjcent 2cell of the 2cell it belongs
 public:
@@ -56,9 +56,12 @@ public:
 	int type;//type=1 creator ;type=0,destoryer
 	int p_critical;
 	double distance;
+	double dis3cell;
+	double persistence;
 	bool flag;//flag false消失 true存在
 	bool normalsetted;
 	vector<int> m_adj2cell;
+	vector<int> p3cell;//组成paired 3cell的2cell 的index，因为collapse之后还要使用此信息
 public:
 	CP_2cell(void);
 	~CP_2cell(void);
@@ -77,6 +80,7 @@ public:
 	vector<CP_LineSegment3D> seg;
 	vector<CP_Triganle3D*> tricells;
 	vector<CP_Triganle3D*> ctri;//中心三角形
+	vector<CP_Triganle3D*> visitedtri;//中心三角形
 	CP_Point3D cp;//中心点
 	vector<CP_Point3D> vjoint;
 public:
@@ -89,10 +93,11 @@ public:
 	CP_Point3D equalDisPoint(double k,CP_Point3D &po,CP_Point3D &pb);
 	bool IsSmallAngle(CP_Point3D &po,CP_Point3D &pa,CP_Point3D &pb);
 	bool ExistPoint(vector<CP_Point3D> &v,CP_Point3D& p);
+	bool ExistTriangle(vector<CP_Triganle3D*> visitedtri,CP_Triganle3D &tri);
 	int LocatePoint(const CP_Point3D &p);
 	bool noCover(CP_Triganle3D &ltri,CP_Triganle3D &rtri);
 	int LocateSegment(vector<CurveSegment*> &curveVec,CurveSegment& line);//若存在，返回线段的下标,否则返回-1
-	int Locate2cell(int _2cell);
+	int Locate2cell(int _2cell);//用最原始的编号去找现在的位置
 	void SetNormals();
 	void spread(CP_Triganle3D* tri);
 	void _2cellNormalConsensus();
@@ -104,6 +109,10 @@ public:
 	void SetAdj2cell();
 	void Set2cellNormal();
 	void SetCreatorAndDestoryer();
+	void setpaired3cells();
+	void calc3cellVolume(CP_2cell& p2cell);
+	double calcTriVolume_projection(const CP_Triganle3D &tri);
+	void expand2cell(CP_2cell& p2cell);
 	int CheckClosedVoid(vector<CurveSegment*> &vboundary,int i);
 	void Reset2cellFlag(int len);
 	void addSegToVec(vector<CurveSegment>& curveVec,CP_LineSegment3D line,CP_Triganle3D* tri);

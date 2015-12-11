@@ -40,6 +40,6 @@ public:
 	afx_msg void OnBnClickedCheck2cell();
 	afx_msg void OnBnClickedSearch();
 	virtual BOOL OnInitDialog();
-	afx_msg void OnCbnEditchangeCombovoid();
-	CComboBox m_CComboBox;
+	afx_msg void OnEnChangeEditVoids();
+	afx_msg void OnEnChangeEditEpsilon();
 };
