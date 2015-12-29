@@ -83,8 +83,34 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	ASSERT(bNameValid);
 	m_wndStatusBar.AddElement(new CMFCRibbonStatusBarPane(ID_STATUSBAR_PANE1, strTitlePane1, TRUE), strTitlePane1);
 	m_wndStatusBar.AddExtendedElement(new CMFCRibbonStatusBarPane(ID_STATUSBAR_PANE2, strTitlePane2, TRUE), strTitlePane2);
-
-
+	//材质
+	CMFCRibbonSlider* pSlider = DYNAMIC_DOWNCAST(CMFCRibbonSlider, m_wndRibbonBar.FindByID(ID_SLIDER_SPECULAR));
+	pSlider->SetPos(25);
+	pSlider = DYNAMIC_DOWNCAST(CMFCRibbonSlider, m_wndRibbonBar.FindByID(ID_SLIDER_Diffuse));
+	pSlider->SetPos(80);
+	pSlider = DYNAMIC_DOWNCAST(CMFCRibbonSlider, m_wndRibbonBar.FindByID(ID_SLIDER_SHININESS));
+	pSlider->SetPos(45);
+	//光源0
+	pSlider = DYNAMIC_DOWNCAST(CMFCRibbonSlider, m_wndRibbonBar.FindByID(ID_SLIDER_AMBIENT0));
+	pSlider->SetPos(25);
+	pSlider = DYNAMIC_DOWNCAST(CMFCRibbonSlider, m_wndRibbonBar.FindByID(ID_SLIDER_DIFFUSE0));
+	pSlider->SetPos(70);
+	pSlider = DYNAMIC_DOWNCAST(CMFCRibbonSlider, m_wndRibbonBar.FindByID(ID_SLIDER_SPECULAR0));
+	pSlider->SetPos(23);
+	//光源1
+	pSlider = DYNAMIC_DOWNCAST(CMFCRibbonSlider, m_wndRibbonBar.FindByID(ID_SLIDER_AMBIENT1));
+	pSlider->SetPos(0);
+	pSlider = DYNAMIC_DOWNCAST(CMFCRibbonSlider, m_wndRibbonBar.FindByID(ID_SLIDER_DIFFUSE1));
+	pSlider->SetPos(21);
+	pSlider = DYNAMIC_DOWNCAST(CMFCRibbonSlider, m_wndRibbonBar.FindByID(ID_SLIDER_SPECULAR1));
+	pSlider->SetPos(23);
+	//光源2
+	pSlider = DYNAMIC_DOWNCAST(CMFCRibbonSlider, m_wndRibbonBar.FindByID(ID_SLIDER_CUTOFF2));
+	pSlider->SetPos(10);
+	pSlider = DYNAMIC_DOWNCAST(CMFCRibbonSlider, m_wndRibbonBar.FindByID(ID_SLIDER_SPECULAR2));
+	pSlider->SetPos(40);
+	pSlider = DYNAMIC_DOWNCAST(CMFCRibbonSlider, m_wndRibbonBar.FindByID(ID_SLIDER_EXPONENT2));
+	pSlider->SetPos(30);
 	// 启用 Visual Studio 2005 样式停靠窗口行为
 	CDockingManager::SetDockingMode(DT_SMART);
 	// 启用 Visual Studio 2005 样式停靠窗口自动隐藏行为
@@ -237,14 +263,12 @@ void CMainFrame::OnShowWindow(BOOL bShow, UINT nStatus)
 }
 
 int CMainFrame::ShowUCSEditor() {
-	if (!m_ucsEditor.Create(_T("UCS Editor"), this, CRect(0, 0, 300, 300), TRUE, IDD_DIALOG_UCSEDIT,
-		WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_LEFT | CBRS_FLOAT_MULTI)) {
-			MessageBox(_T("面板初始化失败"), _T("ERROR"));
-			return -1;
-	}
+	m_ucsEditor.ShowPane(TRUE, TRUE, TRUE);
+
 	m_ucsEditor.EnableDocking(CBRS_ALIGN_ANY);
 	EnableDocking(CBRS_ALIGN_ANY);
 	DockPane(&m_ucsEditor);
+	return 1;
 }
 
 void CMainFrame::SetCursor(CursorType type) {

@@ -122,6 +122,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AbstractCurveEstimation.h" />
+    <ClInclude Include="ArcBall.h" />
     <ClInclude Include="Axis3D.h" />
     <ClInclude Include="CBinaryHeep.h" />
     <ClInclude Include="BodyDecomposition.h" />
@@ -199,6 +200,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AbstractCurveEstimation.cpp" />
+    <ClCompile Include="ArcBall.cpp" />
     <ClCompile Include="Axis3D.cpp" />
     <ClCompile Include="BodyDecomposition.cpp" />
     <ClCompile Include="CArcEstimation.cpp" />
@@ -280,6 +282,7 @@
     <Image Include="C:\Users\Administrator\Desktop\x.bmp" />
     <Image Include="C:\Users\Administrator\Desktop\z.bmp" />
     <Image Include="res\2015073109573166_easyicon_net_60.900726392252.png" />
+    <Image Include="res\2015073109573166_easyicon_net_60.9007263922521.bmp" />
     <Image Include="res\bitmap1.bmp" />
     <Image Include="res\Project1.bmp" />
     <Image Include="res\x.bmp" />

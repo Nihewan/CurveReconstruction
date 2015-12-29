@@ -62,12 +62,14 @@ BOOL CSLDRDoc::OnNewDocument()
 
 	// TODO: 在此添加重新初始化代码
 	// (SDI 文档将重用该文档)
-
+	r[0]=0.9;g[0]=0.5;b[0]=0.5;//红
+	r[1]=0.65;g[1]=0.72;b[1]=0.22;//绿
+	r[2]=0.84;g[2]=0.74;b[2]=0.58;//杏仁
+	r[3]=0.46;g[3]=0.53;b[3]=0.77;//深蓝
+	r[4]=0.6;g[4]=0.4;b[4]=0.7;//紫
+	r[5]=0.81;g[5]=0.6;b[5]=0.01;//土黄
 	return TRUE;
 }
-
-
-
 
 // CSLDRDoc 序列化
 
@@ -232,7 +234,6 @@ BOOL CSLDRDoc::OnOpenDocument(LPCTSTR lpszPathName)
 
 		pMain->m_ctrlPaneFCCR->m_dialog.SetItems(m_FlowComplex,VT_PolyLine);
 		pView->format="curve";
-		pView->showvoid=0;
 		pView->m_Scale = 15.0f;
 		pView->Invalidate();
 
@@ -253,20 +254,48 @@ BOOL CSLDRDoc::OnOpenDocument(LPCTSTR lpszPathName)
 
 void CSLDRDoc::OutputCurveNetwork()
 {
-	CP_Body *pBody = m_pAsmbBody->GetOriginalBody();
-	CString filter = "文件 (*.txt)|*.txt||";
-	CFileDialog openFileDlg(false, NULL, NULL, OFN_HIDEREADONLY, filter);
-	INT_PTR result = openFileDlg.DoModal();  
-	if(result == IDOK) { 
-		CString filePath = openFileDlg.GetPathName();  
-		if (filePath.Find(_T(".txt")) != filePath.GetLength() - 4)
-			filePath += _T(".txt");
-		std::ofstream os;
-		os.open(filePath);
-		for (unsigned int i = 0; i < pBody->GetEdgeNumber(); ++i)
-		{
-			CP_Edge *pEdge = pBody->GetEdge(i);
-			//os <<(LPCTSTR)pEdge->m_pCurve3D->ToString() <<endl;
+	if(format=="dxf"){
+		CP_Body *pBody = m_pAsmbBody->GetOriginalBody();
+		CString filter = "文件 (*.txt)|*.txt||";
+		CFileDialog openFileDlg(false, NULL, NULL, OFN_HIDEREADONLY, filter);
+		INT_PTR result = openFileDlg.DoModal();  
+		if(result == IDOK) { 
+			CString filePath = openFileDlg.GetPathName();  
+			if (filePath.Find(_T(".txt")) != filePath.GetLength() - 4)
+				filePath += _T(".txt");
+			std::ofstream os;
+			os.open(filePath);
+			for (unsigned int i = 0; i < pBody->GetEdgeNumber(); ++i)
+			{
+				CP_Edge *pEdge = pBody->GetEdge(i);
+				//os <<(LPCTSTR)pEdge->m_pCurve3D->ToString() <<endl;
+			}
 		}
-	}
+	}//dxf
+	else if(format=="curve")
+	{
+		CString filter = "文件 (*.obj)|*.obj||";
+		CFileDialog openFileDlg(false, NULL, NULL, OFN_HIDEREADONLY, filter);
+		INT_PTR result = openFileDlg.DoModal();  
+		if(result == IDOK) { 
+			CString filePath = openFileDlg.GetPathName();  
+			if (filePath.Find(_T(".obj")) != filePath.GetLength() - 4)
+				filePath += _T(".obj");
+			std::ofstream out;
+			out.open(filePath);
+			out<<"# Vertices:"<<m_FlowComplex->m_0cells.size()<<endl;
+			out<<"# Faces:"<<m_FlowComplex->tricells.size()<<endl;
+			for(int i=0;i<m_FlowComplex->m_0cells.size();i++)
+			{
+				out<<"v "<<m_FlowComplex->m_0cells[i].m_x<<" "<<m_FlowComplex->m_0cells[i].m_y<<" "<<m_FlowComplex->m_0cells[i].m_z<<endl;
+			}
+			out<<"############"<<endl;
+
+			for(int i=0;i<m_FlowComplex->tricells.size();i++)
+			{
+				if(m_FlowComplex->m_2cells[m_FlowComplex->Locate2cell(m_FlowComplex->tricells[i]->_2cell)]->flag)
+					out<<"f "<< m_FlowComplex->tricells[i]->m_points[0]+1<<" "<<m_FlowComplex->tricells[i]->m_points[1]+1<<" "<<m_FlowComplex->tricells[i]->m_points[2]+1<<endl;
+			}
+		}
+	}//curve
 }

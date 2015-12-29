@@ -1,6 +1,8 @@
 #pragma once
 #include "CP_Mesh.h"
 #include "cp_pointvector.h"
+#include "gl/GLU.h"
+#include "glut.h"
 #include <algorithm>
 #include <map>
 class CP_Tetrahedron
@@ -49,6 +51,7 @@ public:
 class CP_2cell
 {
 public:
+	CP_Triganle3D *pTri;
 	vector<int> m_triangle;
 	vector<CurveSegment> m_boundary;
 	vector<int> m_bp;//边界点
@@ -59,25 +62,59 @@ public:
 	double dis3cell;
 	double persistence;
 	bool flag;//flag false消失 true存在
-	bool normalsetted;
+	bool visited;
 	vector<int> m_adj2cell;
 	vector<int> p3cell;//组成paired 3cell的2cell 的index，因为collapse之后还要使用此信息
+	vector<double> dis;
+	int patch;
 public:
 	CP_2cell(void);
 	~CP_2cell(void);
 };
 
+class CP_3cell
+{
+public:
+	vector<int> m_2cells;
+	vector<int> new2cells;
+	vector<int> cmp3cells;
+public:
+	CP_3cell(void);
+	~CP_3cell(void);
+};
+
+class CP_Patch
+{
+public:
+	vector<int> m_2cells;
+	vector<CurveSegment> m_boundary;
+	vector<int> m_adjPatch;
+	bool visited;
+	int index;//在fc中m_patch vector中的编号
+	double r,g,b;
+	int color;//颜色编号
+	double f;
+public:
+	CP_Patch(void);
+	~CP_Patch(void);
+};
+
 class CP_FlowComplex
 {
 public:
-	int desN;
+	unsigned int desN;
 	bool show;
+	unsigned int inputPoints;
+	unsigned int inputCurves;
+	unsigned int oripatches;
 	vector<CP_Point3D> m_0cells;
 	vector<CurveSegment*> m_1cells;//input curve segment
 	vector<CP_2cell*> m_2cells;//tricells中三角面片的id
+	vector<CP_3cell*> m_3cells;
+	vector<CP_Patch *> m_patches;//包括destoryer和最大creator的patch
+	vector<CP_Patch *> m_cpatches;//其他creator的patch,现在的编号
 	vector<CP_Triganle3D*> delauny2cells;
 	vector<CP_PolyLine3D> m_PolyLine;
-	vector<CP_LineSegment3D> seg;
 	vector<CP_Triganle3D*> tricells;
 	vector<CP_Triganle3D*> ctri;//中心三角形
 	vector<CP_Triganle3D*> visitedtri;//中心三角形
@@ -86,8 +123,10 @@ public:
 public:
 	CP_FlowComplex();
 	~CP_FlowComplex();
+	void clearAll();
 	void Gabrielize();
 	bool IsGabriel(CP_Point3D &c,CP_Point3D &r,double radius_pq);
+	void reverseForProjection(CP_Point3D & p);
 	CP_Point3D ProjectionPoint(CP_Point3D &p1,CP_Point3D &p2,CP_Point3D &p3);
 	void subdivideSegsJointV(CP_Point3D & vp);
 	CP_Point3D equalDisPoint(double k,CP_Point3D &po,CP_Point3D &pb);
@@ -101,25 +140,44 @@ public:
 	void SetNormals();
 	void spread(CP_Triganle3D* tri);
 	void _2cellNormalConsensus();
+	void patchNormalConsensus();
 	void spread2cellTri(int _2cell,CP_Triganle3D* tri);
+	void spreadPatch2cell(int _patch,CP_2cell *p2cell);
 	void spread2cellNormal(CP_2cell& p2cell);
-	void convert2cellNormal(CP_2cell& _2cell);
+	void spreadPatchNormal(CP_Patch& pPatch);
+	void convert2cellNormal(CP_2cell& _2cell,CP_Triganle3D& tri);
+	void convertpatchNormal(CP_Patch& pPatch,CP_Triganle3D& tri);
 	void SetAdjTriangle();
+	void SetAdjPatch();
 	vector<int> GetIncidentTri(const CP_Point3D& v1,const CP_Point3D& v2);
 	void SetAdj2cell();
 	void Set2cellNormal();
+	void SetPatchNormal();
 	void SetCreatorAndDestoryer();
 	void setpaired3cells();
+	void split3cells(CP_3cell& s,CP_3cell& l);
 	void calc3cellVolume(CP_2cell& p2cell);
 	double calcTriVolume_projection(const CP_Triganle3D &tri);
-	void expand2cell(CP_2cell& p2cell);
+	void expand2cell(CP_2cell& p2cell,vector<CurveSegment*> vb,CP_Patch &pPatch);
 	int CheckClosedVoid(vector<CurveSegment*> &vboundary,int i);
 	void Reset2cellFlag(int len);
+	void Reset2cellVisited();
+	void ResetPatchVisited();
+	void ResetTriNormalset();
 	void addSegToVec(vector<CurveSegment>& curveVec,CP_LineSegment3D line,CP_Triganle3D* tri);
 	void cutBranch(vector<CurveSegment*> &vboundary,CurveSegment& curve);
+	CP_Vector3D GetTangent(const CurveSegment &curve) const;
+	void SetPatchColor();
+	void spreadPatchColor(CP_Patch& pPatch);
+
+	void DrawPoints();
+	void DrawDelaunyTriangles();
+	void DrawTriangle(const CP_Triganle3D &tri);
+	void DrawTriangleBoundary(const CP_2cell &p2cell);
+	void Draw2cell(const CP_2cell &p2cell);
+	void Draw2cellBoundary(const CP_2cell &p2cell);
+	void DrawPatchBoundary(const CP_Patch &pPatch);
 };
 extern double dist(const CP_Point3D &x,const CP_Point3D &y);
-
-
 
 

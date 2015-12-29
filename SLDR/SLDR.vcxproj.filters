@@ -381,6 +381,9 @@
     <ClInclude Include="FCCRCtrlDialog.h">
       <Filter>头文件\view</Filter>
     </ClInclude>
+    <ClInclude Include="ArcBall.h">
+      <Filter>头文件\view</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SLDR.cpp">
@@ -593,6 +596,9 @@
     <ClCompile Include="FCCR.cpp">
       <Filter>源文件\module\FCCR</Filter>
     </ClCompile>
+    <ClCompile Include="ArcBall.cpp">
+      <Filter>源文件\view</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="SLDR.rc">
@@ -622,6 +628,9 @@
       <Filter>资源文件</Filter>
     </Image>
     <Image Include="res\2015073109573166_easyicon_net_60.900726392252.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\2015073109573166_easyicon_net_60.9007263922521.bmp">
       <Filter>资源文件</Filter>
     </Image>
   </ItemGroup>

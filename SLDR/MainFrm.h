@@ -52,7 +52,7 @@ public:
 	virtual void Dump(CDumpContext& dc) const;
 #endif
 
-protected:  // 控件条嵌入成员
+public:  // 控件条嵌入成员
 	CMFCRibbonBar     m_wndRibbonBar;
 	CMFCRibbonApplicationButton m_MainButton;
 	CMFCToolBarImages m_PanelImages;

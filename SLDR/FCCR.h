@@ -32,10 +32,10 @@ public:
 	CString filename;
 	int voids;
 	double epsilon;
+	double feasa;
 	Delaunay T;
 	CP_FlowComplex *m_FlowComplex;
 	vector<CP_PolyLine3D> *m_VT_PolyLine;
-	int nn;
 public:
 	FCCR(void);
 	~FCCR(void);
@@ -44,14 +44,16 @@ public:
 	void OnDelaunyTriangulation();
 	void ToFlowcomplex();
 	void OnCollapse();
-	void collapse(vector<CurveSegment*> &v1cell,CurveSegment &curve);
+	void OnThicken();
+	void collapse(CurveSegment &curve);
 	bool IsPlane(CP_Point3D p0, CP_Point3D p1, CP_Point3D p2, CP_Point3D p3);
 	bool obtusetri(Triangle &tri);
 	bool sharpBoundTri(Triangle tri);
 	double getHausdorffDistance(CP_PolyLine3D &curveA, CP_PolyLine3D &curveB);
 	void addrFacet(Facet fit);
-	//void addrVoroFace(Edge e,CP_MeshVertex3D &vIntersect,Triangle tri,bool parentDe,int num);//tri-此时的三角形，e此时三角形的边，此三角形的saddle，退化情况时为父三角形saddle，父三角形退化时parentDe为true，num-2-cell的编号
 	void addrVoroFace(Edge e,int vIntersect,Triangle tricir,int _2cell);
+	void addrFacetDelauny(Facet fit);
+	void addrVoroFaceDelauny(Edge e,int vIntersect,Triangle tricir,int _2cell);
 	void generOBJ();
 };
 

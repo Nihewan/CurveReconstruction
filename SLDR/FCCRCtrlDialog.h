@@ -13,12 +13,20 @@ class FCCRCtrlDialog : public CDialogEx
 public:
 	FCCR fccr;
 	CTreeCtrl m_treeCtrl;
-	bool selectEnable;
+	bool select2cellEnable;
+	bool selectpatchEnable;
 	bool randomColor;
 	bool colorByDis;
 	bool triboundary;
 	bool _2cellboundary;
-	int showNum;
+	bool patchboundary;
+	bool edgeByDegree;
+	bool showpoly;
+	bool showcreators;
+	int selcreator;
+	int sel3cell;
+	bool showvoids;
+	double mTrans; 
 public:
 	FCCRCtrlDialog(CWnd* pParent = NULL);   // 标准构造函数
 	virtual ~FCCRCtrlDialog();
@@ -31,15 +39,26 @@ protected:
 public:
 	void SetItems(CP_FlowComplex *FlowComplex,vector<CP_PolyLine3D> *VT_PolyLine);
 	void SetTreeItems(int _2cell);
+	void SetTreePatch(int _patch);
+	void SetTreeCreator();
+	void SetTree3cells();
 	DECLARE_MESSAGE_MAP()
 public:
-	afx_msg void OnBnClickedSelectTriangle();
+	afx_msg void OnBnClickedSelect2cell();
 	afx_msg void OnBnClickedRandomColor();
 	afx_msg void OnBnClickedColorByDistance();
 	afx_msg void OnBnClickedCheckTri();
 	afx_msg void OnBnClickedCheck2cell();
-	afx_msg void OnBnClickedSearch();
+	afx_msg void OnBnClickedClear();
 	virtual BOOL OnInitDialog();
 	afx_msg void OnEnChangeEditVoids();
 	afx_msg void OnEnChangeEditEpsilon();
+	afx_msg void OnEnChangeEditFeasa();
+	afx_msg void OnBnClickedCheckPolyline();
+	afx_msg void OnBnClickedCheckCreator();
+	afx_msg void OnTvnSelchangedInfotree(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnBnClickedCheckVoids();
+	afx_msg void OnNMCustomdrawSliderTansparent(NMHDR *pNMHDR, LRESULT *pResult);
+	afx_msg void OnBnClickedCheck4();
+	afx_msg void OnBnClickedCheckPatch();
 };

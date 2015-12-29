@@ -27,6 +27,7 @@ class CP_Point3D : public CP_BaseGeometricType
 public:
     double    m_x, m_y, m_z;
 	std::vector<int> m_adjTriangle;
+	std::vector<int> incidentpoly;
 	bool flag;
 public:
     explicit CP_Point3D (double newx=0.0, double newy=0.0, double newz=0.0);

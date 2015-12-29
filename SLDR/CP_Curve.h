@@ -93,9 +93,8 @@ public:
 	bool tag;
 	int cut;
 public:
-	virtual double		GetLength() const;
-	virtual void		Draw();
-
+	double		GetLength() const;
+	void		Draw();
 };
 
 class CP_Nurbs : public CP_Curve3D

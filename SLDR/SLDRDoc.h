@@ -39,6 +39,7 @@ public:
 	vector<CP_Arc> VT_Arc;
 	vector<CP_LineSegment3D> VT_LineSegment;
 	vector<CP_Nurbs> VT_Nurbs;
+	double r[6],b[6],g[6];
 // ²Ù×÷
 public:
 	void OutputCurveNetwork();

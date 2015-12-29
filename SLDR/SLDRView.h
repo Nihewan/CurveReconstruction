@@ -21,6 +21,7 @@
 
 #include "CP_PointVector.h"
 #include "CBoundBox2D.h"
+#include "ArcBall.h"
 #include <string>
 class CSLDRDoc;
 
@@ -36,7 +37,6 @@ public:
 	
 	// Rotate value: 0 around x, 1 around y
 	int m_rotate[2];	
-//	Delaunay T;
 
 // 特性
 public:
@@ -50,14 +50,22 @@ public:
 	GLfloat m_yPos;
 	CPoint m_MouseDownPoint;
 	CString format;
-	bool IsDelauny;
-	bool IsPoly;
-	bool IsFC;
-	int selectedTriangle;
-	int selectedPolyline;
+	bool showDelauny;
+	bool IsProcess;
+	bool showFC;
+	bool showResult;
+	bool showInputP;
+	bool showTop;
+	bool showThicken;
+	int selected2cell;
+	int selectedpatch;
 	bool ctrlDown;
 	bool zDown;
-	int showvoid;
+	double mDiffuse,mSpecular,mShine;
+	double mDiffuse0,mSpecular0,mAmbient0;
+	double mDiffuse1,mSpecular1,mAmbient1;
+	double mCutOff2,mSpecular2,mExponent2;
+	bool light0,light1,light2;
 // 操作
 public:
 	void ReSet();
@@ -69,16 +77,15 @@ public:
 	void InitLight1();
 	void InitLight2();
 	void InitLight3();
-	void FindTriangle(CPoint point); 
+	void Find2cell(CPoint point); 
+	void FindPatch(CPoint point);
 	void FindSelNode(CPoint point);
-	void FindPolyLine(CPoint point);
 	void ProcessHits(GLint hits, GLuint buffer[]);
 	void SetProjectionMatrix(int cx, int cy);
 	void SetModelViewMatrix() ;
 	void  drawScene();
 	void drawString(const char* str);
 	void drawData();
-	void drawMeshTri(CP_Triganle3D* pTri);
 // 重写
 public:
 	virtual void OnDraw(CDC* pDC);  // 重写以绘制该视图
@@ -119,6 +126,33 @@ public:
 	afx_msg void OnFlowcomplex();
 	afx_msg void OnCollapse();
 	afx_msg void OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags);
+	afx_msg void OnThicken();
+	afx_msg void OnFCReconstruction();
+	afx_msg void OnUpdatePolyline(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateDelauny(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateFlowcomplex(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateCollapse(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateButton2(CCmdUI *pCmdUI);
+	afx_msg void OnSliderSpecular();
+	afx_msg void OnSliderDiffuse();
+	afx_msg void OnSliderShininess();
+	afx_msg void OnCheckLight0();
+	afx_msg void OnCheckLight1();
+	afx_msg void OnCheckLight2();
+	afx_msg void OnUpdateCheckLight0(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateCheckLight1(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateCheckLight2(CCmdUI *pCmdUI);
+	afx_msg void OnSliderAmbient0();
+	afx_msg void OnSliderSpecular0();
+	afx_msg void OnSliderDiffuse0();
+	afx_msg void OnSliderAmbient1();
+	afx_msg void OnSliderSpecular1();
+	afx_msg void OnSliderDiffuse1();
+//	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
+	afx_msg void OnSliderSpecular2();
+	afx_msg void OnSliderCutoff2();
+	afx_msg void OnSliderExponent2();
+	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
 };
 
 #ifndef _DEBUG  // SLDRView.cpp 中的调试版本
