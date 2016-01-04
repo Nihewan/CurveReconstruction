@@ -103,7 +103,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	pSlider = DYNAMIC_DOWNCAST(CMFCRibbonSlider, m_wndRibbonBar.FindByID(ID_SLIDER_DIFFUSE1));
 	pSlider->SetPos(21);
 	pSlider = DYNAMIC_DOWNCAST(CMFCRibbonSlider, m_wndRibbonBar.FindByID(ID_SLIDER_SPECULAR1));
-	pSlider->SetPos(23);
+	pSlider->SetPos(70);
 	//¹âÔ´2
 	pSlider = DYNAMIC_DOWNCAST(CMFCRibbonSlider, m_wndRibbonBar.FindByID(ID_SLIDER_CUTOFF2));
 	pSlider->SetPos(10);

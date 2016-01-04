@@ -211,7 +211,7 @@ BOOL FCCRCtrlDialog::OnInitDialog()
 
 	// TODO:  在此添加额外的初始化
 	GetDlgItem(IDC_EDIT_EPSILON)->SetWindowText("0.055");
-	GetDlgItem(IDC_EDIT_FEASA)->SetWindowText("0.05");
+	GetDlgItem(IDC_EDIT_FEASA)->SetWindowText("0.5");
 	GetDlgItem(IDC_EDIT_VOIDS)->SetWindowText("0");
 	((CButton*)GetDlgItem(IDC_CHECK1))->SetCheck(BST_CHECKED);
 	CSliderCtrl *pSlidCtrl=(CSliderCtrl*)GetDlgItem(IDC_SLIDER_TANSPARENT);

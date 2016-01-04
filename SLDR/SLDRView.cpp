@@ -122,7 +122,7 @@ CSLDRView::CSLDRView()
 	mDiffuse0=0.7;
 
 	mAmbient1=0.0;
-	mSpecular1=0.23;
+	mSpecular1=0.7;
 	mDiffuse1=0.21;
 
 	mCutOff2=10;
@@ -163,7 +163,7 @@ void CSLDRView::ReSet()
 	mDiffuse0=0.7;
 
 	mAmbient1=0.0;
-	mSpecular1=0.23;
+	mSpecular1=0.7;
 	mDiffuse1=0.21;
 
 	mCutOff2=10;
@@ -235,6 +235,8 @@ void  CSLDRView::drawData()
 	_itoa_s(pDoc->m_FlowComplex->m_2cells.size(),c,10);
 	drawString("2cells: ");drawString(c);drawString("              ");
 
+	_itoa_s(pDoc->m_FlowComplex->m_3cells.size(),c,10);
+	drawString("3cells: ");drawString(c);drawString("              ");
 	//半透明框
 	glEnable(GL_BLEND);
 	//glDisable(GL_TEXTURE_2D);
@@ -425,13 +427,42 @@ void CSLDRView::OnDraw(CDC* pDC)
 		}
 
 		//0cells
-		if(showInputP)
-			pDoc->m_FlowComplex->DrawPoints();
-
+		if(showInputP){
+			//pDoc->m_FlowComplex->DrawPoints();
+			//for(unsigned int i=0;i<pDoc->m_FlowComplex->m_circums.size();i++)
+			//{
+			//	glPointSize(3.0f);glColor3f(1.0f,0.0,0.0);
+			//	glBegin(GL_POINTS);//必须是加上s，要不然显示不了
+			//	glVertex3f(pDoc->m_FlowComplex->m_circums[i].m_x, pDoc->m_FlowComplex->m_circums[i].m_y,pDoc->m_FlowComplex->m_circums[i].m_z);
+			//	glEnd();
+			//}
+			for(unsigned int i=0;i<pDoc->m_FlowComplex->m_3cells.size();i++)
+			{
+				CP_3cell *p3cell=pDoc->m_FlowComplex->m_3cells[i];
+				for(int j=0;j<p3cell->m_circums.size();j++)
+				{
+					glPointSize(3.0f);glColor3f(1.0f,0.0,0.0);
+					glBegin(GL_POINTS);//必须是加上s，要不然显示不了
+					glVertex3f(pDoc->m_FlowComplex->m_circums[p3cell->m_circums[j]].m_x, pDoc->m_FlowComplex->m_circums[p3cell->m_circums[j]].m_y,pDoc->m_FlowComplex->m_circums[p3cell->m_circums[j]].m_z);
+					glEnd();
+				}
+			}
+		}
 		//delauny
-		if(showDelauny)
-			pDoc->m_FlowComplex->DrawDelaunyTriangles();
-
+		if(showDelauny){
+			//pDoc->m_FlowComplex->DrawDelaunyTriangles();
+			for(unsigned int i=0;i<pDoc->m_FlowComplex->m_cpatches.size();i++)
+			{
+				CP_Patch *pPatch = pDoc->m_FlowComplex->m_cpatches[i];
+				for (unsigned int j = 0; j <pPatch->m_2cells.size(); j++)
+				{
+					CP_2cell *p2cell = pDoc->m_FlowComplex->m_2cells[pPatch->m_2cells[j]];
+					glColor4f(0.7,0.7,0.7,1);
+					pDoc->m_FlowComplex->Draw2cell(*p2cell);
+				}//j
+				pDoc->m_FlowComplex->DrawPatchBoundary(*pPatch);
+			}//i
+		}
 		//flow complex
 		if(showFC)
 		{
@@ -452,9 +483,12 @@ void CSLDRView::OnDraw(CDC* pDC)
 						}
 						else
 							glColor4f(0.7,0.7,0.7,0.5);
-					}else
+					}else{
+						if(p2cell->type==1)
+							glColor4f(0.0,0.7,0.0,1.0);
+						else
 						glColor4f(0.7,0.7,0.7,1.0);
-					
+					}
 					pDoc->m_FlowComplex->Draw2cell(*p2cell);
 					if(pMain->m_ctrlPaneFCCR->m_dialog.triboundary)
 						pDoc->m_FlowComplex->DrawTriangleBoundary(*p2cell);
@@ -470,15 +504,26 @@ void CSLDRView::OnDraw(CDC* pDC)
 				if(pMain->m_ctrlPaneFCCR->m_dialog.sel3cell!=-1)
 				{
 					int _3cell=pMain->m_ctrlPaneFCCR->m_dialog.sel3cell;
+					CP_3cell* p3cell=pDoc->m_FlowComplex->m_3cells[_3cell];
+					//if(p3cell->flag){
 					for(unsigned int j=0;j<pDoc->m_FlowComplex->m_3cells[_3cell]->m_2cells.size();j++)
 					{
 						CP_2cell *p2cell=pDoc->m_FlowComplex->m_2cells[pDoc->m_FlowComplex->m_3cells[_3cell]->m_2cells[j]];
 						if(p2cell->type==1)
-							glColor4f(0.7,0.3,0.3,0.9);
+							glColor4f(0.7,0.3,0.3,1.0);
 						else
-							glColor4f(0.7,0.7,0.7,pMain->m_ctrlPaneFCCR->m_dialog.mTrans);
+							glColor4f(0.7,0.7,0.7,1.0);
 						pDoc->m_FlowComplex->Draw2cell(*p2cell);
 					}//j
+					
+					for(int j=0;j<p3cell->m_circums.size();j++)
+					{
+						glPointSize(3.0f);glColor3f(1.0f,0.0,0.0);
+						glBegin(GL_POINTS);//必须是加上s，要不然显示不了
+						glVertex3f(pDoc->m_FlowComplex->m_circums[p3cell->m_circums[j]].m_x, pDoc->m_FlowComplex->m_circums[p3cell->m_circums[j]].m_y,pDoc->m_FlowComplex->m_circums[p3cell->m_circums[j]].m_z);
+						glEnd();
+					}
+					//}
 				}
 				glDepthMask(GL_TRUE);
 			}
@@ -486,19 +531,16 @@ void CSLDRView::OnDraw(CDC* pDC)
 
 		if(showTop)
 		{
-			for (unsigned int i = 0; i <pDoc->m_FlowComplex->m_2cells.size(); i++)
+			for (unsigned int i = 0; i <pDoc->m_FlowComplex->topo.size(); i++)
 			{
-				CP_2cell *p2cell = pDoc->m_FlowComplex->m_2cells[i];
-				if(p2cell->flag)
-				{
-					glColor3f(0.7f,0.7f,0.7f);
-					pDoc->m_FlowComplex->Draw2cell(*p2cell);
-					if(pMain->m_ctrlPaneFCCR->m_dialog.triboundary)
-						pDoc->m_FlowComplex->DrawTriangleBoundary(*p2cell);
+				CP_2cell *p2cell = pDoc->m_FlowComplex->m_2cells[pDoc->m_FlowComplex->topo[i]];
+				glColor4f(0.7f,0.7f,0.7f,1.0f);
+				pDoc->m_FlowComplex->Draw2cell(*p2cell);
+				if(pMain->m_ctrlPaneFCCR->m_dialog.triboundary)
+					pDoc->m_FlowComplex->DrawTriangleBoundary(*p2cell);
 
-					if(pMain->m_ctrlPaneFCCR->m_dialog._2cellboundary)
-						pDoc->m_FlowComplex->Draw2cellBoundary(*p2cell);
-				}
+				if(pMain->m_ctrlPaneFCCR->m_dialog._2cellboundary)
+					pDoc->m_FlowComplex->Draw2cellBoundary(*p2cell);
 			}//2cell
 		}//showFC
 
@@ -543,31 +585,7 @@ void CSLDRView::OnDraw(CDC* pDC)
 				glEnd();
 			}
 		}
-		
-		//if(pMain->m_ctrlPaneFCCR->m_dialog.randomColor){
-		//if(showvoid!=0&&(pDoc->m_FlowComplex->desN+showvoid-1)<pDoc->m_FlowComplex->m_2cells.size())
-		//{
-		//	int creator=pDoc->m_FlowComplex->desN+showvoid-1;
-		//	CP_2cell *pc2cell = pDoc->m_FlowComplex->m_2cells[creator];
-		//	cout<<showvoid<<"的体积"<<fabs(pc2cell->dis3cell)<<endl;
-		//	for(unsigned int i=0;i<pc2cell->m_triangle.size();i++)
-		//	{
-		//		CP_Triganle3D *pTri = pDoc->m_FlowComplex->tricells[pc2cell->m_triangle[i]];
-		//		drawMeshTri(pTri);
-		//	}
-		//	for(unsigned int j=0;j<pDoc->m_FlowComplex->m_2cells[creator]->p3cell.size();j++)
-		//	{
-		//		int nowi=pDoc->m_FlowComplex->Locate2cell(pDoc->m_FlowComplex->m_2cells[creator]->p3cell[j]);
-		//		CP_2cell *p2cell = pDoc->m_FlowComplex->m_2cells[nowi];
-		//		glColor4f(0.74,0.74,0.74,1);
-		//		for(unsigned int j=0;j<p2cell->m_triangle.size();j++)
-		//		{
-		//			CP_Triganle3D *pTri = pDoc->m_FlowComplex->tricells[p2cell->m_triangle[j]];
-		//			drawMeshTri(pTri);
-		//		}
-		//	}//j
-		//}
-		//else 
+		 
 		if(showResult)
 		{
 			//for(unsigned int i=0;i<1;i++)
@@ -609,17 +627,7 @@ void CSLDRView::OnDraw(CDC* pDC)
 				if(pMain->m_ctrlPaneFCCR->m_dialog.patchboundary)
 					pDoc->m_FlowComplex->DrawPatchBoundary(*pPatch);
 			}//i
-
-			//for(unsigned int i=0;i<pDoc->m_FlowComplex->m_cpatches.size();i++)
-			//{
-			//	CP_Patch *pPatch = pDoc->m_FlowComplex->m_cpatches[i];
-			//	for (unsigned int j = 0; j <pPatch->m_2cells.size(); j++)
-			//	{
-			//		CP_2cell *p2cell = pDoc->m_FlowComplex->m_2cells[pPatch->m_2cells[j]];
-			//		glColor4f(0.7,0.7,0.7,1);
-			//		pDoc->m_FlowComplex->Draw2cell(*p2cell);
-			//	}//j
-			//}//i
+			
 		}//showResult
 	//	}
 		drawData();
@@ -990,7 +998,6 @@ void CSLDRView::Find2cell(CPoint point)
 			glPopName();
 		}//j
 	}//i
-
 	glPopMatrix();
 	// SwapBuffers(dc.m_hDC);
 	// 绘制结束
@@ -1194,6 +1201,8 @@ void CSLDRView::OnLButtonDown(UINT nFlags, CPoint point)
 	if(selected2cell!=-1)
 	{
 		pMain->m_ctrlPaneFCCR->m_dialog.SetTreeItems(selected2cell);//2cell在集合中的下标，非标号
+		cout<<pDoc->m_FlowComplex->m_2cells[pDoc->m_FlowComplex->Locate2cell(selected2cell)]->distance<<endl;
+		
 	}
 	else if(selectedpatch!=-1)
 	{
@@ -1208,10 +1217,18 @@ double dist(const CP_Point3D &x,const CP_Point3D &y)
 	return sqrt((x.m_x - y.m_x)*(x.m_x - y.m_x) + (x.m_y - y.m_y)*(x.m_y - y.m_y) + (x.m_z - y.m_z)*(x.m_z - y.m_z));
 }
 
+double Area(double a, double b, double c)
+{//海伦公式计算三角形面积
+	double s = (a+b+c)/2;
+	return (double)sqrt(s*(s-a)*(s-b)*(s-c));
+}
+
 BOOL CSLDRView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
 	m_Scale += 0.1 *zDelta/2 ;
+	if(m_Scale<0)
+		m_Scale=0.0;
 	InvalidateRect(NULL, FALSE);
 	return CView::OnMouseWheel(nFlags, zDelta, pt);
 }
@@ -1413,7 +1430,7 @@ void CSLDRView::OnFCReconstruction()
 		start = clock();
 		pMain->m_ctrlPaneFCCR->m_dialog.fccr.OnThicken();
 		end = clock();
-		cout<<"time for Thicken: "<<(double)(end-start)/CLOCKS_PER_SEC<<endl;
+		cout<<"time for Thicken and Pruning: "<<(double)(end-start)/CLOCKS_PER_SEC<<endl;
 		showResult=true;
 		IsProcess=true;//不显示采样前线框
 		Invalidate(); 

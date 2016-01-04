@@ -64,6 +64,24 @@ bool CP_FlowComplex::IsSmallAngle(CP_Point3D &po,CP_Point3D &pa,CP_Point3D &pb)
 		return false;
 }
 
+void CP_FlowComplex::IsBoundBox(const CP_Point3D &p)
+{
+	if(p.m_x<minx)
+		minx=p.m_x;
+	if(p.m_x>maxx)
+		maxx=p.m_x;
+
+	if(p.m_y<miny)
+		miny=p.m_y;
+	if(p.m_y>maxy)
+		maxy=p.m_y;
+
+	if(p.m_z<minz)
+		minz=p.m_z;
+	if(p.m_z>maxz)
+		maxz=p.m_z;
+}
+
 void CP_FlowComplex::Gabrielize()
 {
 	//同一条曲线小角度问题
@@ -346,6 +364,28 @@ bool CP_FlowComplex::noCover(CP_Triganle3D &ltri,CP_Triganle3D &rtri)
 			
 	}//abc==2
 	return true;
+}
+
+void CP_FlowComplex::Insert2cellInto1cell(CP_2cell& p2cell)
+{
+	for(int j=0;j<p2cell.m_boundary.size();j++)
+	{
+		int curve=LocateSegment(m_1cells,p2cell.m_boundary[j]);
+		if(curve==-1)
+		{
+			CurveSegment *c=new CurveSegment(p2cell.m_boundary[j].GetPointIndex(0),p2cell.m_boundary[j].GetPointIndex(1));
+			m_1cells.push_back(c);
+			c->degree=1;
+			c->incident2cell.push_back(Locate2cell(p2cell.index));
+		}else
+		{
+			if(m_1cells[curve]->degree!=-1)
+			{
+				m_1cells[curve]->degree++;
+			}
+			m_1cells[curve]->incident2cell.push_back(Locate2cell(p2cell.index));
+		}
+	}//j
 }
 
 int CP_FlowComplex::LocateSegment(vector<CurveSegment*> &curveVec,CurveSegment &line)
@@ -675,7 +715,6 @@ void CP_FlowComplex::spread2cellNormal(CP_2cell& p2cell)
 
 void CP_FlowComplex::SetCreatorAndDestoryer()
 {
-	int pNumOfVoid=0;
 	vector<CurveSegment*> vboundary;
 	for(unsigned int i=0;i<m_2cells.size();i++)
 	{
@@ -704,11 +743,27 @@ void CP_FlowComplex::SetCreatorAndDestoryer()
 		if(exist)
 		{//此2cell边界都存在，检查是否闭合空间的patch数增加，若增加，此面片为creator，否则destoryer
 			int pCloseVoid=CheckClosedVoid(vboundary,i);
-			if(pCloseVoid>pNumOfVoid)
+			if(pCloseVoid!=0)
 			{
-				pNumOfVoid=pCloseVoid;
 				m_2cells[i]->type=1;
-			}
+
+				for(int j=0;j<m_2cells[i]->m_boundary.size();j++)
+				{//重置m_1cell
+					int curve=LocateSegment(vboundary,m_2cells[i]->m_boundary[j]);
+					vboundary[curve]->degree--;
+					vboundary[curve]->tmpdegree--;
+					vboundary[curve]->incident2cell.pop_back();
+				}//j
+				CP_3cell *p3cell=new CP_3cell();
+				m_3cells.push_back(p3cell);
+				p3cell->m_2cells.push_back(m_2cells[i]->index);
+				//cout<<i<<"creator"<<pCloseVoid<<endl;
+				for(int j=0;j<=i;j++)
+				{
+					if(m_2cells[j]->flag&&m_2cells[j]->type==0)
+						p3cell->m_2cells.push_back(m_2cells[j]->index);
+				}
+			}//pclosevoid
 		}//exist
 		//重置所有flag true
 		Reset2cellFlag(i);
@@ -747,181 +802,6 @@ void CP_FlowComplex::cutBranch(vector<CurveSegment*> &vboundary,CurveSegment& cu
 	}//i
 }
 
-void CP_FlowComplex::setpaired3cells()
-{
-	vector<CurveSegment*> vboundary;
-	for (int i = 0; i < desN; i++)
-	{
-		for(unsigned int j=0;j<m_2cells[i]->m_boundary.size();j++)
-		{
-			int curve=LocateSegment(vboundary,m_2cells[i]->m_boundary[j]);
-			if(curve==-1)
-			{
-				vboundary.push_back(&m_2cells[i]->m_boundary[j]);
-				m_2cells[i]->m_boundary[j].degree=1;
-				m_2cells[i]->m_boundary[j].incident2cell.push_back(i);
-			}else
-			{
-				vboundary[curve]->degree++;
-				vboundary[curve]->incident2cell.push_back(i);
-			}
-		}//j
-	}//i
-
-	//所有destoryer每次和一个creator去cutBranch，得到每个creator的3cell
-	for(int i=desN;i<m_2cells.size();i++)
-	{
-		int _2cell=i;    
-		//考虑此creator与所有destoryer
-		for(unsigned int j=0;j<m_2cells[_2cell]->m_boundary.size();j++)
-		{//边加入vboundary
-			int curve=LocateSegment(vboundary,m_2cells[_2cell]->m_boundary[j]);
-			vboundary[curve]->degree++;
-			vboundary[curve]->incident2cell.push_back(_2cell);
-		}//j
-
-		for(unsigned int j=0;j<vboundary.size();j++)
-		{//重置tmpdegree
-			vboundary[j]->ResetDegreee();
-		}
-
-		for(unsigned int j=0;j<vboundary.size();j++)
-		{//剪边操作
-			if(vboundary[j]->tmpdegree==1)
-				cutBranch(vboundary,*vboundary[j]);
-		}
-
-		CP_3cell *p3cell=new CP_3cell();
-		m_3cells.push_back(p3cell);
-		p3cell->m_2cells.push_back(m_2cells[_2cell]->index);
-		m_2cells[_2cell]->p3cell.push_back(m_2cells[_2cell]->index);
-		for(unsigned int j=0;j<desN;j++)
-		{//记录剩下的2cell为构成此creator的paired 3cell的面片
-			if(m_2cells[j]->flag){
-				m_2cells[_2cell]->p3cell.push_back(m_2cells[j]->index);
-				p3cell->m_2cells.push_back(m_2cells[j]->index);
-			}
-		}
-
-		//重置
-		for(unsigned int j=0;j<m_2cells[_2cell]->m_boundary.size();j++)
-		{//重置vboundary
-			int curve=LocateSegment(vboundary,m_2cells[_2cell]->m_boundary[j]);
-			vboundary[curve]->degree--;
-			vboundary[curve]->incident2cell.pop_back();
-		}//j
-		//重置
-		Reset2cellFlag(_2cell);
-	}//i
-
-	//所有vboundary的数据归零
-	for(unsigned int i=0;i<vboundary.size();i++)
-	{
-		vboundary[i]->degree=0;
-		vboundary[i]->tmpdegree=0;
-		vector<int>().swap(vboundary[i]->incident2cell);
-	}//i
-
-
-	//对相互包含的3cells进行分割
-	//for(unsigned int i=0;i<m_3cells.size();i++)
-	//{
-	//	for(int m=0;m<m_3cells.size();m++)
-	//	{
-	//		if(i!=m){//相互处理过的不再处理
-	//			vector<int>::iterator it=find(m_3cells[i]->cmp3cells.begin(),m_3cells[i]->cmp3cells.end(),m);
-	//			if(it==m_3cells[i]->cmp3cells.end()){
-	//				m_3cells[m]->cmp3cells.push_back(i);
-	//				if(m_3cells[i]->m_2cells.size()<m_3cells[m]->m_2cells.size())
-	//					split3cells(*m_3cells[i],*m_3cells[m]);
-	//				else
-	//					split3cells(*m_3cells[m],*m_3cells[i]);
-	//			}
-	//		}
-	//	}
-	//}
-}
-
-void CP_FlowComplex::split3cells(CP_3cell& s,CP_3cell& l)
-{
-	bool splitEnable=false;
-	for(unsigned int i=0;i<s.m_2cells.size();i++)
-	{
-		for(unsigned int j=0;j<l.m_2cells.size();j++)
-		{
-			if(s.m_2cells[i]==l.m_2cells[j])
-				splitEnable=true;
-		}
-	}//i
-	if(splitEnable)
-	{
-		for(unsigned int i=0;i<s.m_2cells.size();i++)
-		{
-			vector<int>::iterator it=find(l.m_2cells.begin(),l.m_2cells.end(),s.m_2cells[i]);
-			if(it==l.m_2cells.end()) //没找到
-				;
-			else //找到
-				l.m_2cells.erase(it);
-		}
-		l.m_2cells.push_back(s.m_2cells[0]);
-		////加上封口
-		//vector<CurveSegment *> vboundary;
-		//for(unsigned int i=0;i<s.m_2cells.size();i++)
-		//{//s
-		//	int _2cell=Locate2cell(s.m_2cells[i]);
-		//	for(unsigned int j=0;j<m_2cells[_2cell]->m_boundary.size();j++)
-		//	{
-		//		int curve=LocateSegment(vboundary,m_2cells[_2cell]->m_boundary[j]);
-		//		if(curve==-1)
-		//		{
-		//			vboundary.push_back(&m_2cells[_2cell]->m_boundary[j]);
-		//			m_2cells[_2cell]->m_boundary[j].degree=1;
-		//			m_2cells[_2cell]->m_boundary[j].incident2cell.push_back(_2cell);
-		//		}else
-		//		{
-		//			vboundary[curve]->degree++;
-		//			vboundary[curve]->incident2cell.push_back(_2cell);
-		//		}
-		//	}//j
-		//}//i
-
-		//for(unsigned int i=0;i<l.m_2cells.size();i++)
-		//{//l
-		//	int _2cell=Locate2cell(l.m_2cells[i]);
-		//	for(unsigned int j=0;j<m_2cells[_2cell]->m_boundary.size();j++)
-		//	{
-		//		int curve=LocateSegment(vboundary,m_2cells[_2cell]->m_boundary[j]);
-		//		if(curve==-1)
-		//		{
-		//			vboundary.push_back(&m_2cells[_2cell]->m_boundary[j]);
-		//			m_2cells[_2cell]->m_boundary[j].degree=1;
-		//			m_2cells[_2cell]->m_boundary[j].incident2cell.push_back(_2cell);
-		//		}else
-		//		{
-		//			vboundary[curve]->degree++;
-		//			vboundary[curve]->incident2cell.push_back(_2cell);
-		//		}
-		//	}//j
-		//}//i
-		//cout<<"correct"<<endl;
-		////扩展s的creator 2cell，然后扩展面加入l
-		//CP_Patch pPatch;
-		//pPatch.m_2cells.push_back(s.m_2cells[0]);
-		//expand2cell(*m_2cells[Locate2cell(s.m_2cells[0])],vboundary,pPatch);
-		//
-		//for(unsigned int i=0;i<pPatch.m_2cells.size();i++)
-		//{
-		//	l.m_2cells.push_back(m_2cells[pPatch.m_2cells[i]]->index);
-		//}
-		////boundary复原
-		//for(unsigned int i=0;i<vboundary.size();i++)
-		//{
-		//	vboundary[i]->degree=0;
-		//	vector<int>().swap(vboundary[i]->incident2cell);
-		//}//i
-	}//splitEnable
-}
-
 int CP_FlowComplex::CheckClosedVoid(vector<CurveSegment*> &vboundary,int len)
 {
 	////剪枝法判断边集
@@ -934,7 +814,7 @@ int CP_FlowComplex::CheckClosedVoid(vector<CurveSegment*> &vboundary,int len)
 	int num=0;
 	for(unsigned int i=0;i<=len;i++)
 	{
-		if(m_2cells[i]->flag)
+		if(m_2cells[i]->flag&&m_2cells[i]->type==0)
 			num++;
 	}
 	
@@ -982,50 +862,6 @@ bool CP_FlowComplex::ExistTriangle(vector<CP_Triganle3D*> visitedtri,CP_Triganle
 			return true;
 	}
 	return false;
-}
-
-double CP_FlowComplex::calcTriVolume_projection(const CP_Triganle3D &tri)
-{
-	double average_height;
-	double projected_area;
-	double projected_vec1_x,projected_vec1_y;
-	double projected_vec2_x,projected_vec2_y;
-	double temp_volume;
-	average_height=(m_0cells[tri.m_points[0]].m_z+m_0cells[tri.m_points[1]].m_z+m_0cells[tri.m_points[2]].m_z)/3.0;
-
-	average_height=fabs(average_height);
-
-	projected_vec1_x=m_0cells[tri.m_points[1]].m_x-m_0cells[tri.m_points[0]].m_x;
-	projected_vec1_y=m_0cells[tri.m_points[1]].m_y-m_0cells[tri.m_points[0]].m_y;
-	projected_vec2_x=m_0cells[tri.m_points[2]].m_x-m_0cells[tri.m_points[0]].m_x;
-	projected_vec2_y=m_0cells[tri.m_points[2]].m_y-m_0cells[tri.m_points[0]].m_y;
-
-	projected_area=(projected_vec1_x*projected_vec2_y-projected_vec2_x*projected_vec1_y)/2.0;
-
-	temp_volume=projected_area*average_height;
-	return fabs(temp_volume);
-}
-
-void CP_FlowComplex::calc3cellVolume(CP_2cell& pc2cell)
-{//计算creator 3cell的大小
-	double sum_volume=0;
-	//
-	int tri_num=pc2cell.m_triangle.size();
-	for(unsigned int j = 0; j < tri_num; j++)
-	{
-		sum_volume+=calcTriVolume_projection(*tricells[pc2cell.m_triangle[j]]);
-	}
-	for(unsigned int i=0;i<pc2cell.p3cell.size();i++)
-	{
-		int nowi=Locate2cell(pc2cell.p3cell[i]);
-		CP_2cell *p2cell = m_2cells[nowi];
-		tri_num=p2cell->m_triangle.size();
-		for(unsigned int j=0;j<tri_num;j++)
-		{
-			sum_volume+=calcTriVolume_projection(*tricells[p2cell->m_triangle[j]]);
-		}
-	}//i
-	pc2cell.dis3cell=sum_volume;
 }
 
 void CP_FlowComplex::expand2cell(CP_2cell& p2cell,vector<CurveSegment*> vb,CP_Patch &pPatch)
@@ -1113,6 +949,7 @@ void CP_FlowComplex::SetPatchColor()
 void CP_FlowComplex::clearAll()
 {
 	desN=0;
+	_3cellN=0;
 	show=0;
 	inputPoints=0;
 	inputCurves=0;
@@ -1272,6 +1109,157 @@ void CP_FlowComplex::DrawPatchBoundary(const CP_Patch &pPatch)
 	glPopAttrib();
 }
 
+void CP_FlowComplex::calculate3cellvolume()
+{
+	for(unsigned int i=0;i<m_circums.size();i++)
+	{
+		for(unsigned int j=0;j<m_3cells.size();j++)
+		{
+			if(IsPointInside3cell(m_circums[i],*m_3cells[j]))
+				m_3cells[j]->m_circums.push_back(i);
+		}//j
+	}//i
+
+	//将每个3cell包含的四面体体积相加
+	for(unsigned int i=0;i<m_3cells.size();i++)
+	{
+		double sum=0;
+		for(unsigned int j=0;j<m_3cells[i]->m_circums.size();j++)
+		{
+			sum+=m_circums[m_3cells[i]->m_circums[j]].vol;
+		}
+		m_3cells[i]->dis3cell=sum;
+		//cout<<i<<"cell:"<<m_3cells[i]->m_circums.size()<<endl;
+	}
+}
+
+bool CP_FlowComplex::IsPointInside3cell(const CircumPoint& p,CP_3cell& p3cell)
+{
+	vector<CP_Point3D> vp;
+	int above=0,under=0;
+	for(unsigned int i=0;i<p3cell.m_2cells.size();i++)
+	{
+		CP_2cell *p2cell=m_2cells[Locate2cell(p3cell.m_2cells[i])];
+		for(unsigned int j=0;j<p2cell->m_triangle.size();j++)
+		{
+			if((p.m_x>=tricells[p2cell->m_triangle[j]]->minx)&&(p.m_x<=tricells[p2cell->m_triangle[j]]->maxx)&&(p.m_y>=tricells[p2cell->m_triangle[j]]->miny)&&(p.m_y<=tricells[p2cell->m_triangle[j]]->maxy))
+			{//三角形位于p所在z轴直线可能相交的位置才计算交点
+				int resultinter=IsPointZLineIntersectTriangle(p,*tricells[p2cell->m_triangle[j]],vp);
+			}
+		}//j
+	}//i
+	for(int i=0;i<vp.size();i++)
+	{
+		if(vp[i].m_z>p.m_z)
+			above++;
+		else
+			under++;
+	}
+	if(above%2==1&&under%2==1)
+		return true;
+	else
+		return false;
+}
+
+int CP_FlowComplex::IsPointZLineIntersectTriangle(const CircumPoint& p,const CP_Triganle3D& tri,vector<CP_Point3D>& vp)
+{//交点在p之上返回1；在p之下返回-1；不相交返回0
+	//三角形所在平面的法向量
+	CP_Vector3D TriangleV;
+	//三角形的边方向向量
+	CP_Vector3D VP12, VP13;
+	//直线与平面的交点
+	CP_Point3D CrossPoint;
+	//平面方程常数项
+	double TriD;
+	CP_Vector3D LineV = CP_Point3D(p.m_x,p.m_y,p.m_z-1.0)-p;
+	/*-------计算平面的法向量及常数项-------*/
+	//point1->point2
+	VP12=m_0cells[tri.m_points[1]]-m_0cells[tri.m_points[0]];
+	//point1->point3
+	VP13=m_0cells[tri.m_points[2]]-m_0cells[tri.m_points[0]];
+	//VP12xVP13
+	TriangleV=VP12^VP13;
+	//计算常数项
+	TriD = -(TriangleV.m_x*m_0cells[tri.m_points[0]].m_x
+		+ TriangleV.m_y*m_0cells[tri.m_points[0]].m_y
+		+ TriangleV.m_z*m_0cells[tri.m_points[0]].m_z);
+	/*-------求解直线与平面的交点坐标---------*/
+	/* 思路：
+	*     首先将直线方程转换为参数方程形式，然后代入平面方程，求得参数t，
+	* 将t代入直线的参数方程即可求出交点坐标
+	*/
+	double tempU, tempD;  //临时变量
+	tempU = TriangleV.m_x*p.m_x + TriangleV.m_y*p.m_y 
+		+ TriangleV.m_z*p.m_z + TriD;
+	tempD = TriangleV.m_x*LineV.m_x + TriangleV.m_y*LineV.m_y + TriangleV.m_z*LineV.m_z;
+	//直线与平面平行或在平面上
+	if(tempD == 0.0)
+	{
+		// printf("The line is parallel with the plane.\n");
+		return 0;
+	}
+	//计算参数t
+	double t = -tempU/tempD;
+	//计算交点坐标
+	CrossPoint.m_x = LineV.m_x*t + p.m_x;
+	CrossPoint.m_y = LineV.m_y*t + p.m_y;
+	CrossPoint.m_z = LineV.m_z*t + p.m_z;
+	/*----------判断交点是否在三角形内部---------*/
+
+	//计算三角形三条边的长度
+	double d12 = dist(m_0cells[tri.m_points[0]], m_0cells[tri.m_points[1]]);
+	double d13 = dist(m_0cells[tri.m_points[0]], m_0cells[tri.m_points[2]]);
+	double d23 = dist(m_0cells[tri.m_points[1]], m_0cells[tri.m_points[2]]);
+	//计算交点到三个顶点的长度
+	double c1 = dist(CrossPoint, m_0cells[tri.m_points[0]]);
+	double c2 = dist(CrossPoint, m_0cells[tri.m_points[1]]);
+	double c3 = dist(CrossPoint, m_0cells[tri.m_points[2]]);
+	//求三角形及子三角形的面积
+	double areaD = Area(d12, d13, d23);  //三角形面积
+	double area1 = Area(c1, c2, d12);    //子三角形1
+	double area2 = Area(c1, c3, d13);    //子三角形2
+	double area3 = Area(c2, c3, d23);    //子三角形3
+	//根据面积判断点是否在三角形内部
+	if(fabs(area1+area2+area3-areaD) < TOL)
+	{
+		if(!ExistPoint(vp,CrossPoint))
+			vp.push_back(CrossPoint);
+		if(CrossPoint.m_z>p.m_z)
+			return 1;
+		else if(CrossPoint.m_z<p.m_z)
+			return -1;
+	}else
+		return 0;
+}
+
+void CP_FlowComplex::SetTriangleBound()
+{
+	for (int i = 0; i < tricells.size(); i++)
+	{
+		double tmpminx=MAX_DISTANCE;
+		double tmpminy=MAX_DISTANCE;
+		double tmpmaxx=FAR_Z;
+		double tmpmaxy=FAR_Z;
+		for(int j=0;j<3;j++)
+		{
+			if(m_0cells[tricells[i]->m_points[j]].m_x<tmpminx)
+				tmpminx=m_0cells[tricells[i]->m_points[j]].m_x;
+			if(m_0cells[tricells[i]->m_points[j]].m_y<tmpminy)
+				tmpminy=m_0cells[tricells[i]->m_points[j]].m_y;
+			if(m_0cells[tricells[i]->m_points[j]].m_x>tmpmaxx)
+				tmpmaxx=m_0cells[tricells[i]->m_points[j]].m_x;
+			if(m_0cells[tricells[i]->m_points[j]].m_y>tmpmaxy)
+				tmpmaxy=m_0cells[tricells[i]->m_points[j]].m_y;
+		}
+		tricells[i]->minx=tmpminx;
+		tricells[i]->miny=tmpminy;
+		tricells[i]->maxx=tmpmaxx;
+		tricells[i]->maxy=tmpmaxy;
+	}
+}
+
+
+
 void CurveSegment::ResetDegreee()
 {
 	tmpdegree=degree;
@@ -1298,8 +1286,6 @@ CP_2cell::CP_2cell(void)
 	index=-1;
 	visited=false;
 	distance=0.0;
-	dis3cell=0.0;
-	persistence=0.0;
 	flag=true;
 	type=0;
 	patch=-1;
@@ -1327,9 +1313,31 @@ CP_Patch::~CP_Patch(void)
 
 CP_3cell::CP_3cell(void)
 {
+	dis3cell=0.0;flag=false;
 }
 
 
 CP_3cell::~CP_3cell(void)
 {
+}
+
+
+CircumPoint::CircumPoint(double newx, double newy, double newz,double newvol):CP_Point3D(newx,newy,newz),vol(newvol)
+{
+	flag=false;
+}
+
+
+CircumPoint::~CircumPoint(void)
+{
+}
+
+CircumPoint& CircumPoint::operator=(const CircumPoint& tmp)
+{
+	m_x=tmp.m_x;
+	m_y=tmp.m_y;
+	m_z=tmp.m_z;
+	vol=tmp.vol;
+	flag=tmp.flag;
+	return *this;
 }

@@ -24,6 +24,7 @@ typedef EK::Vector_3 Vector;
 typedef Delaunay::Facet Facet;
 typedef Delaunay::Cell_handle Cell_handle;
 typedef Delaunay::Finite_facets_iterator  Facets_iterator;
+typedef Delaunay::Finite_cells_iterator Cells_iterator;
 typedef Delaunay::Edge Edge;
 class FCCR
 {
@@ -52,8 +53,6 @@ public:
 	double getHausdorffDistance(CP_PolyLine3D &curveA, CP_PolyLine3D &curveB);
 	void addrFacet(Facet fit);
 	void addrVoroFace(Edge e,int vIntersect,Triangle tricir,int _2cell);
-	void addrFacetDelauny(Facet fit);
-	void addrVoroFaceDelauny(Edge e,int vIntersect,Triangle tricir,int _2cell);
 	void generOBJ();
 };
 

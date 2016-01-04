@@ -17,6 +17,19 @@ private:
 
 };
 
+class CircumPoint :
+	public CP_Point3D
+{
+public:
+	double vol;//所在四面体的体积
+	bool flag;
+public:
+	explicit CircumPoint (double newx=0.0, double newy=0.0, double newz=0.0, double newvol=0.0);
+	CircumPoint& operator=(const CircumPoint& tmp);
+	~CircumPoint(void);
+};
+
+
 class CP_2cell;
 class CP_Triganle3D
 {
@@ -26,6 +39,7 @@ public:
 	bool normalsetted;
 	int _2cell; //构造2-cell时设置三角面片所属的2-cell
 	std::vector<int> m_adjTriangle;//邻接的三角面片
+	double minx,maxx,miny,maxy;
 	int aa;
 public:
 	CP_Triganle3D(int p0, int p1, int p2);
@@ -59,13 +73,10 @@ public:
 	int type;//type=1 creator ;type=0,destoryer
 	int p_critical;
 	double distance;
-	double dis3cell;
-	double persistence;
 	bool flag;//flag false消失 true存在
 	bool visited;
 	vector<int> m_adj2cell;
 	vector<int> p3cell;//组成paired 3cell的2cell 的index，因为collapse之后还要使用此信息
-	vector<double> dis;
 	int patch;
 public:
 	CP_2cell(void);
@@ -76,8 +87,11 @@ class CP_3cell
 {
 public:
 	vector<int> m_2cells;
-	vector<int> new2cells;
 	vector<int> cmp3cells;
+	vector<int> m_circums;
+	vector<CP_Point3D> v;
+	double dis3cell;
+	bool flag;
 public:
 	CP_3cell(void);
 	~CP_3cell(void);
@@ -103,10 +117,12 @@ class CP_FlowComplex
 {
 public:
 	unsigned int desN;
+	unsigned int _3cellN;
 	bool show;
 	unsigned int inputPoints;
 	unsigned int inputCurves;
 	unsigned int oripatches;
+	double minx,maxx,miny,maxy,minz,maxz;
 	vector<CP_Point3D> m_0cells;
 	vector<CurveSegment*> m_1cells;//input curve segment
 	vector<CP_2cell*> m_2cells;//tricells中三角面片的id
@@ -120,15 +136,20 @@ public:
 	vector<CP_Triganle3D*> visitedtri;//中心三角形
 	CP_Point3D cp;//中心点
 	vector<CP_Point3D> vjoint;
+	vector<CircumPoint> m_circums;
+	vector<int> topo;
 public:
 	CP_FlowComplex();
 	~CP_FlowComplex();
 	void clearAll();
+	void IsBoundBox(const CP_Point3D &p);
+	void SetTriangleBound();
 	void Gabrielize();
 	bool IsGabriel(CP_Point3D &c,CP_Point3D &r,double radius_pq);
 	void reverseForProjection(CP_Point3D & p);
 	CP_Point3D ProjectionPoint(CP_Point3D &p1,CP_Point3D &p2,CP_Point3D &p3);
 	void subdivideSegsJointV(CP_Point3D & vp);
+	void Insert2cellInto1cell(CP_2cell& p2cell);
 	CP_Point3D equalDisPoint(double k,CP_Point3D &po,CP_Point3D &pb);
 	bool IsSmallAngle(CP_Point3D &po,CP_Point3D &pa,CP_Point3D &pb);
 	bool ExistPoint(vector<CP_Point3D> &v,CP_Point3D& p);
@@ -154,10 +175,9 @@ public:
 	void Set2cellNormal();
 	void SetPatchNormal();
 	void SetCreatorAndDestoryer();
-	void setpaired3cells();
-	void split3cells(CP_3cell& s,CP_3cell& l);
-	void calc3cellVolume(CP_2cell& p2cell);
-	double calcTriVolume_projection(const CP_Triganle3D &tri);
+	bool IsPointInside3cell(const CircumPoint& p,CP_3cell& p3cell);
+	void calculate3cellvolume();
+	int IsPointZLineIntersectTriangle(const CircumPoint& p,const CP_Triganle3D& tri,vector<CP_Point3D>& vp);
 	void expand2cell(CP_2cell& p2cell,vector<CurveSegment*> vb,CP_Patch &pPatch);
 	int CheckClosedVoid(vector<CurveSegment*> &vboundary,int i);
 	void Reset2cellFlag(int len);
@@ -179,5 +199,6 @@ public:
 	void DrawPatchBoundary(const CP_Patch &pPatch);
 };
 extern double dist(const CP_Point3D &x,const CP_Point3D &y);
+extern double Area(double a,double b,double c);
 
 
