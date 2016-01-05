@@ -489,6 +489,7 @@ void CSLDRView::OnDraw(CDC* pDC)
 						else
 						glColor4f(0.7,0.7,0.7,1.0);
 					}
+					if(p2cell->type!=1)
 					pDoc->m_FlowComplex->Draw2cell(*p2cell);
 					if(pMain->m_ctrlPaneFCCR->m_dialog.triboundary)
 						pDoc->m_FlowComplex->DrawTriangleBoundary(*p2cell);
@@ -987,17 +988,25 @@ void CSLDRView::Find2cell(CPoint point)
 	SetModelViewMatrix();
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT ); // 必须要Clear buffer
 	glScalef(m_Scale, m_Scale, m_Scale);
-	for(unsigned int i=0;i<pDoc->m_FlowComplex->m_patches.size();i++)
+	//for(unsigned int i=0;i<pDoc->m_FlowComplex->m_patches.size();i++)
+	//{
+	//	CP_Patch *pPatch = pDoc->m_FlowComplex->m_patches[i];
+	//	for (unsigned int j = 0; j <pPatch->m_2cells.size(); j++)
+	//	{
+	//		CP_2cell *p2cell = pDoc->m_FlowComplex->m_2cells[pPatch->m_2cells[j]];
+	//		glPushName(p2cell->index);
+	//		pDoc->m_FlowComplex->Draw2cell(*p2cell);
+	//		glPopName();
+	//	}//j
+	//}//i
+	for (unsigned int i = 0; i <pDoc->m_FlowComplex->m_2cells.size(); i++)
 	{
-		CP_Patch *pPatch = pDoc->m_FlowComplex->m_patches[i];
-		for (unsigned int j = 0; j <pPatch->m_2cells.size(); j++)
-		{
-			CP_2cell *p2cell = pDoc->m_FlowComplex->m_2cells[pPatch->m_2cells[j]];
-			glPushName(p2cell->index);
-			pDoc->m_FlowComplex->Draw2cell(*p2cell);
-			glPopName();
-		}//j
-	}//i
+		CP_2cell *p2cell = pDoc->m_FlowComplex->m_2cells[i];
+		
+			if(p2cell->type!=1)
+				pDoc->m_FlowComplex->Draw2cell(*p2cell);
+	}//2cell
+
 	glPopMatrix();
 	// SwapBuffers(dc.m_hDC);
 	// 绘制结束
@@ -1201,7 +1210,7 @@ void CSLDRView::OnLButtonDown(UINT nFlags, CPoint point)
 	if(selected2cell!=-1)
 	{
 		pMain->m_ctrlPaneFCCR->m_dialog.SetTreeItems(selected2cell);//2cell在集合中的下标，非标号
-		cout<<pDoc->m_FlowComplex->m_2cells[pDoc->m_FlowComplex->Locate2cell(selected2cell)]->distance<<endl;
+		pDoc->m_FlowComplex->m_2cells[pDoc->m_FlowComplex->Locate2cell(selected2cell)]->type=1;
 		
 	}
 	else if(selectedpatch!=-1)

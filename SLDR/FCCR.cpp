@@ -221,79 +221,14 @@ void FCCR::addrFacet(Facet f)
 						int v1=m_FlowComplex->LocatePoint(p1);
 						int v2=m_FlowComplex->LocatePoint(p2);
 						CP_Triganle3D *pTriangle =new CP_Triganle3D(v0, v1, v2);
-						bool nocover=true;
-						for(int j=0;j<m_FlowComplex->ctri.size();j++)
-						{
-							if(!m_FlowComplex->noCover(*m_FlowComplex->ctri[j],*pTriangle))
-								nocover=false;
-						}
-						if(nocover){
-							m_FlowComplex->ctri.push_back(pTriangle);
 
-							Point intersec;
-							assign(intersec, intersecObject);
-
-							CP_Point3D pIntersec(to_double(intersec.hx()), to_double(intersec.hy()), to_double(intersec.hz()));
-
-							m_FlowComplex->m_0cells.push_back(pIntersec);
-							int vIntersect=m_FlowComplex->m_0cells.size()-1; 
-							CP_2cell *p2cell=new CP_2cell();
-							m_FlowComplex->m_2cells.push_back(p2cell);
-							p2cell->p_critical=vIntersect;
-							int _2cell=m_FlowComplex->m_2cells.size()-1;
-							p2cell->index=_2cell;
-							p2cell->pTri=pTriangle;
-							p2cell->distance=dist(pIntersec,p0);
-							//另外3个顶点,方便得到EDGE
-							int trivertice[3]={0};
-							int verindex=0;
-							for(int i=0;i<4;i++)
-							{
-								if(i!=f.second)
-									trivertice[verindex++]=i;
-							}
-
-							for(int i=0;i<3;i++)
-							{//对每条edge,其邻接面dual voronoi edge与此面相交，加入cells；不相交，加入cells
-								Edge e(c,trivertice[i%3],trivertice[(i+1)%3]);
-								addrVoroFace(e,vIntersect,tri,_2cell);
-							}//for(int i=0;i<3;i++)
-
-						}
-					}//if (CGAL::object_cast<Point>(&intersecObject))
-				}//intersect
-			}//is_degenerate
-		}else
-		{
-			Ray r;
-			assign(r, t);
-			if(CGAL::do_intersect(r,tri))
-			{
-				CGAL::Object intersecObject=CGAL::intersection(r,tri);
-				if (CGAL::object_cast<Point>(&intersecObject))
-				{
-					CP_Point3D p0(to_double(tri.vertex(0).hx()), to_double(tri.vertex(0).hy()), to_double(tri.vertex(0).hz()));
-					CP_Point3D p1(to_double(tri.vertex(1).hx()), to_double(tri.vertex(1).hy()), to_double(tri.vertex(1).hz()));
-					CP_Point3D p2(to_double(tri.vertex(2).hx()), to_double(tri.vertex(2).hy()), to_double(tri.vertex(2).hz()));
-					int v0=m_FlowComplex->LocatePoint(p0);
-					int v1=m_FlowComplex->LocatePoint(p1);
-					int v2=m_FlowComplex->LocatePoint(p2);
-					CP_Triganle3D *pTriangle =new CP_Triganle3D(v0, v1, v2);
-					bool nocover=true;
-					for(int j=0;j<m_FlowComplex->ctri.size();j++)
-					{
-						if(!m_FlowComplex->noCover(*m_FlowComplex->ctri[j],*pTriangle))
-							nocover=false;
-					}
-					if(nocover){
-						m_FlowComplex->ctri.push_back(pTriangle);
 						Point intersec;
 						assign(intersec, intersecObject);
+
 						CP_Point3D pIntersec(to_double(intersec.hx()), to_double(intersec.hy()), to_double(intersec.hz()));
 
 						m_FlowComplex->m_0cells.push_back(pIntersec);
-						int vIntersect=m_FlowComplex->m_0cells.size()-1;
-
+						int vIntersect=m_FlowComplex->m_0cells.size()-1; 
 						CP_2cell *p2cell=new CP_2cell();
 						m_FlowComplex->m_2cells.push_back(p2cell);
 						p2cell->p_critical=vIntersect;
@@ -315,8 +250,54 @@ void FCCR::addrFacet(Facet f)
 							Edge e(c,trivertice[i%3],trivertice[(i+1)%3]);
 							addrVoroFace(e,vIntersect,tri,_2cell);
 						}//for(int i=0;i<3;i++)
+					}//if (CGAL::object_cast<Point>(&intersecObject))
+				}//intersect
+			}//is_degenerate
+		}else
+		{
+			Ray r;
+			assign(r, t);
+			if(CGAL::do_intersect(r,tri))
+			{
+				CGAL::Object intersecObject=CGAL::intersection(r,tri);
+				if (CGAL::object_cast<Point>(&intersecObject))
+				{
+					CP_Point3D p0(to_double(tri.vertex(0).hx()), to_double(tri.vertex(0).hy()), to_double(tri.vertex(0).hz()));
+					CP_Point3D p1(to_double(tri.vertex(1).hx()), to_double(tri.vertex(1).hy()), to_double(tri.vertex(1).hz()));
+					CP_Point3D p2(to_double(tri.vertex(2).hx()), to_double(tri.vertex(2).hy()), to_double(tri.vertex(2).hz()));
+					int v0=m_FlowComplex->LocatePoint(p0);
+					int v1=m_FlowComplex->LocatePoint(p1);
+					int v2=m_FlowComplex->LocatePoint(p2);
+					CP_Triganle3D *pTriangle =new CP_Triganle3D(v0, v1, v2);
+					
+					Point intersec;
+					assign(intersec, intersecObject);
+					CP_Point3D pIntersec(to_double(intersec.hx()), to_double(intersec.hy()), to_double(intersec.hz()));
 
+					m_FlowComplex->m_0cells.push_back(pIntersec);
+					int vIntersect=m_FlowComplex->m_0cells.size()-1;
+
+					CP_2cell *p2cell=new CP_2cell();
+					m_FlowComplex->m_2cells.push_back(p2cell);
+					p2cell->p_critical=vIntersect;
+					int _2cell=m_FlowComplex->m_2cells.size()-1;
+					p2cell->index=_2cell;
+					p2cell->pTri=pTriangle;
+					p2cell->distance=dist(pIntersec,p0);
+					//另外3个顶点,方便得到EDGE
+					int trivertice[3]={0};
+					int verindex=0;
+					for(int i=0;i<4;i++)
+					{
+						if(i!=f.second)
+							trivertice[verindex++]=i;
 					}
+
+					for(int i=0;i<3;i++)
+					{//对每条edge,其邻接面dual voronoi edge与此面相交，加入cells；不相交，加入cells
+						Edge e(c,trivertice[i%3],trivertice[(i+1)%3]);
+						addrVoroFace(e,vIntersect,tri,_2cell);
+					}//for(int i=0;i<3;i++)
 				}//if (CGAL::object_cast<Point>(&intersecObject))
 			}//if(CGAL::do_intersect(r,tri))
 		}//else Ray
@@ -658,7 +639,7 @@ bool FCCR::obtusetri(Triangle &tri)
 	{
 		CP_Vector3D i1(p[(i+1)%3].m_x-p[i%3].m_x,p[(i+1)%3].m_y-p[i%3].m_y,p[(i+1)%3].m_z-p[i%3].m_z);
 		CP_Vector3D i2(p[(i+2)%3].m_x-p[i%3].m_x,p[(i+2)%3].m_y-p[i%3].m_y,p[(i+2)%3].m_z-p[i%3].m_z);
-		if(i1*i2<TOL)
+		if(i1*i2<=1e-6)
 			return true;
 	}
 	return false;

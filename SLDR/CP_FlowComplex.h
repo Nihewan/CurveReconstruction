@@ -132,7 +132,6 @@ public:
 	vector<CP_Triganle3D*> delauny2cells;
 	vector<CP_PolyLine3D> m_PolyLine;
 	vector<CP_Triganle3D*> tricells;
-	vector<CP_Triganle3D*> ctri;//中心三角形
 	vector<CP_Triganle3D*> visitedtri;//中心三角形
 	CP_Point3D cp;//中心点
 	vector<CP_Point3D> vjoint;
@@ -155,7 +154,6 @@ public:
 	bool ExistPoint(vector<CP_Point3D> &v,CP_Point3D& p);
 	bool ExistTriangle(vector<CP_Triganle3D*> visitedtri,CP_Triganle3D &tri);
 	int LocatePoint(const CP_Point3D &p);
-	bool noCover(CP_Triganle3D &ltri,CP_Triganle3D &rtri);
 	int LocateSegment(vector<CurveSegment*> &curveVec,CurveSegment& line);//若存在，返回线段的下标,否则返回-1
 	int Locate2cell(int _2cell);//用最原始的编号去找现在的位置
 	void SetNormals();

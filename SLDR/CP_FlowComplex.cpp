@@ -47,8 +47,6 @@ CP_FlowComplex::~CP_FlowComplex()
 		delete delauny2cells[i];
 	for(unsigned int i=0;i<tricells.size();i++)
 		delete tricells[i];
-	for(unsigned int i=0;i<ctri.size();i++)
-		delete ctri[i];
 	for(unsigned int i=0;i<m_3cells.size();i++)
 		delete m_3cells[i];
 	vector<CP_3cell*>().swap(m_3cells);
@@ -311,59 +309,6 @@ int CP_FlowComplex::LocatePoint(const CP_Point3D &p)
 			return i;
 	}
 	return -1;
-}
-
-bool CP_FlowComplex::noCover(CP_Triganle3D &ltri,CP_Triganle3D &rtri)
-{
-	int abc = 0;
-	int sp[2]={-1,-1};//公共边顶点的编号
-	int lsr=-1,rsr=-1;//ltri 和rtri的源点（计算法向）
-	for (unsigned int j = 0; j < 3; j++)
-	{
-		for (int k = 0; k < 3; k++)
-		{
-			if (ltri.m_points[j]==rtri.m_points[k])
-				{sp[abc++]=ltri.m_points[j];//按公共边在ltr中顺序存
-			}
-		}
-	}
-
-	if (abc == 2)
-	{//有公共边
-		for (unsigned int j=0;j<3;j++)
-		{
-			int tmp=-1;
-			for(unsigned int k=0;k<2;k++)
-			{
-				if(ltri.m_points[j]==sp[k])
-					tmp=j;
-			}
-			if(tmp==-1)
-				lsr=ltri.m_points[j];
-		}
-
-		for (unsigned int j=0;j<3;j++)
-		{
-			int tmp=-1;
-			for(unsigned int k=0;k<2;k++)
-			{
-				if(rtri.m_points[j]==sp[k])
-					tmp=j;
-			}
-			if(tmp==-1)
-				rsr=rtri.m_points[j];
-		}
-		CP_Vector3D nl=(m_0cells[sp[0]] - m_0cells[lsr]) ^ 
-			(m_0cells[sp[1]] - m_0cells[lsr]);
-		//r 0-1-2
-		CP_Vector3D nr=(m_0cells[sp[0]] - m_0cells[rsr]) ^ 
-			(m_0cells[sp[1]] - m_0cells[rsr]);
-		
-		if((nl*nr)/(nl.GetLength()*nr.GetLength())>0.93)
-			return false;//二面角很小，接近覆盖
-			
-	}//abc==2
-	return true;
 }
 
 void CP_FlowComplex::Insert2cellInto1cell(CP_2cell& p2cell)
@@ -978,9 +923,6 @@ void CP_FlowComplex::clearAll()
 	for(unsigned int i=0;i<tricells.size();i++)
 		delete tricells[i];
 	vector<CP_Triganle3D*>().swap(tricells);
-	for(unsigned int i=0;i<ctri.size();i++)
-		delete ctri[i];
-	vector<CP_Triganle3D*>().swap(ctri);
 	for(unsigned int i=0;i<visitedtri.size();i++)
 		delete visitedtri[i];
 	vector<CP_Triganle3D*>().swap(visitedtri);
