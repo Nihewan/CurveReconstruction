@@ -86,7 +86,7 @@ void CReconstruction::TransEdgeOptimization(CP_Body *pBody)
 	vector<CTransitionEdgeInfo> vTrans;
 	CTransitionCurveFuncCalculator::GetTransitionCurves(pBody, vTrans);
 	vector<double> depthArr;
-	for (int i = 0; i < vTrans.size(); ++i) {
+	for (unsigned int i = 0; i < vTrans.size(); ++i) {
 		CP_EdgeExt *pEdge = dynamic_cast<CP_EdgeExt*>(vTrans[i].m_pTransitionEdge);
 		depthArr.push_back(((CP_Vertex *)pEdge->GetCObjPtProperties(PROPERTY_NAME_MID_VERTEX))->m_pPoint->m_z);
 	}

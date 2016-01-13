@@ -1,4 +1,5 @@
-#include "CP_FlowComplex.h"
+#pragma once
+#include <vector>
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Exact_predicates_exact_constructions_kernel.h>
 #include <CGAL/Delaunay_triangulation_3.h>
@@ -26,17 +27,22 @@ typedef Delaunay::Cell_handle Cell_handle;
 typedef Delaunay::Finite_facets_iterator  Facets_iterator;
 typedef Delaunay::Finite_cells_iterator Cells_iterator;
 typedef Delaunay::Edge Edge;
+
+class CP_FlowComplex;
+class CP_PolyLine3D;
+class CurveSegment;
+class CP_Point3D;
 class FCCR
 {
 public:
 	double maxhd;
 	CString filename;
-	int voids;
+	unsigned int voids;
 	double epsilon;
 	double feasa;
 	Delaunay T;
 	CP_FlowComplex *m_FlowComplex;
-	vector<CP_PolyLine3D> *m_VT_PolyLine;
+	std::vector<CP_PolyLine3D> *m_VT_PolyLine;
 public:
 	FCCR(void);
 	~FCCR(void);
@@ -46,13 +52,11 @@ public:
 	void ToFlowcomplex();
 	void OnCollapse();
 	void OnThicken();
-	void collapse(CurveSegment &curve);
-	bool IsPlane(CP_Point3D p0, CP_Point3D p1, CP_Point3D p2, CP_Point3D p3);
-	bool obtusetri(Triangle &tri);
-	bool sharpBoundTri(Triangle tri);
-	double getHausdorffDistance(CP_PolyLine3D &curveA, CP_PolyLine3D &curveB);
-	void addrFacet(Facet fit);
-	void addrVoroFace(Edge e,int vIntersect,Triangle tricir,int _2cell);
+	void collapse(const CurveSegment &curve);
+	bool obtusetri(const Triangle &tri);
+	double getHausdorffDistance(const CP_PolyLine3D &curveA,const  CP_PolyLine3D &curveB);
+	void addrFacet(const Facet &fit);
+	void addrVoroFace(const Edge &e,int vIntersect,const Triangle &tricir,int _2cell);
 	void generOBJ();
 };
 

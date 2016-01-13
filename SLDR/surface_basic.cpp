@@ -117,9 +117,9 @@ namespace surface_basic {
 					+ (-(1-u) * v * pSurface->GetCtrlPoint(0, m)) + (- u * (1-v) * pSurface->GetCtrlPoint(n, 0))
 					+ (- (1-u) * (1-v) * pSurface->GetCtrlPoint(0, 0)) + (- u * v * pSurface->GetCtrlPoint(n, m));
 				double weight = (1-u) * pSurface->GetWeight(0, j) + u * pSurface->GetWeight(n, j);
-					+ (1-v) * pSurface->GetWeight(i, 0) + v * pSurface->GetWeight(i, m) 
+					(+ (1-v) * pSurface->GetWeight(i, 0) + v * pSurface->GetWeight(i, m) 
 					+ (-(1-u) * v * pSurface->GetWeight(0, m)) + (- u * (1-v) * pSurface->GetWeight(n, 0))
-					+ (- (1-u) * (1-v) * pSurface->GetWeight(0, 0)) + (- u * v * pSurface->GetWeight(n, m));
+					+ (- (1-u) * (1-v) * pSurface->GetWeight(0, 0)) + (- u * v * pSurface->GetWeight(n, m)));
 				pSurface->SetCtrlPoint(i, j, pt, weight);
 			}
 		}
@@ -161,7 +161,7 @@ namespace surface_basic {
 		// Interpolate section curves
 		vector<shared_ptr<CP_Nurbs> > vSecCurs = InterpolateNurbsSectionCurves(vBound);
 		CP_Nurbs **sectionCurs = new CP_Nurbs*[vSecCurs.size()];
-		for (int i = 0; i < vSecCurs.size(); ++i)
+		for (unsigned int i = 0; i < vSecCurs.size(); ++i)
 			sectionCurs[i] = vSecCurs[i].get();
 
 		// Loft

@@ -114,7 +114,7 @@ CP_LineSegment3D& CP_LineSegment3D::operator=(const CP_LineSegment3D &line)
 void CP_LineSegment3D::Split2PolyLine(double ratio)
 {
 	double len = GetLength();
-	int numOfBlock = len*ratio;
+	int numOfBlock = static_cast<int>(len*ratio);
 	if (numOfBlock < 2)
 		numOfBlock=2;
 	for (int i = 0; i <=numOfBlock; i++)
@@ -129,7 +129,7 @@ void CP_LineSegment3D::Split2PolyLine(double ratio)
 void CP_PolyLine3D::Draw()
 {
 	glBegin(GL_LINE_STRIP);
-	for (int i = 0; i < m_points.size(); i++)
+	for (unsigned int i = 0; i < m_points.size(); i++)
 	{
 		glVertex3d(m_points[i].m_x, m_points[i].m_y, m_points[i].m_z);
 	}
@@ -140,7 +140,7 @@ void CP_PolyLine3D::Draw()
 double CP_PolyLine3D::GetLength() const
 {
 	double len = 0;
-	for (int i = 0; i < m_points.size() - 1;i++)
+	for (unsigned int i = 0; i < m_points.size() - 1;i++)
 	{
 		CP_Point3D p(m_points[i]);
 		len += sqrt(p.m_x*p.m_x + p.m_y*p.m_y + p.m_z*p.m_z);
@@ -775,8 +775,8 @@ void CP_Nurbs::Draw() {
 
 void CP_Nurbs::Split2PolyLine(double ratio)
 {
-	int len = GetLength();
-	int numOfBlock = len*ratio;
+	int len = static_cast<int>(GetLength());
+	int numOfBlock = static_cast<int>(len*ratio);
 	if (numOfBlock < 2)
 		numOfBlock = 2;
 	for (int i = 0; i <= numOfBlock; i++)
@@ -1029,8 +1029,8 @@ void CP_Arc::Draw( ) {
 
 void CP_Arc::Split2PolyLine(double ratio)
 {
-	int len = GetLength();
-	int num = len*ratio;
+	int len = static_cast<int>(GetLength());
+	int num = static_cast<int>(len*ratio);
 	if (num < 2)
 		num = 2;
 	double delta = 1.0 / num;

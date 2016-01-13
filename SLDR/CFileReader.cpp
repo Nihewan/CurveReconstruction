@@ -102,7 +102,7 @@ void CFileReader::ReadCURVE(LPCTSTR lpszPathName, vector<CP_PolyLine3D>* VT_Poly
 	int row = 0;
 	int numOfCurves = 0, degree = 3,numOfPoints=0;
 	sfile.ReadString(str);
-	numOfCurves = atof(str);
+	numOfCurves = atoi(str);
 	CP_PolyLine3D poly;
 	while (sfile.ReadString(str))
 	{

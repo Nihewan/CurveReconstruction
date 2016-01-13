@@ -83,7 +83,7 @@ namespace est_refplane {
 
 		// Curved face has lower weight
 		if (pLoop->m_pParentFace->GetSurfaceType() != TYPE_SURFACE_PLANE)
-			maxValue *= CURVED_FACE_WEIGHT_RATIO;
+			maxValue = static_cast<int>(maxValue*CURVED_FACE_WEIGHT_RATIO);
 		((CP_LoopExt *)pLoop)->SetProperties(PROPERTY_NAME_WEIGHT, maxValue);
 		((CP_LoopExt *)pLoop)->SetProperties(PROPERTY_NAME_MATCH_PANE_NORMAL, 
 			new CP_Vector3D(topo_geometric::CalcPlaneNormal(*pMatchPane)));

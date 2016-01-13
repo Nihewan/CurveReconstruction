@@ -23,6 +23,7 @@
 #include "CFileReader.h"
 #include "MainFrm.h"
 #include "SLDRView.h"
+#include "CP_FlowComplex.h"
 #include <fstream>
 
 #include <propkey.h>
@@ -265,7 +266,7 @@ void CSLDRDoc::OutputCurveNetwork()
 				filePath += _T(".txt");
 			std::ofstream os;
 			os.open(filePath);
-			for (unsigned int i = 0; i < pBody->GetEdgeNumber(); ++i)
+			for (int i = 0; i < pBody->GetEdgeNumber(); ++i)
 			{
 				CP_Edge *pEdge = pBody->GetEdge(i);
 				//os <<(LPCTSTR)pEdge->m_pCurve3D->ToString() <<endl;
@@ -285,13 +286,13 @@ void CSLDRDoc::OutputCurveNetwork()
 			out.open(filePath);
 			out<<"# Vertices:"<<m_FlowComplex->m_0cells.size()<<endl;
 			out<<"# Faces:"<<m_FlowComplex->tricells.size()<<endl;
-			for(int i=0;i<m_FlowComplex->m_0cells.size();i++)
+			for(unsigned int i=0;i<m_FlowComplex->m_0cells.size();i++)
 			{
 				out<<"v "<<m_FlowComplex->m_0cells[i].m_x<<" "<<m_FlowComplex->m_0cells[i].m_y<<" "<<m_FlowComplex->m_0cells[i].m_z<<endl;
 			}
 			out<<"############"<<endl;
 
-			for(int i=0;i<m_FlowComplex->tricells.size();i++)
+			for(unsigned int i=0;i<m_FlowComplex->tricells.size();i++)
 			{
 				if(m_FlowComplex->m_2cells[m_FlowComplex->Locate2cell(m_FlowComplex->tricells[i]->_2cell)]->flag)
 					out<<"f "<< m_FlowComplex->tricells[i]->m_points[0]+1<<" "<<m_FlowComplex->tricells[i]->m_points[1]+1<<" "<<m_FlowComplex->tricells[i]->m_points[2]+1<<endl;

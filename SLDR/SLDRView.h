@@ -12,7 +12,8 @@
 // SLDRView.h : CSLDRView 类的接口
 //
 
-#pragma once
+#ifndef SLDRVIEW_H
+#define SLDRVIEW_H
 
 //#include "gl/GL.h"
 //#include "gl/glew.h"
@@ -59,6 +60,7 @@ public:
 	bool showThicken;
 	int selected2cell;
 	int selectedpatch;
+	int selectedpoly;
 	bool ctrlDown;
 	bool zDown;
 	double mDiffuse,mSpecular,mShine;
@@ -77,6 +79,7 @@ public:
 	void InitLight1();
 	void InitLight2();
 	void InitLight3();
+	void FindPolyline(CPoint point);
 	void Find2cell(CPoint point); 
 	void FindPatch(CPoint point);
 	void FindSelNode(CPoint point);
@@ -160,3 +163,4 @@ inline CSLDRDoc* CSLDRView::GetDocument() const
    { return reinterpret_cast<CSLDRDoc*>(m_pDocument); }
 #endif
 
+#endif // !SLDRVIEW_H

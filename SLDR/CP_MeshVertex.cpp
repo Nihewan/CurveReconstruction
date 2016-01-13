@@ -39,7 +39,7 @@ CP_Vector3D CP_MeshVertex3D::GetVtNormal() {
 
 bool CP_MeshVertex3D::ExistTriangle(CP_MeshTriangle3D *t)
 {
-	for (int i = 0; i < m_adjTriangle.size(); i++)
+	for (unsigned int i = 0; i < m_adjTriangle.size(); i++)
 	{
 		int abc = 0;
 		for (int j = 0; j < 3; j++)

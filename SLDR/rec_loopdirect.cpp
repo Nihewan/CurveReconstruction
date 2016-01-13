@@ -106,7 +106,7 @@ namespace rec_bodyassembly {
 
 	CP_Point3D GetCenter(vector<CP_Point3D> &poly) {
 		CP_Point3D pt;
-		for (int i = 0; i < poly.size(); ++i)
+		for (unsigned int i = 0; i < poly.size(); ++i)
 			pt += poly[i];
 		return pt / poly.size();
 	}

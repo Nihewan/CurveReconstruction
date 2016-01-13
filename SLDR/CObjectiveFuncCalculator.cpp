@@ -424,7 +424,7 @@ double CTransEdgeNormalCalc::CalcPara(CP_Vector3D &v0, CP_Vector3D &v1)
 }
 
 void CTransEdgeNormalCalc::InitTransitionEdge() {
-	for (unsigned int i = 0; i < m_pBody->GetEdgeNumber(); ++i)
+	for (int i = 0; i < m_pBody->GetEdgeNumber(); ++i)
 	{
 		CP_Edge *pEdge = m_pBody->GetEdge(i);
 		if (topo_geometric::IsTransitionEdge(pEdge)) {
@@ -751,7 +751,7 @@ CTransitionCurveFuncCalculator::~CTransitionCurveFuncCalculator()
 
 void CTransitionCurveFuncCalculator::GetTransitionCurves(CP_Body *pBody, vector<CTransitionEdgeInfo> &transitionEdgeInfos)
 {
-	for (unsigned int i = 0; i < pBody->GetEdgeNumber(); ++i)
+	for (int i = 0; i < pBody->GetEdgeNumber(); ++i)
 	{
 		CP_Edge *pEdge = pBody->GetEdge(i);
 		if (topo_geometric::IsTransitionEdge(pEdge) &&

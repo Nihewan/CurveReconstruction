@@ -233,7 +233,7 @@ void CCavityDecomposition::PartitionBodyByCavity(CP_Body * body)
 	std::vector<CP_Loop *> * loopArr = new std::vector<CP_Loop *>();
 	CP_Loop * firstLoop = body->GetFace(0)->GetLoop(0);
 	loopArr->push_back(firstLoop);
-	int index = 0;
+	unsigned int index = 0;
 	while(index < loopArr->size())
 	{
 		CP_LoopExt * loop = (CP_LoopExt *)loopArr->at(index);

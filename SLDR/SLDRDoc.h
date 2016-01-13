@@ -17,7 +17,8 @@
 #include "Cp_TopologyExt.h"
 #include "CBoundBox2D.h"
 #include "CTreeSelectedItem.h"
-#include "CP_FlowComplex.h"
+
+class CP_FlowComplex;
 class CSLDRDoc : public CDocument
 {
 protected: // 仅从序列化创建

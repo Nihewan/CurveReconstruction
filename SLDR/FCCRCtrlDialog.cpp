@@ -8,6 +8,7 @@
 #include "SLDRDoc.h"
 #include "FCCRCtrlDialog.h"
 #include "afxdialogex.h"
+#include "CP_FlowComplex.h"
 // FCCRCtrlDialog 对话框
 
 IMPLEMENT_DYNAMIC(FCCRCtrlDialog, CDialogEx)
@@ -27,8 +28,11 @@ FCCRCtrlDialog::FCCRCtrlDialog(CWnd* pParent /*=NULL*/)
 	showcreators=false;
 	selcreator=-1;
 	sel3cell=-1;
+	sel2cell=-1;
+	seltriangle=-1;
 	showvoids=false;
-	mTrans=0.7;
+	showcircum=false;
+	mTrans=1.0;
 }
 
 FCCRCtrlDialog::~FCCRCtrlDialog()
@@ -56,15 +60,13 @@ BEGIN_MESSAGE_MAP(FCCRCtrlDialog, CDialogEx)
 	ON_BN_CLICKED(IDC_CHECK_CREATOR, &FCCRCtrlDialog::OnBnClickedCheckCreator)
 ON_NOTIFY(TVN_SELCHANGED, IDC_INFOTREE, &FCCRCtrlDialog::OnTvnSelchangedInfotree)
 ON_BN_CLICKED(IDC_CHECK_VOIDS, &FCCRCtrlDialog::OnBnClickedCheckVoids)
-ON_NOTIFY(NM_CUSTOMDRAW, IDC_SLIDER_TANSPARENT, &FCCRCtrlDialog::OnNMCustomdrawSliderTansparent)
 ON_BN_CLICKED(IDC_CHECK4, &FCCRCtrlDialog::OnBnClickedCheck4)
 ON_BN_CLICKED(IDC_CHECK_PATCH, &FCCRCtrlDialog::OnBnClickedCheckPatch)
+ON_BN_CLICKED(IDC_CHECK_CIRCUM, &FCCRCtrlDialog::OnBnClickedCheckCircum)
 END_MESSAGE_MAP()
 
 
 // FCCRCtrlDialog 消息处理程序
-
-
 
 void FCCRCtrlDialog::SetItems(CP_FlowComplex *FlowComplex,vector<CP_PolyLine3D> *VT_PolyLine)
 {
@@ -81,7 +83,7 @@ void FCCRCtrlDialog::SetTreeItems(int _2cell)
 	cstr.Format("2cell:%d",_2cell);//2cell在m_2cell中的index
 	HTREEITEM h2cell=m_treeCtrl.InsertItem(cstr);
 
-	for(int i=0;i<m_2cell->m_triangle.size();i++)
+	for(unsigned int i=0;i<m_2cell->m_triangle.size();i++)
 	{
 		cstr.Format("triangle:%d",m_2cell->m_triangle[i]);
 		HTREEITEM htri = m_treeCtrl.InsertItem(cstr,h2cell);
@@ -108,7 +110,7 @@ void FCCRCtrlDialog::SetTreePatch(int _patch)
 	m_treeCtrl.DeleteAllItems(); 
 	CString cstr;
 
-	for(int i=0;i<pPatch->m_2cells.size();i++)
+	for(unsigned int i=0;i<pPatch->m_2cells.size();i++)
 	{
 		cstr.Format("2cell:%d",fccr.m_FlowComplex->m_2cells[pPatch->m_2cells[i]]->index);//2cell在m_2cell中的index
 		m_treeCtrl.InsertItem(cstr);
@@ -119,7 +121,7 @@ void FCCRCtrlDialog::SetTreeCreator()
 {
 	CString cstr;
 	m_treeCtrl.DeleteAllItems(); 
-	for(int i=fccr.m_FlowComplex->desN;i<fccr.m_FlowComplex->m_2cells.size();i++)
+	for(unsigned int i=fccr.m_FlowComplex->desN;i<fccr.m_FlowComplex->m_2cells.size();i++)
 	{
 		cstr.Format("2cell:%d",i);//2cell在m_2cell中的index
 		m_treeCtrl.InsertItem(cstr);
@@ -130,10 +132,22 @@ void FCCRCtrlDialog::SetTree3cells()
 {
 	CString cstr;
 	m_treeCtrl.DeleteAllItems(); 
-	for(int i=0;i<fccr.m_FlowComplex->m_3cells.size();i++)
+	for(unsigned int i=0;i<fccr.m_FlowComplex->m_3cells.size();i++)
 	{
 		cstr.Format("3cell:%d",i);//2cell在m_2cell中的index
-		m_treeCtrl.InsertItem(cstr);
+		HTREEITEM h3cell=m_treeCtrl.InsertItem(cstr);
+		CP_3cell *p3cell=fccr.m_FlowComplex->m_3cells[i];
+		for(unsigned int j=0;j<p3cell->m_2cells.size();j++)
+		{
+			CP_2cell *p2cell=fccr.m_FlowComplex->m_2cells[p3cell->m_2cells[j]];
+			cstr.Format("2cell:%d",p2cell->index);//2cell在m_2cell中的index
+			HTREEITEM h2cell=m_treeCtrl.InsertItem(cstr,h3cell);
+			for(unsigned int k=0;k<p2cell->m_triangle.size();k++)
+			{
+				cstr.Format("triangle:%d",p2cell->m_triangle[k]);
+				HTREEITEM htri = m_treeCtrl.InsertItem(cstr,h2cell);
+			}//k
+		}
 	}//creators
 }
 
@@ -194,7 +208,7 @@ void FCCRCtrlDialog::OnBnClickedClear()
 	// TODO: 在此添加控件通知处理程序代码
 	selcreator=-1;
 	sel3cell=-1;
-	fccr.m_FlowComplex->clearAll();
+	fccr.m_FlowComplex->ClearAll();
 	fccr.maxhd=0;
 	fccr.T.clear();
 
@@ -211,11 +225,10 @@ BOOL FCCRCtrlDialog::OnInitDialog()
 
 	// TODO:  在此添加额外的初始化
 	GetDlgItem(IDC_EDIT_EPSILON)->SetWindowText("0.055");
-	GetDlgItem(IDC_EDIT_FEASA)->SetWindowText("0.5");
+	GetDlgItem(IDC_EDIT_FEASA)->SetWindowText("0.7");
 	GetDlgItem(IDC_EDIT_VOIDS)->SetWindowText("0");
 	((CButton*)GetDlgItem(IDC_CHECK1))->SetCheck(BST_CHECKED);
 	CSliderCtrl *pSlidCtrl=(CSliderCtrl*)GetDlgItem(IDC_SLIDER_TANSPARENT);
-	pSlidCtrl->SetPos(mTrans*100);
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// 异常: OCX 属性页应返回 FALSE
 }
@@ -296,13 +309,17 @@ void FCCRCtrlDialog::OnTvnSelchangedInfotree(NMHDR *pNMHDR, LRESULT *pResult)
 	// TODO: 在此添加控件通知处理程序代码
 	*pResult = 0;
 
+	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
+	CSLDRView * pView = (CSLDRView *)(pMain->GetActiveView());
+
 	CString strText; // 树节点的标签文本字符串   
 	CString seltype;
 	// 获取当前选中节点的句柄   
 	HTREEITEM hItem = m_treeCtrl.GetSelectedItem();  
 	// 获取选中节点的标签文本字符串   
 	strText = m_treeCtrl.GetItemText(hItem); 
-
+	seltype=strText.Left(strText.Find(":"));
+	
 	if(showcreators)
 	{
 		int _2cell=atoi(strText.Right(strText.GetLength()-strText.Find(":")-1));
@@ -310,10 +327,33 @@ void FCCRCtrlDialog::OnTvnSelchangedInfotree(NMHDR *pNMHDR, LRESULT *pResult)
 	}
 	if(showvoids)
 	{
-		sel3cell=atoi(strText.Right(strText.GetLength()-strText.Find(":")-1));
+		if(seltype=="3cell"){
+			sel3cell=atoi(strText.Right(strText.GetLength()-strText.Find(":")-1));
+
+			sel2cell=-1;
+			seltriangle=-1;
+		}
+		else if(seltype=="2cell"){
+			sel2cell=atoi(strText.Right(strText.GetLength()-strText.Find(":")-1));
+
+			HTREEITEM h3cell=m_treeCtrl.GetParentItem(hItem);
+			strText = m_treeCtrl.GetItemText(h3cell); 
+			sel3cell=atoi(strText.Right(strText.GetLength()-strText.Find(":")-1));
+
+			seltriangle=-1;
+		}else if(seltype=="triangle")
+		{
+			seltriangle=atoi(strText.Right(strText.GetLength()-strText.Find(":")-1));
+			HTREEITEM h2cell=m_treeCtrl.GetParentItem(hItem);
+			strText = m_treeCtrl.GetItemText(h2cell); 
+			sel2cell=atoi(strText.Right(strText.GetLength()-strText.Find(":")-1));
+
+			HTREEITEM h3cell=m_treeCtrl.GetParentItem(h2cell);
+			strText = m_treeCtrl.GetItemText(h3cell); 
+			sel3cell=atoi(strText.Right(strText.GetLength()-strText.Find(":")-1));
+		}
 	}
-	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
-	CSLDRView * pView = (CSLDRView *)(pMain->GetActiveView());
+	
 	pView->Invalidate();
 }
 
@@ -329,22 +369,6 @@ void FCCRCtrlDialog::OnBnClickedCheckVoids()
 		SetTree3cells();
 	}else
 		showvoids=false;
-	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
-	CSLDRView * pView = (CSLDRView *)(pMain->GetActiveView());
-	pView->Invalidate();
-}
-
-
-void FCCRCtrlDialog::OnNMCustomdrawSliderTansparent(NMHDR *pNMHDR, LRESULT *pResult)
-{
-	LPNMCUSTOMDRAW pNMCD = reinterpret_cast<LPNMCUSTOMDRAW>(pNMHDR);
-	// TODO: 在此添加控件通知处理程序代码
-	*pResult = 0;
-
-	CSliderCtrl *pSlidCtrl=(CSliderCtrl*)GetDlgItem(IDC_SLIDER_TANSPARENT);
-	int nPos = pSlidCtrl->GetPos(); //获得滑块的当前位置
-	mTrans=nPos/100.0;
-
 	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
 	CSLDRView * pView = (CSLDRView *)(pMain->GetActiveView());
 	pView->Invalidate();
@@ -369,5 +393,19 @@ void FCCRCtrlDialog::OnBnClickedCheckPatch()
 	CSLDRView * pView = (CSLDRView *)(pMain->GetActiveView());
 	if(!selectpatchEnable)
 		pView->selectedpatch=-1;
+	pView->Invalidate();
+}
+
+
+void FCCRCtrlDialog::OnBnClickedCheckCircum()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	showcircum=!showcircum;
+	if(showcircum)
+		mTrans=0.7;
+	else
+		mTrans=1.0;
+	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
+	CSLDRView * pView = (CSLDRView *)(pMain->GetActiveView());
 	pView->Invalidate();
 }

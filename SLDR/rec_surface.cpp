@@ -42,7 +42,7 @@ namespace rec_surface {
 			InitGeneralPoly(poly, pFace, depth);
 			CP_Mesh3D *pMesh = new CP_Mesh3D;
 			surface_tri::Triangulation(poly, topo_geometric::IsClockwise(pFace->GetLoop(0)), *pMesh);
-			for (int i = 0; i < depth.size(); ++i)
+			for (unsigned int i = 0; i < depth.size(); ++i)
 				poly.GetVert(i)->z() = depth[i];
 
 			pFace->m_surface->m_pMesh = pMesh;

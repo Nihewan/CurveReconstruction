@@ -25,7 +25,10 @@ public:
 	bool showcreators;
 	int selcreator;
 	int sel3cell;
+	int sel2cell;
+	int seltriangle;
 	bool showvoids;
+	bool showcircum;
 	double mTrans; 
 public:
 	FCCRCtrlDialog(CWnd* pParent = NULL);   // 标准构造函数
@@ -58,7 +61,7 @@ public:
 	afx_msg void OnBnClickedCheckCreator();
 	afx_msg void OnTvnSelchangedInfotree(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnBnClickedCheckVoids();
-	afx_msg void OnNMCustomdrawSliderTansparent(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnBnClickedCheck4();
 	afx_msg void OnBnClickedCheckPatch();
+	afx_msg void OnBnClickedCheckCircum();
 };

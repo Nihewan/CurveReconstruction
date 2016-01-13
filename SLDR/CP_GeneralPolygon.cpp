@@ -2,7 +2,7 @@
 #include "CP_Mesh.h"
 
 CP_GeneralPolygon2D::~CP_GeneralPolygon2D() {
-	for (int i = 0; i < m_edgeArr.size(); ++i)
+	for (unsigned int i = 0; i < m_edgeArr.size(); ++i)
 		delete m_edgeArr[i];
 	m_edgeArr.clear();
 }
