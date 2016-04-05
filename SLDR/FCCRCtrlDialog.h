@@ -7,10 +7,17 @@
 #include "afxwin.h"
 // FCCRCtrlDialog 对话框
 
+UINT ThreadFunc(LPVOID pParam);
+UINT  ThreadPlayFC(LPVOID pParam);
+#define WM_RESULT WM_USER+100
+#define WM_RESULT_FCPLAY WM_USER+101
+
 class FCCRCtrlDialog : public CDialogEx
 {
 	DECLARE_DYNAMIC(FCCRCtrlDialog)
 public:
+	CWinThread* thread;//全局变量
+	CWinThread* pFCthread;//全局变量
 	FCCR fccr;
 	CTreeCtrl m_treeCtrl;
 	bool select2cellEnable;
@@ -29,7 +36,12 @@ public:
 	int seltriangle;
 	bool showvoids;
 	bool showcircum;
+	bool shownongabriel;
+	bool showvoronoi;
 	double mTrans; 
+	int play;
+	int pos;
+	bool pause;
 public:
 	FCCRCtrlDialog(CWnd* pParent = NULL);   // 标准构造函数
 	virtual ~FCCRCtrlDialog();
@@ -45,6 +57,9 @@ public:
 	void SetTreePatch(int _patch);
 	void SetTreeCreator();
 	void SetTree3cells();
+	void OnButtonReconstruction();
+	void OnPlayFC();
+	void OnPlayFCPause();
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnBnClickedSelect2cell();
@@ -64,4 +79,7 @@ public:
 	afx_msg void OnBnClickedCheck4();
 	afx_msg void OnBnClickedCheckPatch();
 	afx_msg void OnBnClickedCheckCircum();
+	afx_msg void OnBnClickedCheckNongabriel();
+	afx_msg void OnBnClickedCheckVoronoi();
+
 };

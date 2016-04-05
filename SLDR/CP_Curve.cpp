@@ -131,6 +131,7 @@ void CP_PolyLine3D::Draw()
 	glBegin(GL_LINE_STRIP);
 	for (unsigned int i = 0; i < m_points.size(); i++)
 	{
+		glNormal3f(0.0f,0.0f,0.0f);
 		glVertex3d(m_points[i].m_x, m_points[i].m_y, m_points[i].m_z);
 	}
 

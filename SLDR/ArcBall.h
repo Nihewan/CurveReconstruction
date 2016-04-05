@@ -398,7 +398,7 @@ public:
     inline
         void    setBounds(GLfloat NewWidth, GLfloat NewHeight)
     {
-        ASSERT((NewWidth > 1.0f) && (NewHeight > 1.0f));
+       // ASSERT((NewWidth > 1.0f) && (NewHeight > 1.0f));
 		
         //设置长宽的调整因子
         this->AdjustWidth  = 1.0f / ((NewWidth  - 1.0f) * 0.5f);

@@ -29,9 +29,11 @@ class CircumPoint :
 public:
 	double vol;//所在四面体的体积
 	bool flag;
+	double distance;//Voronoi vertex和Delaunay tetrahedron顶点间的距离
 public:
 	explicit CircumPoint (double newx=0.0, double newy=0.0, double newz=0.0, double newvol=0.0);
 	void SetMember(double newx, double newy, double newz, double newvol);
+	void SetDistance(double d);
 	CircumPoint& operator=(const CircumPoint& tmp);
 	~CircumPoint(void);
 };
@@ -49,11 +51,23 @@ public:
 	double minx,maxx,miny,maxy;
 	int aa;
 public:
+	CP_Triganle3D();
 	CP_Triganle3D(int p0, int p1, int p2);
 	~CP_Triganle3D(void);
 	//CP_Vector3D GetNormal();
 };
 
+class CircuAndTri
+{
+public:
+	vector<CP_LineSegment3D> m_circulator;//开头的中心三角形为空，表示圈和下一个三角形
+	CP_Triganle3D tri;
+	//
+	vector<CircuAndTri*> m_circuAndTri;//访问时深度优先
+public:
+	CircuAndTri();
+	~CircuAndTri(void);
+};
 
 class CurveSegment :public CP_LineSegment3D
 {
@@ -85,6 +99,7 @@ public:
 	vector<int> m_adj2cell;
 	vector<int> p3cell;//组成paired 3cell的2cell 的index，因为collapse之后还要使用此信息
 	int patch;
+	CircuAndTri m_circulator;
 public:
 	CP_2cell(void);
 	~CP_2cell(void);
@@ -97,7 +112,9 @@ public:
 	vector<int> cmp3cells;
 	vector<int> m_circums;
 	vector<CP_Point3D> v;
-	double dis3cell;
+	double dis3cell;//其实是体积
+	double distance;
+	double persistence;
 	bool flag;
 public:
 	CP_3cell(void);
@@ -132,12 +149,15 @@ public:
 	int oripatches;
 	double minx,maxx,miny,maxy,minz,maxz;
 	vector<CP_Point3D> m_0cells;
+	vector<CP_Point3D> m_critical;
 	vector<CurveSegment*> m_1cells;//input curve segment
 	vector<CP_2cell*> m_2cells;//tricells中三角面片的id
 	vector<CP_3cell*> m_3cells;
 	vector<CP_Patch *> m_patches;//包括destoryer和最大creator的patch
 	vector<CP_Patch *> m_cpatches;//其他creator的patch,现在的编号
 	vector<CP_Triganle3D*> delauny2cells;
+	vector<CP_Triganle3D*> non_gabriel_triangles;
+	vector<CP_Triganle3D*> right_triangle;
 	vector<CP_PolyLine3D> m_PolyLine;
 	vector<CP_Triganle3D*> tricells;
 	vector<CP_Triganle3D*> visitedtri;//中心三角形
@@ -150,6 +170,7 @@ public:
 	~CP_FlowComplex();
 	void ClearAll();
 	void IsBoundBox(const CP_Point3D &p);
+	void Set3cellDistance();
 	void SetTriangleBound();
 	void Gabrielize();
 	bool IsGabriel(const CP_Point3D &c,const CP_Point3D &r,double radius_pq);
@@ -200,6 +221,8 @@ public:
 
 	void DrawPoints();
 	void DrawDelaunyTriangles();
+	void DrawRightTriangles();
+	void DrawNonGabrielTriangles();
 	void DrawTriangle(const CP_Triganle3D &tri);
 	void DrawTriangleBoundary(const CP_2cell &p2cell);
 	void Draw2cell(const CP_2cell &p2cell);

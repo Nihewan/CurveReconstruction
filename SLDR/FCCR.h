@@ -11,17 +11,17 @@ typedef CGAL::Exact_predicates_exact_constructions_kernel EK;
 
 typedef CGAL::Lazy_exact_nt<CGAL::Gmpq> NT; 
 typedef CGAL::Cartesian<NT> K; 
-typedef CGAL::Delaunay_triangulation_3<EK> Delaunay;
+typedef CGAL::Delaunay_triangulation_3<K> Delaunay;
 typedef CGAL::Cartesian_converter<IK, EK>	IK_to_EK;
 typedef CGAL::Cartesian_converter<EK, IK>   EK_to_IK;
-typedef EK::Point_3   Point;
-typedef EK::Ray_3	Ray;
-typedef EK::Segment_3 Segment;
-typedef EK::Triangle_3 Triangle;
-typedef EK::Tetrahedron_3 Tetrahedron;
-typedef EK::Line_3   Line;
-typedef EK::Plane_3 Plane;
-typedef EK::Vector_3 Vector;
+typedef K::Point_3   Point;
+typedef K::Ray_3	Ray;
+typedef K::Segment_3 Segment;
+typedef K::Triangle_3 Triangle;
+typedef K::Tetrahedron_3 Tetrahedron;
+typedef K::Line_3   Line;
+typedef K::Plane_3 Plane;
+typedef K::Vector_3 Vector;
 typedef Delaunay::Facet Facet;
 typedef Delaunay::Cell_handle Cell_handle;
 typedef Delaunay::Finite_facets_iterator  Facets_iterator;
@@ -32,6 +32,8 @@ class CP_FlowComplex;
 class CP_PolyLine3D;
 class CurveSegment;
 class CP_Point3D;
+class CP_Triganle3D;
+class CircuAndTri;
 class FCCR
 {
 public:
@@ -43,6 +45,8 @@ public:
 	Delaunay T;
 	CP_FlowComplex *m_FlowComplex;
 	std::vector<CP_PolyLine3D> *m_VT_PolyLine;
+	bool showResult;
+	bool IsProcess;
 public:
 	FCCR(void);
 	~FCCR(void);
@@ -56,7 +60,8 @@ public:
 	bool obtusetri(const Triangle &tri);
 	double getHausdorffDistance(const CP_PolyLine3D &curveA,const  CP_PolyLine3D &curveB);
 	void addrFacet(const Facet &fit);
-	void addrVoroFace(const Edge &e,int vIntersect,const Triangle &tricir,int _2cell);
+	void addrVoroFace(const Edge &e,int vIntersect,const Triangle &tricir,int _2cell,CircuAndTri* pTrcirculator);
+	void deleteTriangle(vector<CP_Triganle3D*> &non_gabriel_triangles,const Triangle &tri);
 	void generOBJ();
 };
 

@@ -53,6 +53,8 @@ public:
 	CString format;
 	bool showDelauny;
 	bool IsProcess;
+	bool fcEnable;
+	bool playEnable;
 	bool showFC;
 	bool showResult;
 	bool showInputP;
@@ -68,6 +70,7 @@ public:
 	double mDiffuse1,mSpecular1,mAmbient1;
 	double mCutOff2,mSpecular2,mExponent2;
 	bool light0,light1,light2;
+	int play;
 // 操作
 public:
 	void ReSet();
@@ -89,6 +92,7 @@ public:
 	void  drawScene();
 	void drawString(const char* str);
 	void drawData();
+	
 // 重写
 public:
 	virtual void OnDraw(CDC* pDC);  // 重写以绘制该视图
@@ -107,7 +111,6 @@ public:
 #endif
 
 protected:
-
 // 生成的消息映射函数
 protected:
 	afx_msg void OnFilePrintPreview();
@@ -156,6 +159,11 @@ public:
 	afx_msg void OnSliderCutoff2();
 	afx_msg void OnSliderExponent2();
 	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
+	afx_msg void OnUpdateFCReconstruction(CCmdUI *pCmdUI);
+	afx_msg void OnButtonPlay();
+	afx_msg void OnButtonPause();
+	afx_msg void OnUpdateButtonPlay(CCmdUI *pCmdUI);
+	afx_msg void OnButtonPlaycell();
 };
 
 #ifndef _DEBUG  // SLDRView.cpp 中的调试版本

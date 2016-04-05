@@ -17,6 +17,11 @@ CP_Tetrahedron::~CP_Tetrahedron()
 
 }
 
+CP_Triganle3D::CP_Triganle3D()
+{
+
+}
+
 CP_Triganle3D::CP_Triganle3D(int p0, int p1, int p2)
 {
 	m_points[0] = p0;
@@ -29,6 +34,16 @@ CP_Triganle3D::CP_Triganle3D(int p0, int p1, int p2)
 
 CP_Triganle3D::~CP_Triganle3D(void)
 {
+}
+
+CircuAndTri::CircuAndTri()
+{
+
+}
+
+CircuAndTri::~CircuAndTri()
+{
+
 }
 
 CP_FlowComplex::CP_FlowComplex()
@@ -899,6 +914,7 @@ void CP_FlowComplex::ClearAll()
 	for(unsigned int i=0;i<delauny2cells.size();i++)
 		delete delauny2cells[i];
 	vector<CP_Triganle3D*>().swap(delauny2cells);
+	vector<CP_Triganle3D*>().swap(non_gabriel_triangles);
 	vector<CP_PolyLine3D>().swap(m_PolyLine);
 	for(unsigned int i=0;i<tricells.size();i++)
 		delete tricells[i];
@@ -907,6 +923,8 @@ void CP_FlowComplex::ClearAll()
 		delete visitedtri[i];
 	vector<CP_Triganle3D*>().swap(visitedtri);
 	vector<CP_Point3D>().swap(vjoint);
+	vector<CircumPoint>().swap(m_circums);
+	vector<int>().swap(topo);
 }
 
 void CP_FlowComplex::DrawPoints()
@@ -916,18 +934,74 @@ void CP_FlowComplex::DrawPoints()
 	for (unsigned int j = 0; j < inputPoints; j++)
 	{
 		glBegin(GL_POINTS);//必须是加上s，要不然显示不了
+		glNormal3f(1.0f,1.0f,1.0f);
 		glVertex3f(m_0cells[j].m_x, m_0cells[j].m_y,m_0cells[j].m_z);
 		glEnd();
 	}
 }
 
+void CP_FlowComplex::DrawRightTriangles()
+{
+	glColor4f(0.7,0.7,0.7,1.0);
+	for (unsigned int i = 0; i <right_triangle.size(); i++)
+	{
+		CP_Triganle3D *pTri = right_triangle[i];
+		DrawTriangle(*pTri);
+
+		glEnable (GL_LINE_SMOOTH);
+		glHint (GL_LINE_SMOOTH, GL_NICEST);
+		glLineWidth(1.1f);
+		glColor4f(0.7,0.7,0.7,1.0);
+		glBegin(GL_LINE_LOOP);
+		for (unsigned int j = 0; j < 3; j++){
+			//glNormal3f(0, 0, 0);
+			glVertex3f(m_0cells[pTri->m_points[j]].m_x, m_0cells[pTri->m_points[j]].m_y, m_0cells[pTri->m_points[j]].m_z);
+		}
+		glEnd();
+		glDisable(GL_LINE_SMOOTH);
+	}
+}
+
 void CP_FlowComplex::DrawDelaunyTriangles()
 {
-	glColor4f(0.7,0.7,0.7,1);
+	glColor4f(0.7,0.7,0.7,1.0);
 	for (unsigned int i = 0; i <delauny2cells.size(); i++)
 	{
 		CP_Triganle3D *pTri = delauny2cells[i];
 		DrawTriangle(*pTri);
+
+		glEnable (GL_LINE_SMOOTH);
+		glHint (GL_LINE_SMOOTH, GL_NICEST);
+		glLineWidth(1.1f);
+		glColor4f(0.7,0.7,0.7,1.0);
+		glBegin(GL_LINE_LOOP);
+		for (unsigned int j = 0; j < 3; j++){
+			//glNormal3f(0, 0, 0);
+			glVertex3f(m_0cells[pTri->m_points[j]].m_x, m_0cells[pTri->m_points[j]].m_y, m_0cells[pTri->m_points[j]].m_z);
+		}
+		glEnd();
+		glDisable(GL_LINE_SMOOTH);
+	}
+}
+
+void CP_FlowComplex::DrawNonGabrielTriangles()
+{
+	for (unsigned int i = 0; i <non_gabriel_triangles.size(); i++)
+	{
+		glColor4f(0.6,0.6,0.9,0.1);
+		CP_Triganle3D *pTri = non_gabriel_triangles[i];
+		DrawTriangle(*pTri);
+
+		glEnable (GL_LINE_SMOOTH);
+		glHint (GL_LINE_SMOOTH, GL_NICEST);
+		glLineWidth(0.1f);
+		glColor4f(0.7,0.7,0.7,0.5);
+		glBegin(GL_LINE_LOOP);
+		for (unsigned int j = 0; j < 3; j++){
+			//glNormal3f(0, 0, 0);
+			glVertex3f(m_0cells[pTri->m_points[j]].m_x, m_0cells[pTri->m_points[j]].m_y, m_0cells[pTri->m_points[j]].m_z);
+		}glEnd();
+		glDisable(GL_LINE_SMOOTH);
 	}
 }
 
@@ -1160,6 +1234,25 @@ int CP_FlowComplex::IsPointZLineIntersectTriangle(const CircumPoint& p,
 	return 0;
 }
 
+void CP_FlowComplex::Set3cellDistance()
+{
+	for(unsigned int i=0;i<m_3cells.size();i++)
+	{
+		double mindistance=100000000;
+		for(unsigned int j=0;j<m_3cells[i]->m_circums.size();j++)
+		{
+			if(m_circums[m_3cells[i]->m_circums[j]].distance<mindistance)
+			{
+				mindistance=m_circums[m_3cells[i]->m_circums[j]].distance;
+			}
+		}//circums
+		//m_3cells[i]->distance=maxdistance/m_2cells[Locate2cell(m_3cells[i]->m_2cells[0])]->distance;
+		m_3cells[i]->distance=mindistance;
+		//cout<<m_3cells[i]->distance<<endl;
+		m_3cells[i]->persistence=log(m_3cells[i]->distance/m_2cells[Locate2cell(m_3cells[i]->m_2cells[0])]->distance);
+	}//3cells
+}
+
 void CP_FlowComplex::SetTriangleBound()
 {
 	for (unsigned int i = 0; i < tricells.size(); i++)
@@ -1245,7 +1338,6 @@ void CP_FlowComplex::SeekDestoryerPatch()
 		}
 	}//i
 }
-
 
 void CurveSegment::ResetDegreee()
 {
@@ -1334,5 +1426,11 @@ CircumPoint& CircumPoint::operator=(const CircumPoint& tmp)
 	m_z=tmp.m_z;
 	vol=tmp.vol;
 	flag=tmp.flag;
+	distance=tmp.distance;
 	return *this;
+}
+
+void CircumPoint::SetDistance(double d)
+{
+	distance=d;
 }

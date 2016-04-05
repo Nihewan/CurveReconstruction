@@ -11,6 +11,8 @@
 #include "CP_FlowComplex.h"
 // FCCRCtrlDialog 对话框
 
+//#define WM_RESULT WM_USER+500
+
 IMPLEMENT_DYNAMIC(FCCRCtrlDialog, CDialogEx)
 
 FCCRCtrlDialog::FCCRCtrlDialog(CWnd* pParent /*=NULL*/)
@@ -32,7 +34,12 @@ FCCRCtrlDialog::FCCRCtrlDialog(CWnd* pParent /*=NULL*/)
 	seltriangle=-1;
 	showvoids=false;
 	showcircum=false;
+	shownongabriel=false;
+	showvoronoi=false;
 	mTrans=1.0;
+	play=0;
+	pos=0;
+	pause=false;
 }
 
 FCCRCtrlDialog::~FCCRCtrlDialog()
@@ -63,6 +70,8 @@ ON_BN_CLICKED(IDC_CHECK_VOIDS, &FCCRCtrlDialog::OnBnClickedCheckVoids)
 ON_BN_CLICKED(IDC_CHECK4, &FCCRCtrlDialog::OnBnClickedCheck4)
 ON_BN_CLICKED(IDC_CHECK_PATCH, &FCCRCtrlDialog::OnBnClickedCheckPatch)
 ON_BN_CLICKED(IDC_CHECK_CIRCUM, &FCCRCtrlDialog::OnBnClickedCheckCircum)
+ON_BN_CLICKED(IDC_CHECK_NONGABRIEL, &FCCRCtrlDialog::OnBnClickedCheckNongabriel)
+ON_BN_CLICKED(IDC_CHECK_VORONOI, &FCCRCtrlDialog::OnBnClickedCheckVoronoi)
 END_MESSAGE_MAP()
 
 
@@ -211,10 +220,14 @@ void FCCRCtrlDialog::OnBnClickedClear()
 	fccr.m_FlowComplex->ClearAll();
 	fccr.maxhd=0;
 	fccr.T.clear();
+	play=0;
+	pos=0;
+	pause=false;
 
 	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
 	CSLDRView * pView = (CSLDRView *)(pMain->GetActiveView());
-	pView->IsProcess=false;
+	fccr.IsProcess=false;
+	fccr.showResult=false;
 	pView->Invalidate();
 }
 
@@ -408,4 +421,118 @@ void FCCRCtrlDialog::OnBnClickedCheckCircum()
 	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
 	CSLDRView * pView = (CSLDRView *)(pMain->GetActiveView());
 	pView->Invalidate();
+}
+
+
+//void FCCRCtrlDialog::OnBnClickedCheckNonGabriel()
+//{
+//	// TODO: 在此添加控件通知处理程序代码
+//	shownongabriel=!shownongabriel;
+//	if(shownongabriel)
+//		cout<<"aaaaaaaaaa"<<endl;
+//	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
+//	CSLDRView * pView = (CSLDRView *)(pMain->GetActiveView());
+//	pView->Invalidate();
+//}
+
+
+void FCCRCtrlDialog::OnBnClickedCheckNongabriel()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	shownongabriel=!shownongabriel;
+	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
+	CSLDRView * pView = (CSLDRView *)(pMain->GetActiveView());
+	pView->Invalidate();
+}
+
+
+void FCCRCtrlDialog::OnBnClickedCheckVoronoi()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	showvoronoi=!showvoronoi;
+	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
+	CSLDRView * pView = (CSLDRView *)(pMain->GetActiveView());
+	pView->Invalidate();
+}
+
+
+void FCCRCtrlDialog::OnButtonReconstruction()
+{
+	// TODO: 在此添加命令处理程序代码
+	thread=AfxBeginThread(ThreadFunc,this);  
+}
+
+void FCCRCtrlDialog::OnPlayFC()
+{
+	pFCthread=AfxBeginThread(ThreadPlayFC,this);
+}
+
+UINT  ThreadPlayFC(LPVOID pParam) 
+{  
+	FCCRCtrlDialog *dlg=(FCCRCtrlDialog*)pParam;
+	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
+	CSLDRView * pView = (CSLDRView *)(pMain->GetActiveView());
+	CSLDRDoc* pDoc = pView->GetDocument();
+	int num=static_cast<int>(dlg->fccr.m_FlowComplex->m_2cells.size());
+	for(unsigned int i=0;i<dlg->fccr.m_FlowComplex->m_2cells.size();i++)
+	{
+		dlg->play++;
+		dlg->pos=(dlg->play*100)/num;
+		//delay
+		Sleep(10);
+		::PostMessage(pMain->m_hWnd,WM_RESULT_FCPLAY,0,0);
+	}
+	dlg->play=0;//演示完后显示FC，不显示动画
+	return 0;
+}
+
+UINT  ThreadFunc(LPVOID pParam) 
+{  
+	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
+	CSLDRView * pView = (CSLDRView *)(pMain->GetActiveView());
+	clock_t start,end;
+	//polyline
+	FCCRCtrlDialog *fc=(FCCRCtrlDialog*)pParam;
+	start = clock();
+	fc->fccr.ToPolyLine();
+	end = clock();
+	cout<<"time for polyline: "<<(double)(end-start)/CLOCKS_PER_SEC<<endl;
+	//delauny and voronoi
+	start = clock();
+	fc->fccr.OnDelaunyTriangulation();
+	end = clock();
+	cout<<"time for Delauny: "<<(double)(end-start)/CLOCKS_PER_SEC<<endl;
+	//flow complex
+	//pMain->m_ctrlPaneFCCR->m_dialog.fccr.filename=pDoc->filename;
+	start = clock();
+	fc->fccr.ToFlowcomplex();
+	end = clock();
+	cout<<"time for compute Flow Complex: "<<(double)(end-start)/CLOCKS_PER_SEC<<endl;
+	// topological reconstruction
+	start = clock();
+	fc->fccr.OnCollapse();
+	end = clock();
+	cout<<"time for collapse: "<<(double)(end-start)/CLOCKS_PER_SEC<<endl;
+	//thicken
+	start = clock();
+	fc->fccr.OnThicken();
+	end = clock();
+	cout<<"time for Thicken and Pruning: "<<(double)(end-start)/CLOCKS_PER_SEC<<endl;
+	
+	fc->fccr.showResult=true;
+	fc->fccr.IsProcess=true;
+	::PostMessage(pMain->m_hWnd,WM_RESULT,0,0);
+	return 0;
+}  
+
+void FCCRCtrlDialog::OnPlayFCPause()
+{
+	if(!pause){
+		pause=true;
+		pFCthread->SuspendThread();
+	}
+	else{
+		pause=false;
+		pFCthread->ResumeThread();
+	}
 }

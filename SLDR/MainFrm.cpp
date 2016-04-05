@@ -19,7 +19,8 @@
 #include "CLog.h"
 #include "CCopierRegister.h"
 #include "SLDRDoc.h"
-
+#include "SLDRView.h"
+#include "CP_FlowComplex.h"
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -39,6 +40,8 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
 	ON_WM_SHOWWINDOW()
 	ON_WM_SETCURSOR()
 	ON_COMMAND(ID_BUTTON_SAVECNW, &CMainFrame::OnButtonSavecnw)
+	ON_MESSAGE(WM_RESULT,&CMainFrame::ShowResult)
+	ON_MESSAGE(WM_RESULT_FCPLAY,&CMainFrame::ShowFCPlay)
 END_MESSAGE_MAP()
 
 // CMainFrame ¹¹Ôì/Îö¹¹
@@ -301,3 +304,28 @@ void CMainFrame::OnButtonSavecnw()
 	CSLDRDoc* pDoc = dynamic_cast<CSLDRDoc*>(GetActiveDocument());
 	pDoc->OutputCurveNetwork();
 }
+
+class CSLDRDoc;
+LRESULT  CMainFrame::ShowResult(WPARAM wParam,LPARAM lParam)
+{
+	CSLDRView * pView = (CSLDRView *)(GetActiveView());
+	pView->fcEnable=true;
+	pView->Invalidate();
+	return 0;
+}
+
+LRESULT  CMainFrame::ShowFCPlay(WPARAM wParam,LPARAM lParam)
+{
+	CSLDRView * pView = (CSLDRView *)(GetActiveView());
+	CMFCRibbonBar* pRibbon = ((CMainFrame*) AfxGetMainWnd())->GetRibbonBar();
+	CMFCRibbonProgressBar* pProgressBar = DYNAMIC_DOWNCAST(
+		CMFCRibbonProgressBar, pRibbon->FindByID(ID_PROGRESS_PLAYFC));
+	pProgressBar->SetPos(m_ctrlPaneFCCR->m_dialog.pos,true);
+	if(m_ctrlPaneFCCR->m_dialog.pos==100)
+		pView->playEnable=true;
+	pView->Invalidate();
+	return 0;
+}
+
+
+

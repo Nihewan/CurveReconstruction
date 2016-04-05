@@ -16,8 +16,10 @@
 #include "CtrlPane.h"
 #include "FCCRCtrlPane.h"
 #include "UCSEditorPane.h"
+#include "SLDRDoc.h"
 #include <iostream>
 using namespace std;
+
 class CMainFrame : public CFrameWndEx
 {
 	
@@ -31,7 +33,7 @@ public:
 	FCCRCtrlPane *m_ctrlPaneFCCR;
 	CUCSEditorPane m_ucsEditor;
 	CursorType	   m_cursorType;
-
+	CWinThread* thread;//全局变量
 // 操作
 public:
 	int ShowUCSEditor();
@@ -73,6 +75,8 @@ public:
 	afx_msg void OnCbShowcp();
 	afx_msg BOOL OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
 	afx_msg void OnButtonSavecnw();
+	afx_msg LRESULT  ShowResult(WPARAM wParam,LPARAM  lParam);
+	afx_msg LRESULT  ShowFCPlay(WPARAM wParam,LPARAM  lParam);
 };
 
 
