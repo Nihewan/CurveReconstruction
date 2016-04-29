@@ -32,6 +32,7 @@ FCCRCtrlDialog::FCCRCtrlDialog(CWnd* pParent /*=NULL*/)
 	sel3cell=-1;
 	sel2cell=-1;
 	seltriangle=-1;
+	selpoly=-1;
 	showvoids=false;
 	showcircum=false;
 	shownongabriel=false;
@@ -211,23 +212,53 @@ void FCCRCtrlDialog::OnBnClickedCheck2cell()
 	pView->Invalidate();
 }
 
-
 void FCCRCtrlDialog::OnBnClickedClear()
 {
-	// TODO: 在此添加控件通知处理程序代码
+	// 刷新状态、清空处理结果
+	select2cellEnable=false;
+	selectpatchEnable=false;
+	randomColor=true;
+	colorByDis=false;
+	triboundary=false;
+	_2cellboundary=false;
+	patchboundary=false;
+	edgeByDegree=false;
+	showpoly=false;
+	showcreators=false;
 	selcreator=-1;
 	sel3cell=-1;
-	fccr.m_FlowComplex->ClearAll();
-	fccr.maxhd=0;
-	fccr.T.clear();
+	sel2cell=-1;
+	seltriangle=-1;
+	selpoly=-1;
+	showvoids=false;
+	showcircum=false;
+	shownongabriel=false;
+	showvoronoi=false;
+	mTrans=1.0;
 	play=0;
 	pos=0;
 	pause=false;
 
+	fccr.ReSet();
 	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
 	CSLDRView * pView = (CSLDRView *)(pMain->GetActiveView());
-	fccr.IsProcess=false;
-	fccr.showResult=false;
+	pView->ReSet();
+
+	((CButton*)GetDlgItem(IDC_CHECK1))->SetCheck(BST_CHECKED);
+	((CButton*)GetDlgItem(IDC_SELECT_TRIANGLE))->SetCheck(BST_UNCHECKED);
+	((CButton*)GetDlgItem(IDC_CHECK_PATCH))->SetCheck(BST_UNCHECKED);
+	((CButton*)GetDlgItem(IDC_CHECK_TRI))->SetCheck(BST_UNCHECKED);
+	((CButton*)GetDlgItem(IDC_CHECK_2CELL))->SetCheck(BST_UNCHECKED);
+	((CButton*)GetDlgItem(IDC_CHECK4))->SetCheck(BST_UNCHECKED);
+	((CButton*)GetDlgItem(IDC_SHOWEDGE))->SetCheck(BST_UNCHECKED);
+	((CButton*)GetDlgItem(IDC_CHECK_POLYLINE))->SetCheck(BST_UNCHECKED);
+	((CButton*)GetDlgItem(IDC_CHECK_VORONOI))->SetCheck(BST_UNCHECKED);
+	((CButton*)GetDlgItem(IDC_CHECK_CREATOR))->SetCheck(BST_UNCHECKED);
+	((CButton*)GetDlgItem(IDC_CHECK_VOIDS))->SetCheck(BST_UNCHECKED);
+	((CButton*)GetDlgItem(IDC_CHECK_NONGABRIEL))->SetCheck(BST_UNCHECKED);
+	GetDlgItem(IDC_EDIT_EPSILON)->SetWindowText("0.055");
+	GetDlgItem(IDC_EDIT_FEASA)->SetWindowText("0.7");
+	GetDlgItem(IDC_EDIT_VOIDS)->SetWindowText("0");
 	pView->Invalidate();
 }
 
@@ -462,6 +493,11 @@ void FCCRCtrlDialog::OnButtonReconstruction()
 	thread=AfxBeginThread(ThreadFunc,this);  
 }
 
+void FCCRCtrlDialog::OnImprovedFCReconstruction()
+{
+	thread=AfxBeginThread(ThreadImrovedFC,this);
+}
+
 void FCCRCtrlDialog::OnPlayFC()
 {
 	pFCthread=AfxBeginThread(ThreadPlayFC,this);
@@ -473,14 +509,18 @@ UINT  ThreadPlayFC(LPVOID pParam)
 	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
 	CSLDRView * pView = (CSLDRView *)(pMain->GetActiveView());
 	CSLDRDoc* pDoc = pView->GetDocument();
-	int num=static_cast<int>(dlg->fccr.m_FlowComplex->m_2cells.size());
-	for(unsigned int i=0;i<dlg->fccr.m_FlowComplex->m_2cells.size();i++)
+	int num=0;
+	//cout<<dlg->selpoly<<endl;
+	if(dlg->selpoly!=-1)
+	    num=static_cast<int>(dlg->fccr.m_FlowComplex->m_PolyLine[dlg->selpoly].cycle.size());
+	
+	for(int i=0;i<num;i++)
 	{
 		dlg->play++;
 		dlg->pos=(dlg->play*100)/num;
 		//delay
-		Sleep(10);
 		::PostMessage(pMain->m_hWnd,WM_RESULT_FCPLAY,0,0);
+		Sleep(1000);
 	}
 	dlg->play=0;//演示完后显示FC，不显示动画
 	return 0;
@@ -525,6 +565,55 @@ UINT  ThreadFunc(LPVOID pParam)
 	return 0;
 }  
 
+UINT  ThreadImrovedFC(LPVOID pParam) 
+{  
+	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
+	CSLDRView * pView = (CSLDRView *)(pMain->GetActiveView());
+	clock_t start,end;
+	//polyline
+	FCCRCtrlDialog *fc=(FCCRCtrlDialog*)pParam;
+	fc->fccr.IsProcess=true;
+	start = clock();
+	fc->fccr.IFCPolyline();//step0 角度分类
+	//::PostMessage(pMain->m_hWnd,WM_RESULT_REFRESH,0,0);//刷新结果界面
+	//fc->thread->SuspendThread();
+
+	//fc->fccr.ShortestCycle();//step1 最小环
+	//::PostMessage(pMain->m_hWnd,WM_RESULT_REFRESH,0,0);//刷新结果界面
+	//fc->thread->SuspendThread();
+
+	//fc->fccr.ConfirmClassification();//step2 最小环为双的边不为非流形
+	//fc->fccr.SetSymmetricCurveTagTrue();
+	cout<<fc->fccr.m_FlowComplex->m_PolyLine.size()<<endl;
+	end = clock();
+	cout<<"time for polyline: "<<(double)(end-start)/CLOCKS_PER_SEC<<endl;
+	//delauny and voronoi
+	//start = clock();
+	//fc->fccr.OnDelaunyTriangulation();
+	//end = clock();
+	//cout<<"time for Delauny: "<<(double)(end-start)/CLOCKS_PER_SEC<<endl;
+	////flow complex
+	////pMain->m_ctrlPaneFCCR->m_dialog.fccr.filename=pDoc->filename;
+	//start = clock();
+	//fc->fccr.ToFlowcomplex();
+	//end = clock();
+	//cout<<"time for compute Flow Complex: "<<(double)(end-start)/CLOCKS_PER_SEC<<endl;
+	//// topological reconstruction
+	//start = clock();
+	//fc->fccr.OnCollapse();
+	//end = clock();
+	//cout<<"time for collapse: "<<(double)(end-start)/CLOCKS_PER_SEC<<endl;
+	////thicken
+	//start = clock();
+	//fc->fccr.OnThicken();
+	//end = clock();
+	//cout<<"time for Thicken and Pruning: "<<(double)(end-start)/CLOCKS_PER_SEC<<endl;
+
+	//fc->fccr.showResult=true;
+	::PostMessage(pMain->m_hWnd,WM_RESULT,0,0);//刷新结果界面
+	return 0;
+}
+
 void FCCRCtrlDialog::OnPlayFCPause()
 {
 	if(!pause){
@@ -535,4 +624,9 @@ void FCCRCtrlDialog::OnPlayFCPause()
 		pause=false;
 		pFCthread->ResumeThread();
 	}
+}
+
+void FCCRCtrlDialog::OnIFCMethodNext()
+{
+	thread->ResumeThread();
 }

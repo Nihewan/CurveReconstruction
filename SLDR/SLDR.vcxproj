@@ -284,7 +284,9 @@
     <Image Include="C:\Users\Administrator\Desktop\z.bmp" />
     <Image Include="res\2015073109573166_easyicon_net_60.900726392252.png" />
     <Image Include="res\2015073109573166_easyicon_net_60.9007263922521.bmp" />
+    <Image Include="res\3D_Cube_32px_1074515_easyicon.net.png" />
     <Image Include="res\bitmap1.bmp" />
+    <Image Include="res\bitmap3.bmp" />
     <Image Include="res\Project1.bmp" />
     <Image Include="res\x.bmp" />
     <Image Include="res\z.bmp" />

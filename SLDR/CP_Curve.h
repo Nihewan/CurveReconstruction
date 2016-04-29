@@ -90,11 +90,18 @@ public:
 class CP_PolyLine3D{
 public:
 	vector<CP_Point3D> m_points;
-	bool tag;
-	int cut;
+	vector<vector<int>> cycle;//组成最小环的边
+	bool tag;//标记预期非流形面片的边界曲线
+	int s,e;//两端点的在0cells中的下标
+	vector<double> len;
+	double mincyclelength;//最小环的周长
+	vector<int> sharppointv;
 public:
+	CP_PolyLine3D(void);
 	double		GetLength() const;
+	double      GetLength(int s,int e) const;
 	void		Draw();
+	void		ZoomDraw();
 };
 
 class CP_Nurbs : public CP_Curve3D
@@ -192,8 +199,6 @@ public:
 	virtual void		Draw( );
 	virtual CP_Arc&		operator=(const CP_Curve3D&);
 };
-
-
-
+extern double dist(const CP_Point3D &x,const CP_Point3D &y);
 
 #endif

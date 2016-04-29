@@ -54,6 +54,7 @@ public:
 	bool showDelauny;
 	bool IsProcess;
 	bool fcEnable;
+	bool ifcEnable;
 	bool playEnable;
 	bool showFC;
 	bool showResult;
@@ -63,14 +64,15 @@ public:
 	int selected2cell;
 	int selectedpatch;
 	int selectedpoly;
-	bool ctrlDown;
+	int moveonpoly;
+	bool shiftDown;
 	bool zDown;
 	double mDiffuse,mSpecular,mShine;
 	double mDiffuse0,mSpecular0,mAmbient0;
 	double mDiffuse1,mSpecular1,mAmbient1;
 	double mCutOff2,mSpecular2,mExponent2;
 	bool light0,light1,light2;
-	int play;
+	int step;
 // 操作
 public:
 	void ReSet();
@@ -164,6 +166,9 @@ public:
 	afx_msg void OnButtonPause();
 	afx_msg void OnUpdateButtonPlay(CCmdUI *pCmdUI);
 	afx_msg void OnButtonPlaycell();
+	afx_msg void OnButtonImprovedfc();
+	afx_msg void OnButtonNext();
+	afx_msg void OnUpdateButtonImprovedfc(CCmdUI *pCmdUI);
 };
 
 #ifndef _DEBUG  // SLDRView.cpp 中的调试版本

@@ -51,6 +51,7 @@ public:
 	FCCR(void);
 	~FCCR(void);
 
+	void ReSet();
 	void ToPolyLine();
 	void OnDelaunyTriangulation();
 	void ToFlowcomplex();
@@ -63,5 +64,11 @@ public:
 	void addrVoroFace(const Edge &e,int vIntersect,const Triangle &tricir,int _2cell,CircuAndTri* pTrcirculator);
 	void deleteTriangle(vector<CP_Triganle3D*> &non_gabriel_triangles,const Triangle &tri);
 	void generOBJ();
+
+	void IFCPolyline();
+	void ShortestCycle();
+	void ConfirmClassification();
+	void SetSymmetricCurveTagTrue();
+	bool IsExistSharpChange(CP_PolyLine3D &poly);
 };
 

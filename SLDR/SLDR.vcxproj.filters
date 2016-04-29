@@ -633,5 +633,11 @@
     <Image Include="res\2015073109573166_easyicon_net_60.9007263922521.bmp">
       <Filter>资源文件</Filter>
     </Image>
+    <Image Include="res\3D_Cube_32px_1074515_easyicon.net.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\bitmap3.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
   </ItemGroup>
 </Project>

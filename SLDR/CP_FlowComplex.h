@@ -10,18 +10,32 @@
 #include "cp_pointvector.h"
 #include "gl/GLU.h"
 #include "glut.h"
+//////////////////////////////////////////////////////////////////////////
+/////////////////////////以图形式存储的曲线端点//////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+typedef struct EdgeNode         //边表结点
+{
+	int adjvex;         //邻接点域，存储该顶点对应的下标
+	int polyindex;		//曲线的下标
+	EdgeNode *next;      //链域，指向下一个邻接点
+}EdgeNode;
 
-class CP_Tetrahedron
+typedef struct VertexNode       //顶点表结构
+{
+	int data;        //顶点域，存储顶点下标
+	EdgeNode *firstedge;        //边表头指针
+}VertexNode;
+
+class GraphList
 {
 public:
-	int m_points[4];
+	vector<VertexNode> adjList;
+	unsigned int numVertexes, numEdges;  //图中当前顶点数和边数
 public:
-	CP_Tetrahedron(int i,int j,int k,int l);
-	~CP_Tetrahedron();
-
-private:
-
+	GraphList();
+	~GraphList();
 };
+//////////////////////////////////////////////////////////////////////////
 
 class CircumPoint :
 	public CP_Point3D
@@ -148,6 +162,7 @@ public:
 	unsigned int inputCurves;
 	int oripatches;
 	double minx,maxx,miny,maxy,minz,maxz;
+	GraphList graph;
 	vector<CP_Point3D> m_0cells;
 	vector<CP_Point3D> m_critical;
 	vector<CurveSegment*> m_1cells;//input curve segment
@@ -157,12 +172,11 @@ public:
 	vector<CP_Patch *> m_cpatches;//其他creator的patch,现在的编号
 	vector<CP_Triganle3D*> delauny2cells;
 	vector<CP_Triganle3D*> non_gabriel_triangles;
-	vector<CP_Triganle3D*> right_triangle;
 	vector<CP_PolyLine3D> m_PolyLine;
 	vector<CP_Triganle3D*> tricells;
 	vector<CP_Triganle3D*> visitedtri;//中心三角形
 	CP_Point3D cp;//中心点
-	vector<CP_Point3D> vjoint;
+	vector<int> vjoint;
 	vector<CircumPoint> m_circums;
 	vector<int> topo;
 public:
@@ -218,16 +232,21 @@ public:
 	void SeekCreatorPatch();
 	void SeekDestoryerPatch();
 	void GetPatchBoundary();
-
+	//画
 	void DrawPoints();
 	void DrawDelaunyTriangles();
-	void DrawRightTriangles();
 	void DrawNonGabrielTriangles();
 	void DrawTriangle(const CP_Triganle3D &tri);
 	void DrawTriangleBoundary(const CP_2cell &p2cell);
 	void Draw2cell(const CP_2cell &p2cell);
 	void Draw2cellBoundary(const CP_2cell &p2cell);
 	void DrawPatchBoundary(const CP_Patch &pPatch);
+	//改进的方法
+	void FindShortestCycle(int i);
+	double GetCycleLength(vector<int> cycle);
+	int ConnectToPolyBothEnds(int i);
+	void FindCyclesForaCurve(int i);
+	bool ContainSubCycle(const vector<int> newpath);
 };
 extern double dist(const CP_Point3D &x,const CP_Point3D &y);
 extern double Area(double a,double b,double c);

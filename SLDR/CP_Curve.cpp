@@ -134,7 +134,18 @@ void CP_PolyLine3D::Draw()
 		glNormal3f(0.0f,0.0f,0.0f);
 		glVertex3d(m_points[i].m_x, m_points[i].m_y, m_points[i].m_z);
 	}
+	glEnd();
+}
 
+void CP_PolyLine3D::ZoomDraw()
+{
+	double scale=0.95;
+	glBegin(GL_LINE_STRIP);
+	for (unsigned int i = 0; i < m_points.size(); i++)
+	{
+		glNormal3f(1.0f,0.0f,0.0f);
+		glVertex3d(m_points[i].m_x*scale, m_points[i].m_y*scale, m_points[i].m_z*scale);
+	}
 	glEnd();
 }
 
@@ -143,11 +154,34 @@ double CP_PolyLine3D::GetLength() const
 	double len = 0;
 	for (unsigned int i = 0; i < m_points.size() - 1;i++)
 	{
-		CP_Point3D p(m_points[i]);
-		len += sqrt(p.m_x*p.m_x + p.m_y*p.m_y + p.m_z*p.m_z);
+		//CP_Point3D p(m_points[i]);
+		len+=dist(m_points[i],m_points[i+1]);
+		//len += sqrt(p.m_x*p.m_x + p.m_y*p.m_y + p.m_z*p.m_z);
 	}
 	return len;
 }
+
+double CP_PolyLine3D::GetLength(int s,int e) const
+{
+	double len=0;
+	if(s<e)
+	{
+		for (int i = s; i < e;i++)
+		{
+			CP_Point3D p(m_points[i]);
+			len += sqrt(p.m_x*p.m_x + p.m_y*p.m_y + p.m_z*p.m_z);
+		}
+	}
+	
+	return len;
+}
+
+CP_PolyLine3D::CP_PolyLine3D(void)
+{
+	tag=true;
+	mincyclelength=MAX_DISTANCE;
+}
+
 
 /************************************************************************/
 /* CP_BSpline                                                           */

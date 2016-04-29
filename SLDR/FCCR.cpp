@@ -19,6 +19,21 @@ FCCR::~FCCR(void)
 {
 }
 
+void FCCR::ReSet()
+{
+	maxhd=0;
+	voids=0;
+	epsilon=0.055;
+	feasa=0.7;
+	filename="";
+
+	showResult=false;
+	IsProcess=false;
+
+	T.clear();
+	m_FlowComplex->ClearAll();
+}
+
 double FCCR::getHausdorffDistance(const CP_PolyLine3D &curveA,const CP_PolyLine3D &curveB)
 {
 	double maxAB = 0;//A所有点到B所有点最小值里最大的
@@ -61,6 +76,7 @@ double FCCR::getHausdorffDistance(const CP_PolyLine3D &curveA,const CP_PolyLine3
 
 void FCCR::ToPolyLine()
 {
+	//采样点
 	for (unsigned int i = 0; i < m_VT_PolyLine->size(); i++)
 	{
 		//求曲线i与其他曲线k（k！=i）的豪斯多夫距离
@@ -84,7 +100,7 @@ void FCCR::ToPolyLine()
 
 		int start = 0;
 		CP_PolyLine3D poly;
-		poly.tag=false;
+		poly.tag=true;
 		for (unsigned int j = 0; j < (*m_VT_PolyLine)[i].m_points.size(); j++)
 		{
 			if (j == 0){
@@ -97,27 +113,27 @@ void FCCR::ToPolyLine()
 				m_FlowComplex->m_PolyLine.push_back(poly);
 			}
 			else{
-				if((*m_VT_PolyLine)[i].m_points.size()<23)
+				/*if((*m_VT_PolyLine)[i].m_points.size()<23)
 				{
 					if(j%2==0){
 					poly.m_points.push_back((*m_VT_PolyLine)[i].m_points[j]);
 					start = j;
 					}
-				}else{
+				}else{*/
 				if (dist((*m_VT_PolyLine)[i].m_points[start], (*m_VT_PolyLine)[i].m_points[j])>minhd)
 				{
 					poly.m_points.push_back((*m_VT_PolyLine)[i].m_points[j]);
 					start = j;
 				}
-				}
+			//}
 			}//else
 		}//j
 	//	std::cout << minhd << endl;
 		if (minhd > maxhd)
 			maxhd = minhd;
 	}
-//	std::cout << maxhd << endl;
-	//预处理折线
+   //std::cout << maxhd << endl;
+	//预处理折线,使采样满足Gariel性质
 	m_FlowComplex->Gabrielize();
 	int num=0;
 	//加入0-cells
@@ -139,6 +155,7 @@ void FCCR::ToPolyLine()
 					curve->degree=-1;
 				}
 				s=m_FlowComplex->m_0cells.size()-1;
+				ipoint=s;//下标
 			}
 			else
 			{
@@ -150,6 +167,12 @@ void FCCR::ToPolyLine()
 				}
 				s=ipoint;
 			}
+
+			//标记曲线的端点下标
+			if(j==0)
+				m_FlowComplex->m_PolyLine[i].s=ipoint;
+			else if(j==m_FlowComplex->m_PolyLine[i].m_points.size()-1)
+				m_FlowComplex->m_PolyLine[i].e=ipoint;
 		}//j
 	}//i
 	m_FlowComplex->inputPoints=m_FlowComplex->m_0cells.size();
@@ -165,6 +188,147 @@ void FCCR::ToPolyLine()
 	m_FlowComplex->cp.m_x=x/m_FlowComplex->m_0cells.size();
 	m_FlowComplex->cp.m_y=y/m_FlowComplex->m_0cells.size();
 	m_FlowComplex->cp.m_z=z/m_FlowComplex->m_0cells.size();
+}
+
+void FCCR::IFCPolyline()
+{
+	epsilon=0.015;//采样一定要小才能表示原来的曲线
+	ToPolyLine();
+	//寻找最小环进一步判断
+	//1.创建图
+	m_FlowComplex->graph.numVertexes=m_FlowComplex->inputPoints;
+	m_FlowComplex->graph.numEdges=m_FlowComplex->m_PolyLine.size();
+	//建立顶点
+	m_FlowComplex->graph.adjList.resize(m_FlowComplex->graph.numVertexes);
+	for (unsigned int i = 0; i < m_FlowComplex->graph.numVertexes; i++)
+	{
+		m_FlowComplex->graph.adjList[i].data=i;
+		m_FlowComplex->graph.adjList[i].firstedge=NULL;
+	}
+	//建立边表
+	EdgeNode *e;
+	for (unsigned int i = 0; i < m_FlowComplex->m_PolyLine.size(); i++)
+	{
+		int start=m_FlowComplex->m_PolyLine[i].s;//曲线start，end
+		int end=m_FlowComplex->m_PolyLine[i].e;
+
+		e =new EdgeNode;
+		e->adjvex = end;//邻接序号为end
+		e->polyindex=i;
+		e->next = m_FlowComplex->graph.adjList[start].firstedge;//将e指针指向当前顶点指向的结构
+		m_FlowComplex->graph.adjList[start].firstedge = e;//将当前顶点的指针指向e,新边放到头上
+
+		e = new EdgeNode;
+		e->adjvex =start;
+		e->polyindex=i;
+		e->next = m_FlowComplex->graph.adjList[end].firstedge;
+		m_FlowComplex->graph.adjList[end].firstedge = e;
+	}
+	
+	//2.采样后曲线分类，有尖锐折角的最小环为单则为预期非流形面片的边界曲线
+	/*for (unsigned int i = 0; i < m_FlowComplex->m_PolyLine.size(); i++)
+	{
+	if(IsExistSharpChange(m_FlowComplex->m_PolyLine[i])){
+	m_FlowComplex->m_PolyLine[i].tag=false;
+	}
+	}*/
+	
+	//记录交汇点
+	for (unsigned int i = 0; i < m_FlowComplex->m_PolyLine.size(); i++)
+	{
+		int start=m_FlowComplex->m_PolyLine[i].s;
+		int end=m_FlowComplex->m_PolyLine[i].e;
+		vector<int>::iterator result;
+		result= find( m_FlowComplex->vjoint.begin(), m_FlowComplex->vjoint.end(), start );
+		if(result == m_FlowComplex->vjoint.end()) 
+			m_FlowComplex->vjoint.push_back(start);
+
+		result= find( m_FlowComplex->vjoint.begin(), m_FlowComplex->vjoint.end(), end );
+		if(result == m_FlowComplex->vjoint.end()) 
+			m_FlowComplex->vjoint.push_back(end);
+	}
+
+	for (unsigned int i = 0; i < m_FlowComplex->m_PolyLine.size(); i++)
+	{
+		m_FlowComplex->FindCyclesForaCurve(i);
+	}
+	
+}
+
+void FCCR::ShortestCycle()
+{
+	for (unsigned int i = 0; i < m_FlowComplex->m_PolyLine.size(); i++)
+	{
+		if(!m_FlowComplex->m_PolyLine[i].tag)
+		{
+			m_FlowComplex->FindShortestCycle(i);
+		}
+	}
+}
+
+void FCCR::ConfirmClassification()
+{
+	for (unsigned int i = 0; i < m_FlowComplex->m_PolyLine.size(); i++)
+	{
+		if(m_FlowComplex->m_PolyLine[i].cycle.size()%2==0&&!m_FlowComplex->m_PolyLine[i].tag)
+		    m_FlowComplex->m_PolyLine[i].tag=true;
+	}
+}
+
+void FCCR::SetSymmetricCurveTagTrue()
+{
+	vector<int> toexam;
+	for (unsigned int i = 0; i < m_FlowComplex->m_PolyLine.size(); i++)
+	{
+		if(!m_FlowComplex->m_PolyLine[i].tag)
+			toexam.push_back(i);
+	}
+
+	for(unsigned int i=0;i<toexam.size();++i)
+	{
+		CP_PolyLine3D *lpoly=&m_FlowComplex->m_PolyLine[toexam[i]];
+		if(m_FlowComplex->ConnectToPolyBothEnds(toexam[i])==-1){
+			for(unsigned int j=i+1;j<toexam.size();++j)
+			{
+				if (m_FlowComplex->ConnectToPolyBothEnds(toexam[j])==-1)
+				{
+					CP_PolyLine3D *rpoly=&m_FlowComplex->m_PolyLine[toexam[j]];
+					//只共一个点
+					if(lpoly->s==rpoly->s&&lpoly->e!=rpoly->e)
+					{
+						if(lpoly->sharppointv.size()==rpoly->sharppointv.size()&&fabs(lpoly->GetLength()-rpoly->GetLength())<0.02)
+						{//折角数一样且长度一样
+						//每个折角到公共点的长度一样
+							lpoly->tag=true;
+							rpoly->tag=true;
+						}
+					}else if(lpoly->s==rpoly->e&&lpoly->e!=rpoly->s)
+					{
+						if(lpoly->sharppointv.size()==rpoly->sharppointv.size()&&fabs(lpoly->GetLength()-rpoly->GetLength())<0.02)
+						{
+							lpoly->tag=true;
+							rpoly->tag=true;
+						}
+					}else if(lpoly->e==rpoly->e&&lpoly->s!=rpoly->s)
+					{
+						if(lpoly->sharppointv.size()==rpoly->sharppointv.size()&&fabs(lpoly->GetLength()-rpoly->GetLength())<0.02)
+						{
+							lpoly->tag=true;
+							rpoly->tag=true;
+						}
+					}
+					else if(lpoly->e==rpoly->s&&lpoly->s!=rpoly->e)
+					{
+						if(lpoly->sharppointv.size()==rpoly->sharppointv.size()&&fabs(lpoly->GetLength()-rpoly->GetLength())<0.02)
+						{
+							lpoly->tag=true;
+							rpoly->tag=true;
+						}
+					}
+				}//j connection
+			}//j
+		}//i connection
+	}//i
 }
 
 void FCCR::OnDelaunyTriangulation()
@@ -1087,4 +1251,26 @@ void FCCR::OnThicken()
 	//着色算法
 	m_FlowComplex->ResetPatchVisited();
 	m_FlowComplex->SetPatchColor();
+}
+
+bool FCCR::IsExistSharpChange(CP_PolyLine3D &poly)
+{
+	bool sharp=false;
+	int delta=1;//1邻域是靠谱有根据的，太大可能多处更多
+	int pnum=static_cast<int>(poly.m_points.size());
+	
+	for(int i=delta;i<pnum-delta;++i)
+	{
+		CP_Vector3D v0=poly.m_points[i-delta]-poly.m_points[i];
+		CP_Vector3D v1=poly.m_points[i+delta]-poly.m_points[i];
+		double cosAlpha=v0*v1/(v0.GetLength()*v1.GetLength());
+		if(cosAlpha>=-0.78){//小于140度，太大可能太多
+			sharp=true;
+			poly.sharppointv.push_back(i);
+		}
+	}//i
+	if (sharp)
+		return true;
+	else
+ 	    return false;
 }

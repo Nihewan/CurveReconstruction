@@ -77,6 +77,7 @@ public:
 	afx_msg void OnButtonSavecnw();
 	afx_msg LRESULT  ShowResult(WPARAM wParam,LPARAM  lParam);
 	afx_msg LRESULT  ShowFCPlay(WPARAM wParam,LPARAM  lParam);
+	afx_msg LRESULT  ResultRefresh(WPARAM wParam,LPARAM  lParam);
 };
 
 

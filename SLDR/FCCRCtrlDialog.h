@@ -7,10 +7,12 @@
 #include "afxwin.h"
 // FCCRCtrlDialog ¶Ô»°¿ò
 
-UINT ThreadFunc(LPVOID pParam);
-UINT  ThreadPlayFC(LPVOID pParam);
+UINT ThreadFunc(LPVOID pParam);//FC method
+UINT ThreadImrovedFC(LPVOID pParam);//IFC method
+UINT ThreadPlayFC(LPVOID pParam);//FC¶¯»­
 #define WM_RESULT WM_USER+100
 #define WM_RESULT_FCPLAY WM_USER+101
+#define WM_RESULT_REFRESH WM_USER+102
 
 class FCCRCtrlDialog : public CDialogEx
 {
@@ -34,6 +36,7 @@ public:
 	int sel3cell;
 	int sel2cell;
 	int seltriangle;
+	int selpoly;
 	bool showvoids;
 	bool showcircum;
 	bool shownongabriel;
@@ -58,8 +61,10 @@ public:
 	void SetTreeCreator();
 	void SetTree3cells();
 	void OnButtonReconstruction();
+	void OnImprovedFCReconstruction();
 	void OnPlayFC();
 	void OnPlayFCPause();
+	void OnIFCMethodNext();
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnBnClickedSelect2cell();

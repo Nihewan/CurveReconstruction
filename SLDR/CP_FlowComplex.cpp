@@ -1,21 +1,9 @@
 #include "stdafx.h"
 #include "CP_FlowComplex.h"
+#include <queue>
 #include <iostream>
 //using namespace std;
 
-CP_Tetrahedron::CP_Tetrahedron(int i,int j,int k,int l)
-{
-	m_points[0] = i;
-	m_points[1] = j;
-	m_points[2] = k;
-	m_points[3] = l;
-}
-
-CP_Tetrahedron::~CP_Tetrahedron()
-{
-
-
-}
 
 CP_Triganle3D::CP_Triganle3D()
 {
@@ -126,6 +114,7 @@ void CP_FlowComplex::Gabrielize()
 
 	//两线间小角度冲突问题
 	//在交汇点冲突时应该以此为joint点等距细分，这样后边不会再需要投影了
+	vector<CP_Point3D> vjoint;
 	for(unsigned int i=0;i<m_PolyLine.size();i++)
 	{
 		for(unsigned int j=0;j<m_PolyLine[i].m_points.size()-1;j++)
@@ -894,8 +883,10 @@ void CP_FlowComplex::ClearAll()
 	inputPoints=0;
 	inputCurves=0;
 	oripatches=0;
+	minx=maxx=miny=maxy=minz=maxz=0.0;
 
 	vector<CP_Point3D>().swap(m_0cells);
+	vector<CP_Point3D>().swap(m_critical);
 	for(unsigned int i=0;i<m_1cells.size();i++)
 		delete m_1cells[i];
 	vector<CurveSegment*>().swap(m_1cells);
@@ -914,7 +905,7 @@ void CP_FlowComplex::ClearAll()
 	for(unsigned int i=0;i<delauny2cells.size();i++)
 		delete delauny2cells[i];
 	vector<CP_Triganle3D*>().swap(delauny2cells);
-	vector<CP_Triganle3D*>().swap(non_gabriel_triangles);
+	vector<CP_Triganle3D*>().swap(non_gabriel_triangles);//Delauny中的部分三角形
 	vector<CP_PolyLine3D>().swap(m_PolyLine);
 	for(unsigned int i=0;i<tricells.size();i++)
 		delete tricells[i];
@@ -922,7 +913,7 @@ void CP_FlowComplex::ClearAll()
 	for(unsigned int i=0;i<visitedtri.size();i++)
 		delete visitedtri[i];
 	vector<CP_Triganle3D*>().swap(visitedtri);
-	vector<CP_Point3D>().swap(vjoint);
+	vector<int>().swap(vjoint);
 	vector<CircumPoint>().swap(m_circums);
 	vector<int>().swap(topo);
 }
@@ -930,7 +921,7 @@ void CP_FlowComplex::ClearAll()
 void CP_FlowComplex::DrawPoints()
 {
 	glColor3f(1.0, 0.0, 0.0);
-	glPointSize(3.0f);
+	glPointSize(6.0f);
 	for (unsigned int j = 0; j < inputPoints; j++)
 	{
 		glBegin(GL_POINTS);//必须是加上s，要不然显示不了
@@ -938,28 +929,13 @@ void CP_FlowComplex::DrawPoints()
 		glVertex3f(m_0cells[j].m_x, m_0cells[j].m_y,m_0cells[j].m_z);
 		glEnd();
 	}
-}
-
-void CP_FlowComplex::DrawRightTriangles()
-{
-	glColor4f(0.7,0.7,0.7,1.0);
-	for (unsigned int i = 0; i <right_triangle.size(); i++)
-	{
-		CP_Triganle3D *pTri = right_triangle[i];
-		DrawTriangle(*pTri);
-
-		glEnable (GL_LINE_SMOOTH);
-		glHint (GL_LINE_SMOOTH, GL_NICEST);
-		glLineWidth(1.1f);
-		glColor4f(0.7,0.7,0.7,1.0);
-		glBegin(GL_LINE_LOOP);
-		for (unsigned int j = 0; j < 3; j++){
-			//glNormal3f(0, 0, 0);
-			glVertex3f(m_0cells[pTri->m_points[j]].m_x, m_0cells[pTri->m_points[j]].m_y, m_0cells[pTri->m_points[j]].m_z);
-		}
-		glEnd();
-		glDisable(GL_LINE_SMOOTH);
-	}
+	//for (unsigned int j = 0; j < vjoint.size(); j++)
+	//{
+	//	glBegin(GL_POINTS);//必须是加上s，要不然显示不了
+	//	glNormal3f(1.0f,1.0f,1.0f);
+	//	glVertex3f(m_0cells[vjoint[j]].m_x, m_0cells[vjoint[j]].m_y,m_0cells[vjoint[j]].m_z);
+	//	glEnd();
+	//}
 }
 
 void CP_FlowComplex::DrawDelaunyTriangles()
@@ -1339,6 +1315,196 @@ void CP_FlowComplex::SeekDestoryerPatch()
 	}//i
 }
 
+void CP_FlowComplex::FindShortestCycle(int i)
+{//查找编号为i的曲线的最小环
+	CP_PolyLine3D *poly=&m_PolyLine[i];
+	double delta=0.005;
+	if(poly->s==poly->e)
+	{//单个曲线头尾相连表示一环面 
+		vector<int> newpath;
+		newpath.push_back(poly->s);
+		newpath.push_back(i);
+		poly->cycle.push_back(newpath);
+		return;
+	}
+
+	int connection=ConnectToPolyBothEnds(i);
+	if(connection!=-1)
+	{//防止两个首尾相连的翅膀成环
+		vector<int> newpath;
+		newpath.push_back(poly->s);
+		newpath.push_back(i);
+		newpath.push_back(connection);
+		poly->cycle.push_back(newpath);
+		return;
+	}
+
+	queue<vector<int>> paths;//每个vector中，0位置存当前路径的头端点下标，后边是路径
+	int end=poly->e;//结束端点
+
+	vector<int> vpath;
+	vpath.push_back(poly->s);//加入头
+	vpath.push_back(i);//加入本曲线
+	paths.push(vpath);
+	int last=0;
+	bool exist=false;
+	while(!paths.empty())
+	{
+		vector<int> prepath=paths.front();
+		paths.pop();
+		if(last!=prepath.size()&&exist)//此深度的一层遍历完，且找到了最小环
+			return;
+
+		last=prepath.size();
+		EdgeNode *e=graph.adjList[prepath[0]].firstedge;//此头的边表
+		unsigned int times=0;
+		while(e)
+		{//对此端点关联的所有未访问曲线BFS
+			vector<int> newpath(prepath);
+			if (times>m_PolyLine.size()-1)
+			{//防止有的线不能与tag为false的线成环死循环
+				m_PolyLine[i].tag=true;
+				return;
+			}
+			
+			if(find(newpath.begin()+1,newpath.end(),e->polyindex)==newpath.end()&&m_PolyLine[e->polyindex].tag){
+				/*if(find(newpath.begin(),newpath.end(),25)!=newpath.end())
+					cout<<e->polyindex<<"相连"<<endl;*/
+				/*if(i==2)
+					cout<<poly->s<<"aaaa"<<endl;*/
+				if(newpath[0]==m_PolyLine[e->polyindex].s)//设置新头
+					newpath[0]=m_PolyLine[e->polyindex].e;
+				else
+					newpath[0]=m_PolyLine[e->polyindex].s;
+				
+				newpath.push_back(e->polyindex);
+				if(newpath[0]==end)
+				{  //记录可返回
+					exist=true;
+					double cyclelength=GetCycleLength(newpath);
+					
+					if(cyclelength<poly->mincyclelength&&fabs(poly->mincyclelength-cyclelength)>delta)
+					{//小很多，它才是最小环
+						vector<vector<int>>().swap(poly->cycle);
+						poly->cycle.push_back(newpath);
+						poly->mincyclelength=cyclelength;
+					}else if(fabs(cyclelength-poly->mincyclelength)<delta)
+					{//大一点或小一点都加进来作为偶数个最小环
+						poly->cycle.push_back(newpath);
+						poly->mincyclelength=min(poly->mincyclelength,cyclelength);
+					}
+				}
+				paths.push(newpath);
+			}
+			e=e->next;
+			times++;
+		}//e
+
+	}//path.empty
+	
+}
+
+double CP_FlowComplex::GetCycleLength(vector<int> cycle)
+{   //Input:环中曲线编号
+	//Output:环周长
+	double sumlength=0.0;
+	for (unsigned int i=1;i<cycle.size();++i)
+	{
+		sumlength+=m_PolyLine[cycle[i]].GetLength();
+	}
+	return sumlength;
+}
+
+int CP_FlowComplex::ConnectToPolyBothEnds(int i)
+{
+	//Input:曲线编号
+	//Output:与一个tag为true的两端直接相连曲线的编号
+	CP_PolyLine3D *poly=&m_PolyLine[i];
+	int start=poly->s;
+	int end=poly->e;
+	EdgeNode *es=graph.adjList[start].firstedge;//以start为头的边表
+	EdgeNode *ee=graph.adjList[end].firstedge;//以end为头的边表
+	//两边表中相同的线
+	while (es)
+	{
+		if(m_PolyLine[es->polyindex].tag){
+		    while (ee)
+		    {
+			    if(ee->polyindex==es->polyindex)
+					return es->polyindex;
+				ee=ee->next;
+			}
+		}
+		ee=graph.adjList[end].firstedge;
+		es=es->next;
+	}
+	return -1;
+}
+
+void CP_FlowComplex::FindCyclesForaCurve(int i)
+{   //查找包含编号为i的至少2个最小环，从i的start出发，目标点为end，BFS
+	//长度为n的为1个，然后长度为n+1的一层所有几个
+	CP_PolyLine3D *poly=&m_PolyLine[i];
+	double delta=0.005;
+	if(poly->s==poly->e)
+	{//单个曲线头尾相连表示一环面 
+		vector<int> newpath;
+		newpath.push_back(poly->s);
+		newpath.push_back(i);
+		poly->cycle.push_back(newpath);
+		return;
+	}
+
+	queue<vector<int>> paths;//每个vector中，0位置存当前路径的头端点下标，后边是路径
+	int end=poly->e;//结束端点
+
+	vector<int> vpath;
+	vpath.push_back(poly->s);//加入头
+	vpath.push_back(i);//加入本曲线
+	paths.push(vpath);
+	int last=0;
+	while(!paths.empty())
+	{
+		vector<int> prepath=paths.front();
+		paths.pop();
+		if(last!=prepath.size()&&poly->cycle.size()>=2)//此深度的一层遍历完，且找到了2个以上最小环
+			return;
+
+		last=prepath.size();
+		EdgeNode *e=graph.adjList[prepath[0]].firstedge;//此头的边表
+		while(e)
+		{//对此端点关联的所有未访问曲线BFS
+			vector<int> newpath(prepath);
+			
+			if(find(newpath.begin()+1,newpath.end(),e->polyindex)==newpath.end()){
+				if(newpath[0]==m_PolyLine[e->polyindex].s)//设置新头
+					newpath[0]=m_PolyLine[e->polyindex].e;
+				else
+					newpath[0]=m_PolyLine[e->polyindex].s;
+				
+				newpath.push_back(e->polyindex);
+				if(newpath[0]==end)
+				{  //记录可返回
+					poly->cycle.push_back(newpath);
+				}else
+				    paths.push(newpath);
+			}
+			e=e->next;
+		}//e
+	}//path.empty
+}
+
+bool CP_FlowComplex::ContainSubCycle(const vector<int> newpath)
+{
+	int head=newpath[0];
+	for (unsigned int i=1;i<newpath.size()-1;++i)
+	{
+		if(m_PolyLine[newpath[i]].s==head||m_PolyLine[newpath[i]].e==head)
+			return true;
+	}
+	return false;
+}
+
 void CurveSegment::ResetDegreee()
 {
 	tmpdegree=degree;
@@ -1433,4 +1599,24 @@ CircumPoint& CircumPoint::operator=(const CircumPoint& tmp)
 void CircumPoint::SetDistance(double d)
 {
 	distance=d;
+}
+
+GraphList::~GraphList()
+{
+	EdgeNode *p,*q;
+	for(unsigned int i=0;i<adjList.size();++i)
+	{
+		p=adjList[i].firstedge;
+		while (p)
+		{
+			q=p;
+			p=p->next;
+			delete q;
+		}
+	}
+}
+
+GraphList::GraphList()
+{
+
 }

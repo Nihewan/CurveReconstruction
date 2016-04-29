@@ -42,6 +42,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
 	ON_COMMAND(ID_BUTTON_SAVECNW, &CMainFrame::OnButtonSavecnw)
 	ON_MESSAGE(WM_RESULT,&CMainFrame::ShowResult)
 	ON_MESSAGE(WM_RESULT_FCPLAY,&CMainFrame::ShowFCPlay)
+	ON_MESSAGE(WM_RESULT_REFRESH,&CMainFrame::ResultRefresh)
 END_MESSAGE_MAP()
 
 // CMainFrame ¹¹Ôì/Îö¹¹
@@ -310,6 +311,7 @@ LRESULT  CMainFrame::ShowResult(WPARAM wParam,LPARAM lParam)
 {
 	CSLDRView * pView = (CSLDRView *)(GetActiveView());
 	pView->fcEnable=true;
+	pView->ifcEnable=true;
 	pView->Invalidate();
 	return 0;
 }
@@ -327,5 +329,11 @@ LRESULT  CMainFrame::ShowFCPlay(WPARAM wParam,LPARAM lParam)
 	return 0;
 }
 
+LRESULT  CMainFrame::ResultRefresh(WPARAM wParam,LPARAM  lParam)
+{
+	CSLDRView * pView = (CSLDRView *)(GetActiveView());
+	pView->Invalidate();
+	return 0;
+}
 
 
