@@ -1678,5 +1678,5 @@ void FCCR::ImprovedFindCyclesForAllPatches()
 	m_FlowComplex->ResetPatchVisited();
 	m_FlowComplex->SetPatchColor();
 
-	//. 
+	//.
 }
