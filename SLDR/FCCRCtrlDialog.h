@@ -37,10 +37,12 @@ public:
 	int sel2cell;
 	int seltriangle;
 	int selpoly;
+	int selpatch;
+	int selcycle;
 	bool showvoids;
 	bool showcircum;
-	bool shownongabriel;
-	bool showvoronoi;
+	bool showbystep;
+	bool showdarts;
 	double mTrans; 
 	int play;
 	int pos;
@@ -56,10 +58,12 @@ protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 public:
 	void SetItems(CP_FlowComplex *FlowComplex,vector<CP_PolyLine3D> *VT_PolyLine);
-	void SetTreeItems(int _2cell);
-	void SetTreePatch(int _patch);
+	void SetTreeItems(int _2cell);//显示选中2cell包含的三角形
+	void SetTreePatch(int _patch);//显示选中patch包含的2cells
 	void SetTreeCreator();
 	void SetTree3cells();
+	void SetTreePatches();
+	void SetTreeCycles();
 	void OnButtonReconstruction();
 	void OnImprovedFCReconstruction();
 	void OnPlayFC();
@@ -84,7 +88,6 @@ public:
 	afx_msg void OnBnClickedCheck4();
 	afx_msg void OnBnClickedCheckPatch();
 	afx_msg void OnBnClickedCheckCircum();
-	afx_msg void OnBnClickedCheckNongabriel();
-	afx_msg void OnBnClickedCheckVoronoi();
-
+	afx_msg void OnBnClickedCheckShowByStep();
+	afx_msg void OnBnClickedShowDarts();
 };

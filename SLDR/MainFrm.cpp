@@ -323,7 +323,7 @@ LRESULT  CMainFrame::ShowFCPlay(WPARAM wParam,LPARAM lParam)
 	CMFCRibbonProgressBar* pProgressBar = DYNAMIC_DOWNCAST(
 		CMFCRibbonProgressBar, pRibbon->FindByID(ID_PROGRESS_PLAYFC));
 	pProgressBar->SetPos(m_ctrlPaneFCCR->m_dialog.pos,true);
-	if(m_ctrlPaneFCCR->m_dialog.pos==100)
+	if(m_ctrlPaneFCCR->m_dialog.play==0)
 		pView->playEnable=true;
 	pView->Invalidate();
 	return 0;

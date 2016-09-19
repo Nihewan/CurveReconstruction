@@ -57,16 +57,18 @@ public:
 	bool ifcEnable;
 	bool playEnable;
 	bool showFC;
-	bool showResult;
 	bool showInputP;
 	bool showTop;
 	bool showThicken;
+	bool showCycles;
 	int selected2cell;
 	int selectedpatch;
 	int selectedpoly;
 	int moveonpoly;
 	bool shiftDown;
-	bool zDown;
+	bool CtrlDown;
+	bool CKeyDown;
+	int which;
 	double mDiffuse,mSpecular,mShine;
 	double mDiffuse0,mSpecular0,mAmbient0;
 	double mDiffuse1,mSpecular1,mAmbient1;
@@ -169,6 +171,7 @@ public:
 	afx_msg void OnButtonImprovedfc();
 	afx_msg void OnButtonNext();
 	afx_msg void OnUpdateButtonImprovedfc(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateButtonNext(CCmdUI *pCmdUI);
 };
 
 #ifndef _DEBUG  // SLDRView.cpp 中的调试版本

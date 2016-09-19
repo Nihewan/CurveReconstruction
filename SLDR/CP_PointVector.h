@@ -37,7 +37,6 @@ public:
 	CP_Point3D& operator -= (const CP_Point3D &pt);
 	bool operator == (const CP_Point3D &pt);
 	CP_Point3D operator -() const;
-
 };
 
 class CP_Point4D
@@ -108,6 +107,7 @@ extern CP_Vector3D operator - (const CP_Vector3D& u, const CP_Vector3D& v);
 extern double operator * (const CP_Vector3D& u, const CP_Vector3D& v);
 extern CP_Vector3D operator ^ (const CP_Vector3D& u, const CP_Vector3D& v);
 extern CP_Vector3D operator * (const CP_Vector3D& v, double num);
+extern CP_Vector3D operator * (double num, const CP_Vector3D& v);
 extern CP_Vector3D operator / (const CP_Vector3D& v, double num);
 
 #endif

@@ -293,6 +293,11 @@ CP_Vector3D operator * (const CP_Vector3D& v, double num)
     return CP_Vector3D (v.m_x * num, v.m_y * num, v.m_z * num);
 } 
 
+CP_Vector3D operator * (double num,const CP_Vector3D& v)
+{
+	return CP_Vector3D (v.m_x * num, v.m_y * num, v.m_z * num);
+} 
+
 CP_Vector3D operator / (const CP_Vector3D& v, double num)
 {
     num = 1.0/num; // 注意: 这里没有处理除数为0的情况

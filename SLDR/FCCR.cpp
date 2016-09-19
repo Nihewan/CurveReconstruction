@@ -3,6 +3,8 @@
 #include "FCCR.h"
 #include <iostream>
 #include <fstream>
+#include<functional> 
+#include<algorithm>
 FCCR::FCCR(void)
 {
 	maxhd=0;
@@ -147,14 +149,15 @@ void FCCR::ToPolyLine()
 			if (ipoint==-1)
 			{
 				m_FlowComplex->m_0cells.push_back(m_FlowComplex->m_PolyLine[i].m_points[j]);
-				m_FlowComplex->IsBoundBox(m_FlowComplex->m_0cells[m_FlowComplex->m_0cells.size()-1]);
+				m_FlowComplex->IsBoundBox(m_FlowComplex->m_0cells.back());
 				if(j!=0)
 				{
 					CurveSegment* curve=new CurveSegment(s,m_FlowComplex->m_0cells.size()-1);
 					m_FlowComplex->m_1cells.push_back(curve);
-					curve->degree=-1;
+					curve->isBoundary=i;
 				}
 				s=m_FlowComplex->m_0cells.size()-1;
+				m_FlowComplex->m_PolyLine[i].idx.push_back(s);
 				ipoint=s;//下标
 			}
 			else
@@ -163,9 +166,10 @@ void FCCR::ToPolyLine()
 				{
 					CurveSegment* curve=new CurveSegment(s,ipoint);
 					m_FlowComplex->m_1cells.push_back(curve);
-					curve->degree=-1;
+					curve->isBoundary=i;
 				}
 				s=ipoint;
+				m_FlowComplex->m_PolyLine[i].idx.push_back(s);
 			}
 
 			//标记曲线的端点下标
@@ -176,7 +180,7 @@ void FCCR::ToPolyLine()
 		}//j
 	}//i
 	m_FlowComplex->inputPoints=m_FlowComplex->m_0cells.size();
-	m_FlowComplex->inputCurves=m_FlowComplex->m_1cells.size();
+	m_FlowComplex->inputCurveSegments=m_FlowComplex->m_1cells.size();
 
 	double x=0,y=0,z=0;
 	for(unsigned int i=0;i<m_FlowComplex->m_0cells.size();i++)
@@ -190,9 +194,8 @@ void FCCR::ToPolyLine()
 	m_FlowComplex->cp.m_z=z/m_FlowComplex->m_0cells.size();
 }
 
-void FCCR::IFCPolyline()
+void FCCR::ImprovedPolyline()
 {
-	epsilon=0.015;//采样一定要小才能表示原来的曲线
 	ToPolyLine();
 	//寻找最小环进一步判断
 	//1.创建图
@@ -225,14 +228,6 @@ void FCCR::IFCPolyline()
 		m_FlowComplex->graph.adjList[end].firstedge = e;
 	}
 	
-	//2.采样后曲线分类，有尖锐折角的最小环为单则为预期非流形面片的边界曲线
-	/*for (unsigned int i = 0; i < m_FlowComplex->m_PolyLine.size(); i++)
-	{
-	if(IsExistSharpChange(m_FlowComplex->m_PolyLine[i])){
-	m_FlowComplex->m_PolyLine[i].tag=false;
-	}
-	}*/
-	
 	//记录交汇点
 	for (unsigned int i = 0; i < m_FlowComplex->m_PolyLine.size(); i++)
 	{
@@ -246,11 +241,6 @@ void FCCR::IFCPolyline()
 		result= find( m_FlowComplex->vjoint.begin(), m_FlowComplex->vjoint.end(), end );
 		if(result == m_FlowComplex->vjoint.end()) 
 			m_FlowComplex->vjoint.push_back(end);
-	}
-
-	for (unsigned int i = 0; i < m_FlowComplex->m_PolyLine.size(); i++)
-	{
-		m_FlowComplex->FindCyclesForaCurve(i);
 	}
 	
 }
@@ -405,7 +395,8 @@ void FCCR::addrFacet(const Facet &f)
 						p2cell->pTri=pTriangle;
 						p2cell->distance=dist(pIntersec,p0);
 						p2cell->m_circulator.tri=(*pTriangle);
-						
+						p2cell->delaunytri.push_back(m_FlowComplex->LocateTriangle(m_FlowComplex->delauny2cells,*pTriangle));
+
 						//另外3个顶点,方便得到EDGE
 						int trivertice[3]={0};
 						int verindex=0;
@@ -457,6 +448,7 @@ void FCCR::addrFacet(const Facet &f)
 					p2cell->pTri=pTriangle;
 					p2cell->distance=dist(pIntersec,p0);
 					p2cell->m_circulator.tri=(*pTriangle);
+					p2cell->delaunytri.push_back(m_FlowComplex->LocateTriangle(m_FlowComplex->delauny2cells,*pTriangle));
 					//另外3个顶点,方便得到EDGE
 					int trivertice[3]={0};
 					int verindex=0;
@@ -553,7 +545,13 @@ void FCCR::addrVoroFace(const Edge &e,int vIntersect,const Triangle &tri,int _2c
 							if (CGAL::object_cast<Point>(&intersecObject))
 							{
 								deleteTriangle(m_FlowComplex->non_gabriel_triangles,tricir);
-
+								CP_Point3D p0(to_double(tricir.vertex(0).hx()), to_double(tricir.vertex(0).hy()), to_double(tricir.vertex(0).hz()));
+								CP_Point3D p1(to_double(tricir.vertex(1).hx()), to_double(tricir.vertex(1).hy()), to_double(tricir.vertex(1).hz()));
+								CP_Point3D p2(to_double(tricir.vertex(2).hx()), to_double(tricir.vertex(2).hy()), to_double(tricir.vertex(2).hz()));
+								int v0=m_FlowComplex->LocatePoint(p0);
+								int v1=m_FlowComplex->LocatePoint(p1);
+								int v2=m_FlowComplex->LocatePoint(p2);
+								CP_Triganle3D *pTriangle =new CP_Triganle3D(v0, v1, v2);
 								//计算新的critical point
 								Point intersec;
 								assign(intersec, intersecObject);
@@ -600,6 +598,7 @@ void FCCR::addrVoroFace(const Edge &e,int vIntersect,const Triangle &tri,int _2c
 								p2cell->index=_2cellcir;
 								p2cell->pTri=NULL;
 								p2cell->distance=dist(pIntersec,pci);
+								p2cell->delaunytri.push_back(m_FlowComplex->LocateTriangle(m_FlowComplex->delauny2cells,*pTriangle));
 
 								for(int i=0;i<3;i++)
 								{//对每条edge,其邻接面dual voronoi edge与此面相交，加入cells；不相交，加入cells
@@ -612,8 +611,8 @@ void FCCR::addrVoroFace(const Edge &e,int vIntersect,const Triangle &tri,int _2c
 							}//if (CGAL::object_cast<Point>(&intersecObject))
 						}//if(CGAL::do_intersect(scir,tricir))
 						else
-						{//
-							if(obtusetri(tricir)&&CGAL::do_intersect(scir,tricir.supporting_plane()))
+						{//没有相交的原因可能是精度问题导致tricir太小，与其所在的tri的后边相交（超过了而不是够不到）
+							if(obtusetri(tricir)&&CGAL::do_intersect(scir,tri))
 							{
 								//如果相邻边是最长边，此三角形该加入
 								int trivertice[3]={0};
@@ -658,7 +657,13 @@ void FCCR::addrVoroFace(const Edge &e,int vIntersect,const Triangle &tri,int _2c
 						if (CGAL::object_cast<Point>(&intersecObject))
 						{
 							deleteTriangle(m_FlowComplex->non_gabriel_triangles,tricir);
-
+							CP_Point3D p0(to_double(tricir.vertex(0).hx()), to_double(tricir.vertex(0).hy()), to_double(tricir.vertex(0).hz()));
+							CP_Point3D p1(to_double(tricir.vertex(1).hx()), to_double(tricir.vertex(1).hy()), to_double(tricir.vertex(1).hz()));
+							CP_Point3D p2(to_double(tricir.vertex(2).hx()), to_double(tricir.vertex(2).hy()), to_double(tricir.vertex(2).hz()));
+							int v0=m_FlowComplex->LocatePoint(p0);
+							int v1=m_FlowComplex->LocatePoint(p1);
+							int v2=m_FlowComplex->LocatePoint(p2);
+							CP_Triganle3D *pTriangle =new CP_Triganle3D(v0, v1, v2);
 							//计算新的critical point
 							Point intersec;
 							assign(intersec, intersecObject);
@@ -705,6 +710,7 @@ void FCCR::addrVoroFace(const Edge &e,int vIntersect,const Triangle &tri,int _2c
 							p2cell->index=_2cellcir;
 							p2cell->pTri=NULL;
 							p2cell->distance=dist(pIntersec,pci);
+							p2cell->delaunytri.push_back(m_FlowComplex->LocateTriangle(m_FlowComplex->delauny2cells,*pTriangle));
 
 							for(int i=0;i<3;i++)
 							{//对每条edge,其邻接面dual voronoi edge与此面相交，加入cells；不相交，加入cells
@@ -718,7 +724,7 @@ void FCCR::addrVoroFace(const Edge &e,int vIntersect,const Triangle &tri,int _2c
 					}//if(CGAL::do_intersect(rcir,tricir))
 					else
 					{//
-						if(obtusetri(tricir)&&CGAL::do_intersect(rcir,tricir.supporting_plane()))
+						if(obtusetri(tricir)&&CGAL::do_intersect(rcir,tri))
 						{
 							//如果相邻边是最长边，此三角形该加入
 							int trivertice[3]={0};
@@ -760,6 +766,13 @@ void FCCR::addrVoroFace(const Edge &e,int vIntersect,const Triangle &tri,int _2c
 	if(num==0&&narrowmis)
 	{
 		deleteTriangle(m_FlowComplex->non_gabriel_triangles,trimis);
+		CP_Point3D p0(to_double(trimis.vertex(0).hx()), to_double(trimis.vertex(0).hy()), to_double(trimis.vertex(0).hz()));
+		CP_Point3D p1(to_double(trimis.vertex(1).hx()), to_double(trimis.vertex(1).hy()), to_double(trimis.vertex(1).hz()));
+		CP_Point3D p2(to_double(trimis.vertex(2).hx()), to_double(trimis.vertex(2).hy()), to_double(trimis.vertex(2).hz()));
+		int v0=m_FlowComplex->LocatePoint(p0);
+		int v1=m_FlowComplex->LocatePoint(p1);
+		int v2=m_FlowComplex->LocatePoint(p2);
+		CP_Triganle3D *pTriangle =new CP_Triganle3D(v0, v1, v2);
 
 		CP_Point3D pIntersec((pci.m_x+pci1.m_x)/2, (pci.m_y+pci1.m_y)/2, (pci.m_z+pci1.m_z)/2);
 
@@ -783,6 +796,7 @@ void FCCR::addrVoroFace(const Edge &e,int vIntersect,const Triangle &tri,int _2c
 		p2cell->index=_2cellcir;
 		p2cell->pTri=NULL;
 		p2cell->distance=dist(pIntersec,pci);
+		p2cell->delaunytri.push_back(m_FlowComplex->LocateTriangle(m_FlowComplex->delauny2cells,*pTriangle));
 
 		for(int i=0;i<3;i++)
 		{//对每条edge,其邻接面dual voronoi edge与此面相交，加入cells；不相交，加入cells
@@ -856,7 +870,7 @@ bool FCCR::obtusetri(const Triangle &tri)
 }
 
 
-int ExistLineSeg(const vector<CurveSegment> &lvec,CurveSegment &l)
+int ExistLineSeg(const vector<CurveSegment> &lvec,const CurveSegment &l)
 {
 	for(unsigned int i=0;i<lvec.size();i++)
 	{
@@ -925,7 +939,7 @@ void FCCR::ToFlowcomplex()
 	m_FlowComplex->SetTriangleBound();//为每个triangle计算包围盒，减少判断vorocircum点是否在3cell中的计算
 
 	////计算每个2-cell的边界
-	vector<CurveSegment> lvec;
+	vector<CurveSegment* > lvec;
 	for (unsigned int i = 0; i < m_FlowComplex->m_2cells.size(); i++)
 	{//2-cell边界
 		for(unsigned int j=0;j<m_FlowComplex->m_2cells[i]->m_triangle.size();j++)
@@ -933,11 +947,12 @@ void FCCR::ToFlowcomplex()
 			CP_Triganle3D* ptri=m_FlowComplex->tricells[m_FlowComplex->m_2cells[i]->m_triangle[j]];
 			for(int k=0;k<3;k++)
 			{
-				CurveSegment l(ptri->m_points[k%3],ptri->m_points[(k+1)%3]);
-				l._triangle=m_FlowComplex->m_2cells[i]->m_triangle[j];
-				int lindex=ExistLineSeg(lvec,l);
+				CurveSegment* l=new CurveSegment(ptri->m_points[k%3],ptri->m_points[(k+1)%3]);
+				l->_triangle=m_FlowComplex->m_2cells[i]->m_triangle[j];
+				int lindex=m_FlowComplex->LocateSegment(lvec,*l);
 				if(lindex!=-1)
 				{
+					delete l;
 					lvec.erase(lvec.begin()+lindex);
 				}else
 					lvec.push_back(l);
@@ -945,8 +960,8 @@ void FCCR::ToFlowcomplex()
 		}//j
 		
 		for(unsigned int j=0;j<lvec.size();j++)
-			m_FlowComplex->m_2cells[i]->m_boundary.push_back(lvec[j]);
-		vector<CurveSegment>().swap(lvec);
+			m_FlowComplex->m_2cells[i]->m_boundary.push_back(*lvec[j]);
+		vector<CurveSegment* >().swap(lvec);
 	}//i
 
 	//按distance从小到大加到集合中
@@ -980,8 +995,6 @@ void FCCR::ToFlowcomplex()
 	vector<int> v;
 	for(unsigned int i=0;i<m_FlowComplex->m_3cells.size();i++)
 	{//为了显示3cells时方便
-		//cout<<m_FlowComplex->m_3cells[i]->distance<<endl;
-		//cout<<m_FlowComplex->m_2cells[m_FlowComplex->Locate2cell(m_FlowComplex->m_3cells[i]->m_2cells[0])]->distance<<","<<m_FlowComplex->m_3cells[i]->distance<<endl;
 		for(unsigned int j=0;j<m_FlowComplex->m_3cells[i]->m_2cells.size();j++)
 		{
 			v.push_back(m_FlowComplex->Locate2cell(m_FlowComplex->m_3cells[i]->m_2cells[j]));
@@ -1024,7 +1037,7 @@ void FCCR::OnCollapse()
 
 	for (unsigned int i = 0; i < m_FlowComplex->m_1cells.size(); i++)
 	{
-		if(m_FlowComplex->m_1cells[i]->degree == 1)
+		if(m_FlowComplex->m_1cells[i]->degree == 1&&m_FlowComplex->m_1cells[i]->isBoundary==-1)
 			collapse(*m_FlowComplex->m_1cells[i]);
 
 		//消除destoryer毛边和除最大creator 3cell的destoryer
@@ -1055,13 +1068,12 @@ void FCCR::collapse(const CurveSegment &curve)
 			{
 				m_FlowComplex->m_1cells[icurve]->degree--;
 				m_FlowComplex->m_1cells[icurve]->incident2cell.erase(remove(m_FlowComplex->m_1cells[icurve]->incident2cell.begin(),m_FlowComplex->m_1cells[icurve]->incident2cell.end(),icell),m_FlowComplex->m_1cells[icurve]->incident2cell.end());
-				if(m_FlowComplex->m_1cells[icurve]->degree==1)
+				if(m_FlowComplex->m_1cells[icurve]->degree==1&&m_FlowComplex->m_1cells[icurve]->isBoundary==-1)
 					collapse(*m_FlowComplex->m_1cells[icurve]);
 			}
 		}//j
 	}//2cell flag
 }
-
 
 void FCCR::OnThicken()
 {
@@ -1114,7 +1126,7 @@ void FCCR::OnThicken()
 							{
 								//在输入线中找三个点
 								double minNT=MAX_DISTANCE;
-								for(unsigned int k=0;k<m_FlowComplex->inputCurves;k++)
+								for(unsigned int k=0;k<m_FlowComplex->inputCurveSegments;k++)
 								{
 									if(m_FlowComplex->m_1cells[k]->sp==pTri->m_points[j]||m_FlowComplex->m_1cells[k]->ep==pTri->m_points[j])
 									{
@@ -1142,101 +1154,20 @@ void FCCR::OnThicken()
 
 		for (unsigned int i = 0; i < m_FlowComplex->m_1cells.size(); i++)
 		{
-			if(m_FlowComplex->m_1cells[i]->degree == 1)
+			if(m_FlowComplex->m_1cells[i]->degree == 1&&m_FlowComplex->m_1cells[i]->isBoundary==-1)
 				collapse(*m_FlowComplex->m_1cells[i]);
 			//消除destoryer毛边和除最大creator 3cell的destoryer
 		}//collapse后边应该做相应改变
 	
 		//寻找patch
 		//扩展最大的creator
-		m_FlowComplex->SeekCreatorPatch();
+		m_FlowComplex->SeekCreatorPatch(m_FlowComplex->_3cellN-1);
 	}
 
 	//destoryer patches
 	m_FlowComplex->SeekDestoryerPatch();
 	m_FlowComplex->oripatches=m_FlowComplex->m_patches.size();
 	
-	//patch边界
-	m_FlowComplex->GetPatchBoundary();
-
-	//////////////////////////////////////////////////////////////////////////
-	//////////////////////////////////////////////////////////////////////////
-	//TODO 目前pruning算法肯定不能消除所有3cell，往后改进中可能使用此段代码
-	//m_FlowComplex->ResetTriNormalset();
-	//m_FlowComplex->Reset2cellVisited();
-
-	////patch加入新的边集，看哪些是隔板
-	////patch重新寻找
-	//vector<CurveSegment*> vboundary;
-	//for(unsigned int i=0;i<m_FlowComplex->m_patches.size();i++)
-	//{
-	//	CP_Patch * pPatch=m_FlowComplex->m_patches[i];
-	//	for(unsigned int j=0;j<pPatch->m_boundary.size();j++)
-	//	{
-	//		int curve=m_FlowComplex->LocateSegment(vboundary,pPatch->m_boundary[j]);
-	//		if(curve==-1)
-	//		{
-	//			vboundary.push_back(&pPatch->m_boundary[j]);
-	//			pPatch->m_boundary[j].degree=1;
-	//			pPatch->m_boundary[j].incident2cell.push_back(i);//incident2cell 存相关的patch编号
-	//		}else
-	//		{
-	//			vboundary[curve]->degree++;
-	//			vboundary[curve]->incident2cell.push_back(i);
-	//		}
-	//	}//j
-	//}
-	//for(unsigned int i=0;i<m_FlowComplex->m_patches.size();i++)
-	//{
-	//	bool part=true;
-	//	CP_Patch * pPatch=m_FlowComplex->m_patches[i];
-	//	for(unsigned int j=0;j<pPatch->m_boundary.size();j++)
-	//	{
-	//		int curve=m_FlowComplex->LocateSegment(vboundary,pPatch->m_boundary[j]);
-	//		if(vboundary[curve]->degree<3)
-	//		{
-	//			part=false;
-	//			break;
-	//		}
-	//	}
-	//	if(part){
-	//		//此patch是隔板，所有2cell flag=false
-	//		for (unsigned int j = 0; j <pPatch->m_2cells.size(); j++)
-	//		{
-	//			CP_2cell *p2cell =m_FlowComplex->m_2cells[pPatch->m_2cells[j]];
-	//			p2cell->flag=false;
-	//			for(unsigned int k=0;k<p2cell->m_boundary.size();k++)
-	//			{
-	//				int icurve=m_FlowComplex->LocateSegment(m_FlowComplex->m_1cells,p2cell->m_boundary[k]);
-	//				if(m_FlowComplex->m_1cells[icurve]->degree>0)
-	//				{
-	//					m_FlowComplex->m_1cells[icurve]->degree--;
-	//					m_FlowComplex->m_1cells[icurve]->incident2cell.erase(remove(m_FlowComplex->m_1cells[icurve]->incident2cell.begin(),m_FlowComplex->m_1cells[icurve]->incident2cell.end(),pPatch->m_2cells[j]),m_FlowComplex->m_1cells[icurve]->incident2cell.end());
-	//				}
-	//			}//j
-	//		}
-	//		for(unsigned int j=0;j<pPatch->m_boundary.size();j++)
-	//		{
-	//			int curve=m_FlowComplex->LocateSegment(vboundary,pPatch->m_boundary[j]);
-	//			vboundary[curve]->degree--;
-	//			vboundary[curve]->incident2cell.erase(remove(vboundary[curve]->incident2cell.begin(),vboundary[curve]->incident2cell.end(),i),vboundary[curve]->incident2cell.end());
-	//		}//j
-	//	}
-	//}
-	//vector<CP_Patch *>().swap(m_FlowComplex->m_patches);
-
-	////重新构造patch
-	//if(voids>0){
-	//	//寻找patch
-	//	//扩展最大的creator
-	//	m_FlowComplex->SeekCreatorPatch();
-	//}
-	////destoryer patches
-	//m_FlowComplex->SeekDestoryerPatch();
-	//m_FlowComplex->oripatches=m_FlowComplex->m_patches.size();
-	////patch边界
-	//m_FlowComplex->GetPatchBoundary();
-
 	//patch法向
 	m_FlowComplex->ResetTriNormalset();
 	m_FlowComplex->Reset2cellVisited();
@@ -1273,4 +1204,479 @@ bool FCCR::IsExistSharpChange(CP_PolyLine3D &poly)
 		return true;
 	else
  	    return false;
+}
+
+void FCCR::ImprovedFlowcomplex()
+{
+	//Delauny面中构造Flow Complex结构并重新计算法向
+	Facets_iterator fit;
+	Facet f;
+	for(fit = T.finite_facets_begin(); fit != T.finite_facets_end(); ++fit)
+	{
+		f.first=fit->first;
+		f.second=fit->second;
+		addrFacet(f);
+	}
+
+	//由tricell构造2cells
+	for (unsigned int i = 0; i < m_FlowComplex->tricells.size(); i++)
+	{
+		m_FlowComplex->m_2cells[m_FlowComplex->tricells[i]->_2cell]->m_triangle.push_back(i);
+	}
+
+	////计算每个2-cell的边界
+	vector<CurveSegment> lvec;
+	for (unsigned int i = 0; i < m_FlowComplex->m_2cells.size(); i++)
+	{//2-cell边界
+		for(unsigned int j=0;j<m_FlowComplex->m_2cells[i]->m_triangle.size();j++)
+		{
+			CP_Triganle3D* ptri=m_FlowComplex->tricells[m_FlowComplex->m_2cells[i]->m_triangle[j]];
+			for(int k=0;k<3;k++)
+			{
+				CurveSegment l(ptri->m_points[k%3],ptri->m_points[(k+1)%3]);
+				l._triangle=m_FlowComplex->m_2cells[i]->m_triangle[j];
+				int lindex=ExistLineSeg(lvec,l);
+				if(lindex!=-1)
+				{
+					lvec.erase(lvec.begin()+lindex);
+				}else
+					lvec.push_back(l);
+			}//k
+		}//j
+
+		for(unsigned int j=0;j<lvec.size();j++)
+			m_FlowComplex->m_2cells[i]->m_boundary.push_back(lvec[j]);
+		vector<CurveSegment>().swap(lvec);
+	}//i
+
+	//按distance从小到大加到集合中
+	sort(m_FlowComplex->m_2cells.begin(),m_FlowComplex->m_2cells.end(),distanceCmp);
+	//decide creator and destoryer
+	m_FlowComplex->SetCreatorAndDestoryer();
+	m_FlowComplex->_3cellN=m_FlowComplex->m_3cells.size();
+	m_FlowComplex->Reset2cellVisited();
+
+	int desN=0;
+	for (unsigned int i = 0; i <m_FlowComplex->m_2cells.size(); i++)
+	{
+		CP_2cell *p2cell=m_FlowComplex->m_2cells[i];
+		if(p2cell->type==0)
+			desN++;
+	}
+	m_FlowComplex->desN=desN;
+	sort(m_FlowComplex->m_2cells.begin(),m_FlowComplex->m_2cells.end(),typeCmp);
+
+	//2-cells按distance增序
+	sort(m_FlowComplex->m_2cells.begin(),m_FlowComplex->m_2cells.begin()+desN,distanceCmp);
+	sort(m_FlowComplex->m_2cells.begin()+desN,m_FlowComplex->m_2cells.end(),distanceCmp);//按2cell distance排序（体积）
+
+	vector<int> v;
+	for(unsigned int i=0;i<m_FlowComplex->m_3cells.size();i++)
+	{//为了显示3cells时方便
+		for(unsigned int j=0;j<m_FlowComplex->m_3cells[i]->m_2cells.size();j++)
+		{
+			v.push_back(m_FlowComplex->Locate2cell(m_FlowComplex->m_3cells[i]->m_2cells[j]));
+		}
+		v.swap(m_FlowComplex->m_3cells[i]->m_2cells);
+		vector<int>().swap(v);
+	}
+
+	m_FlowComplex->Reset2cellVisited();
+	m_FlowComplex->SetAdjTriangle();
+	m_FlowComplex->Set2cellNormalConsensus();
+}
+
+void FCCR::ImprovedThicken()
+{
+	//destoryer patches
+	m_FlowComplex->SeekDestoryerPatch();
+	m_FlowComplex->oripatches=m_FlowComplex->m_patches.size();
+
+	for(unsigned int i=0;i<m_FlowComplex->m_patches.size();i++)
+	{
+		CP_Patch *pPatch = m_FlowComplex->m_patches[i];
+		for(unsigned int j=0;j<pPatch->m_boundary.size();j++)
+		{
+			if(pPatch->m_boundary[j]->isBoundary==-1)
+			{//边界不是输入边则一定是非流形边
+				pPatch->wrong=true;//方便展示有问题的patch
+				pPatch->nonmanifoldedge++;
+				pPatch->m_boundary[j]->incidentpatch.push_back(i);
+			}
+		}//j
+	}//i
+	//for(unsigned int i=m_FlowComplex->m_1cells.size()-1;i>=0;--i)
+	for(unsigned int i=0;i<m_FlowComplex->m_1cells.size();i++)
+	{
+		int patchnum=m_FlowComplex->m_1cells[i]->incidentpatch.size();
+		if(patchnum>2)
+		{
+			int p1=-1,p2=-1;//一对patch的编号
+			double  dihedral=PI*1000;//余弦值
+			int nonmanifolds=MAX_DISTANCE;
+			int topoOnTwoSide=0;
+			for(int j=0;j<patchnum;j++){
+				CP_Patch *pPatchl=m_FlowComplex->m_patches[m_FlowComplex->m_1cells[i]->incidentpatch[j]];
+				while(pPatchl->merged!=pPatchl->index)
+				{
+					pPatchl=m_FlowComplex->m_patches[pPatchl->merged];
+				}
+				for (int k=j+1;k<patchnum;k++)
+				{
+					CP_Patch *pPatchr=m_FlowComplex->m_patches[m_FlowComplex->m_1cells[i]->incidentpatch[k]];
+					while(pPatchr->merged!=pPatchr->index)
+					{
+						pPatchr=m_FlowComplex->m_patches[pPatchr->merged];
+					}
+					if(pPatchl->index!=pPatchr->index){
+					
+					int tmptopoOnTwoSide=m_FlowComplex->TopologicalEnable(*m_FlowComplex->m_1cells[i],*pPatchl,*pPatchr);
+					if(tmptopoOnTwoSide==topoOnTwoSide)
+					{
+						double tmpdihedral=m_FlowComplex->DihedralOfNeighbourPatch(*m_FlowComplex->m_1cells[i],*pPatchl,*pPatchr);
+						if(tmpdihedral<dihedral){
+							topoOnTwoSide=tmptopoOnTwoSide;
+							dihedral=tmpdihedral;
+							p1=pPatchl->index;p2=pPatchr->index;
+						}
+					}else if(tmptopoOnTwoSide>topoOnTwoSide)
+					{
+						topoOnTwoSide=tmptopoOnTwoSide;
+						double tmpdihedral=m_FlowComplex->DihedralOfNeighbourPatch(*m_FlowComplex->m_1cells[i],*pPatchl,*pPatchr);
+						dihedral=tmpdihedral;
+						p1=pPatchl->index;p2=pPatchr->index;
+					}
+					}
+				}//k
+			}//j
+			//对此处1cell的patch合并
+			if(dihedral>=/*(double)PI/2.0*/2.0*PI){p1=-1;p2=-1;}
+			if(p1!=-1&&p2!=-1) {
+				m_FlowComplex->MergePatch(*m_FlowComplex->m_1cells[i],*m_FlowComplex->m_patches[p1],*m_FlowComplex->m_patches[p2]);
+			    m_FlowComplex->m_patches[p1]->dihedral=dihedral;
+			}
+		}//>2
+	}//i 1cell
+	
+	vector<CP_Patch*>::iterator iter;
+	for (iter=m_FlowComplex->m_patches.begin();iter!=m_FlowComplex->m_patches.end();++iter)
+	{
+		int interior=true;
+		for(unsigned int i=0;i<(*iter)->m_boundary.size();++i)
+		{
+			if((*iter)->m_boundary[i]->degree<=2)
+			{
+				interior=false;
+				break;
+			}
+		}
+		
+		if(interior)
+		{//去除2cell及其边界
+			for (unsigned int j = 0; j <(*iter)->m_2cells.size(); j++)
+			{
+				CP_2cell *p2cell=m_FlowComplex->m_2cells[(*iter)->m_2cells[j]];
+				p2cell->flag=false;
+				for(unsigned int k=0;k<p2cell->m_boundary.size();k++){
+					int icurve=m_FlowComplex->LocateSegment(m_FlowComplex->m_1cells,p2cell->m_boundary[k]);
+					m_FlowComplex->m_1cells[icurve]->degree--;
+					m_FlowComplex->m_1cells[icurve]->incident2cell.erase(remove(m_FlowComplex->m_1cells[icurve]->incident2cell.begin(),m_FlowComplex->m_1cells[icurve]->incident2cell.end(),(*iter)->m_2cells[j]),m_FlowComplex->m_1cells[icurve]->incident2cell.end());
+				}
+			}
+			(*iter)->flag=false;
+		}
+		if((*iter)->merged!=(*iter)->index)
+		    (*iter)->flag=false;
+	}
+	
+	//第二步：迭代加入creator patch
+	for(int i=(int)m_FlowComplex->m_3cells.size()-1;i>=0;i--)
+	{
+		//wrong patch 2cell visited重置，参与重新组合
+		for (unsigned int j=0;j<m_FlowComplex->m_patches.size();++j)
+		{
+			if(m_FlowComplex->m_patches[j]->flag&&m_FlowComplex->m_patches[j]->wrong)
+			{
+				CP_Patch *pPatch=m_FlowComplex->m_patches[j];
+				for(unsigned int k=0;k<pPatch->m_2cells.size();++k)
+				{
+					m_FlowComplex->m_2cells[pPatch->m_2cells[k]]->visited=false;
+				}
+				pPatch->flag=false;//防止与过去重复
+			}
+			for(unsigned int k=0;k<m_FlowComplex->m_patches[j]->m_boundary.size();k++)
+			{
+				if(m_FlowComplex->m_patches[j]->m_boundary[k]->isBoundary==-1)
+				{
+					vector<int>().swap(m_FlowComplex->m_patches[j]->m_boundary[k]->incidentpatch);
+				}
+			}//k
+		}//j
+
+		CP_3cell *p3cell=m_FlowComplex->m_3cells[i];
+		for(unsigned int j=0;j<p3cell->m_2cells.size();j++)
+		{
+			CP_2cell* p2cell=m_FlowComplex->m_2cells[p3cell->m_2cells[j]];
+			if(!p2cell->flag)
+			{
+				p2cell->flag=true;//其他也置为true
+				m_FlowComplex->Insert2cellInto1cell(*p2cell);
+			}
+		}
+		int startidx=m_FlowComplex->m_patches.size();
+		for(int j=(int)m_FlowComplex->m_3cells.size()-1;j>=i;--j)
+		{
+			int _patch=m_FlowComplex->m_2cells[m_FlowComplex->m_3cells[j]->m_2cells[0]]->patch;
+			if(_patch==-1)//最新的patch
+				m_FlowComplex->SeekCreatorPatch(j);
+			else {//以前的patch未被保存，要重新找
+				if(m_FlowComplex->m_patches[_patch]->wrong)
+					m_FlowComplex->SeekCreatorPatch(j);
+			}
+		}
+		m_FlowComplex->SeekDestoryerPatch();
+
+		//记录新patches的边信息用于合并
+		for(unsigned int j=startidx;j<m_FlowComplex->m_patches.size();++j){
+			if(m_FlowComplex->m_patches[j]->flag){
+				for(unsigned int k=0;k<m_FlowComplex->m_patches[j]->m_boundary.size();++k)
+				{
+					if(m_FlowComplex->m_patches[j]->m_boundary[k]->isBoundary==-1)
+					{	
+						m_FlowComplex->m_patches[j]->wrong=true;
+						m_FlowComplex->m_patches[j]->nonmanifoldedge++;
+						m_FlowComplex->m_patches[j]->m_boundary[k]->incidentpatch.push_back(j);
+					}
+				}//k
+			}//flag
+		}//j
+		
+		//合并新patches
+		for(unsigned int j=0;j<m_FlowComplex->m_1cells.size();j++)
+		{
+			int patchnum=m_FlowComplex->m_1cells[j]->incidentpatch.size();
+			if(patchnum>2)
+			{
+				int p1=-1,p2=-1;//一对patch的编号
+				double  dihedral=PI*1000;//余弦值
+				int nonmanifolds=MAX_DISTANCE;
+				int topoOnTwoSide=0;
+				for(int k=0;k<patchnum;k++){
+					CP_Patch *pPatchl=m_FlowComplex->m_patches[m_FlowComplex->m_1cells[j]->incidentpatch[k]];
+					while(pPatchl->merged!=pPatchl->index)
+					{
+						pPatchl=m_FlowComplex->m_patches[pPatchl->merged];
+					}
+					for (int m=k+1;m<patchnum;m++)
+					{
+						CP_Patch *pPatchr=m_FlowComplex->m_patches[m_FlowComplex->m_1cells[j]->incidentpatch[m]];
+						while(pPatchr->merged!=pPatchr->index)
+						{
+							pPatchr=m_FlowComplex->m_patches[pPatchr->merged];
+						}
+						if(pPatchl->index!=pPatchr->index){
+						int tmptopoOnTwoSide=m_FlowComplex->TopologicalEnable(*m_FlowComplex->m_1cells[j],*pPatchl,*pPatchr);
+						if(tmptopoOnTwoSide==topoOnTwoSide)
+						{
+							double tmpdihedral=m_FlowComplex->DihedralOfNeighbourPatch(*m_FlowComplex->m_1cells[j],*pPatchl,*pPatchr);
+							if(tmpdihedral<dihedral){
+								topoOnTwoSide=tmptopoOnTwoSide;
+								dihedral=tmpdihedral;
+								p1=pPatchl->index;p2=pPatchr->index;
+							}
+						}else if(tmptopoOnTwoSide>topoOnTwoSide)
+						{
+							topoOnTwoSide=tmptopoOnTwoSide;
+							double tmpdihedral=m_FlowComplex->DihedralOfNeighbourPatch(*m_FlowComplex->m_1cells[j],*pPatchl,*pPatchr);
+							dihedral=tmpdihedral;
+							p1=pPatchl->index;p2=pPatchr->index;
+						}
+						}
+					}//m
+				}//k
+				//对此处1cell的patch合并
+				if(dihedral>=/*(double)PI/2.0*/2.0*PI){p1=-1;p2=-1;}
+				if(p1!=-1&&p2!=-1){
+					m_FlowComplex->MergePatch(*m_FlowComplex->m_1cells[j],*m_FlowComplex->m_patches[p1],*m_FlowComplex->m_patches[p2]);
+					m_FlowComplex->m_patches[p1]->dihedral=dihedral;
+				}			
+			}//>2
+		}//j 1cell
+		//如果每次都检查内部面可能删除过多的面有漏洞
+	}//i 3cell
+
+	//消除内部面,先合并再去掉内部面，最后同时去除，保持亏格
+	for(unsigned int j=0;j<m_FlowComplex->m_patches.size();++j){
+		if(m_FlowComplex->m_patches[j]->flag&&m_FlowComplex->m_patches[j]->wrong){
+			//假如凡是存在的都用内部面规则检测，可能去掉预期保留的面（如Torso）
+			int interior=true;
+			for(unsigned int k=0;k<m_FlowComplex->m_patches[j]->m_boundary.size();++k)
+			{
+				if(m_FlowComplex->m_patches[j]->m_boundary[k]->degree<=2)
+				{
+					interior=false;
+				}
+			}
+			if(interior){
+				for (unsigned int k = 0;k <m_FlowComplex->m_patches[j]->m_2cells.size(); k++)
+				{
+					CP_2cell *p2cell=m_FlowComplex->m_2cells[m_FlowComplex->m_patches[j]->m_2cells[k]];
+					p2cell->flag=false;
+					for(unsigned int m=0;m<p2cell->m_boundary.size();m++){
+						int icurve=m_FlowComplex->LocateSegment(m_FlowComplex->m_1cells,p2cell->m_boundary[m]);
+						m_FlowComplex->m_1cells[icurve]->degree--;
+						m_FlowComplex->m_1cells[icurve]->incident2cell.erase(remove(m_FlowComplex->m_1cells[icurve]->incident2cell.begin(),m_FlowComplex->m_1cells[icurve]->incident2cell.end(),m_FlowComplex->m_patches[j]->m_2cells[k]),m_FlowComplex->m_1cells[icurve]->incident2cell.end());
+					}
+				}
+				m_FlowComplex->m_patches[j]->flag=false;
+			}
+		}//flag wrong
+		else if(m_FlowComplex->m_patches[j]->flag/*&&!m_FlowComplex->m_patches[j]->wrong*/){
+			if(m_FlowComplex->m_patches[j]->m_boundary.size()==0)//无边界当然不可能(Boat尾部)
+			{m_FlowComplex->m_patches[j]->flag=false;}
+		}//flag !wrong
+	}//j
+	m_FlowComplex->oripatches=m_FlowComplex->m_patches.size();
+
+	//删除重复边
+	for(unsigned int j=0;j<m_FlowComplex->m_patches.size();++j){
+		if(m_FlowComplex->m_patches[j]->flag/*&&m_FlowComplex->m_patches[j]->wrong*/){//如果开了会删除Torso用于构造新环的patch
+			for(vector<CurveSegment*>::iterator itl=m_FlowComplex->m_patches[j]->m_boundary.begin();itl!=m_FlowComplex->m_patches[j]->m_boundary.end();)
+			{
+				bool dele=false;
+				for(vector<CurveSegment*>::iterator itr=itl+1;itr!=m_FlowComplex->m_patches[j]->m_boundary.end();)
+				{
+					if((*itr)->EqualToCurvement(*itl)){
+						dele=true;
+						m_FlowComplex->m_patches[j]->m_boundary.erase(itr);
+					}
+					else
+						++itr;
+				}
+				if(dele)
+					m_FlowComplex->m_patches[j]->m_boundary.erase(itl);
+				else
+					++itl;
+			}
+		}//flag
+	}//j
+}
+
+void FCCR::ImprovedFindCyclesForAllPatches()
+{
+	//边界完全被输入曲线包围的patch记录darts
+	for(unsigned int i=0;i<m_FlowComplex->m_patches.size();++i){
+		if(m_FlowComplex->m_patches[i]->flag&&!m_FlowComplex->m_patches[i]->wrong){
+			vector<int> poly;
+            for(unsigned int j=0;j<m_FlowComplex->m_patches[i]->m_boundary.size();j++){
+				if(m_FlowComplex->m_patches[i]->m_boundary[j]->isBoundary!=-1
+					&&find(poly.begin(),poly.end(),m_FlowComplex->m_patches[i]->m_boundary[j]->isBoundary)==poly.end())
+				{
+					poly.push_back(m_FlowComplex->m_patches[i]->m_boundary[j]->isBoundary);
+				}
+			}//j
+
+			vector<vector<int> > pairs;
+			pairs.resize(m_FlowComplex->graph.numVertexes);
+			for(unsigned int j=0;j<poly.size();++j)
+			{
+				pairs[m_FlowComplex->m_PolyLine[poly[j]].s].push_back(poly[j]);
+				pairs[m_FlowComplex->m_PolyLine[poly[j]].e].push_back(poly[j]);
+			}
+
+			for(unsigned int j=0;j<pairs.size();++j)
+			{
+				if((int)pairs[j].size()==2)
+				{
+                     m_FlowComplex->graph.adjList[j].darts.push_back(pair<int,int>(pairs[j][0],pairs[j][1]));
+				}
+			}
+
+			m_FlowComplex->cycles.push_back(poly);//边界完全被输入曲线包围的patch记录cycle
+		}//flag wrong-false
+	}//i
+
+	for(unsigned int i=0;i<m_FlowComplex->m_patches.size();++i){
+		if(m_FlowComplex->m_patches[i]->flag&&!m_FlowComplex->m_patches[i]->wrong){
+			for(unsigned int j=0;j<m_FlowComplex->m_patches[i]->m_2cells.size();++j){
+				int _2cell=m_FlowComplex->m_patches[i]->m_2cells[j];
+				for(unsigned int k=0;k<m_FlowComplex->m_2cells[_2cell]->delaunytri.size();++k){
+					m_FlowComplex->delaunyexist[m_FlowComplex->m_2cells[_2cell]->delaunytri[k]]=i;}
+			}//j
+		}
+	}//i
+	
+	for (unsigned int i = 0; i <m_FlowComplex->m_1cells.size(); i++)
+	{
+		CurveSegment* pcurve=m_FlowComplex->m_1cells[i];
+		if(pcurve->isBoundary!=-1){
+			pcurve->tmpdegree=0;
+			pcurve->newdegree=0;
+		}
+		else
+			pcurve->ResetDegreee();
+	}
+	//tmpdegree保持临时度数，只受patch wrong 为false的影响
+	for(unsigned int i=0;i<m_FlowComplex->m_patches.size();++i){
+		if(m_FlowComplex->m_patches[i]->flag&&!m_FlowComplex->m_patches[i]->wrong){
+			for(unsigned int j=0;j<m_FlowComplex->m_patches[i]->m_boundary.size();j++){
+				m_FlowComplex->m_patches[i]->m_boundary[j]->tmpdegree++;
+				m_FlowComplex->m_patches[i]->m_boundary[j]->newdegree++;
+			}
+		}
+	}
+	//对一个wrong patch找到所有连通分量
+	for(unsigned int i=0;i<m_FlowComplex->m_patches.size();++i){
+		if(m_FlowComplex->m_patches[i]->flag&&m_FlowComplex->m_patches[i]->wrong){
+			vector<int> poly;
+			for(unsigned int j=0;j<m_FlowComplex->m_patches[i]->m_boundary.size();j++){
+				int validDegree=m_FlowComplex->m_patches[i]->m_boundary[j]->tmpdegree;
+				if(m_FlowComplex->m_patches[i]->m_boundary[j]->isBoundary!=-1&&validDegree<2//一个连通分量的边不含度数大于2的曲线 
+					&&find(poly.begin(),poly.end(),m_FlowComplex->m_patches[i]->m_boundary[j]->isBoundary)==poly.end())
+				{
+					poly.push_back(m_FlowComplex->m_patches[i]->m_boundary[j]->isBoundary);
+				}
+			}//j
+
+			GraphList  graphall;
+			m_FlowComplex->BuildGraphFromCurves(poly,graphall);
+			m_FlowComplex->m_patches[i]->forest=m_FlowComplex->GetConnectedComponents(graphall);
+			//至此，找到patch的所有初始连通分量
+			//不按darts删除，否则可能不会生成恰好封闭模型的环
+			
+			vector<GraphList*> newforest;
+			for(unsigned int j=0;j<m_FlowComplex->m_patches[i]->forest.size();++j)
+			{
+				m_FlowComplex->AddTreeWithoutbranch(newforest,m_FlowComplex->m_patches[i]->forest[j]);
+			}
+			m_FlowComplex->m_patches[i]->forest=newforest;
+			//为patch的每个连通分量找环
+			for(unsigned int j=0;j<m_FlowComplex->m_patches[i]->forest.size();++j)
+			{
+				m_FlowComplex->FindShortestCycleForComponent(m_FlowComplex->m_patches[i]->cycle,*m_FlowComplex->m_patches[i]->forest[j],i);
+			}
+			//去掉重复
+
+			//重构
+			m_FlowComplex->ComputeDelaunyPatchForCycles(*m_FlowComplex->m_patches[i]);
+			m_FlowComplex->m_patches[i]->flag=false;
+		}//flag wrong
+	}//i
+	cout<<"success"<<endl;
+	//patch法向
+	m_FlowComplex->ResetTriNormalset();
+	m_FlowComplex->Reset2cellVisited();
+	m_FlowComplex->PatchNormalConsensus();
+
+	m_FlowComplex->ResetTriNormalset();
+	m_FlowComplex->Reset2cellVisited();
+	m_FlowComplex->SetPatchNormal();
+	//patch颜色
+	//找到每个patch的相邻patch
+	m_FlowComplex->SetAdjPatch();
+	//着色算法
+	m_FlowComplex->ResetPatchVisited();
+	m_FlowComplex->SetPatchColor();
+
+	//.
 }

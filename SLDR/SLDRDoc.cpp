@@ -66,9 +66,9 @@ BOOL CSLDRDoc::OnNewDocument()
 	r[0]=0.9;g[0]=0.5;b[0]=0.5;//ºì
 	r[1]=0.65;g[1]=0.72;b[1]=0.22;//ÂÌ
 	r[2]=0.84;g[2]=0.74;b[2]=0.58;//ÐÓÈÊ
-	r[3]=0.46;g[3]=0.53;b[3]=0.77;//ÉîÀ¶
-	r[4]=0.6;g[4]=0.4;b[4]=0.7;//×Ï
-	r[5]=0.81;g[5]=0.6;b[5]=0.01;//ÍÁ»Æ
+	r[3]=0.6;g[3]=0.4;b[3]=0.7;//×Ï
+	r[4]=0.81;g[4]=0.6;b[4]=0.01;//ÍÁ»Æ
+	r[5]=0.35;g[5]=0.96;b[5]=0.5;//²ÝÂÌ
 	return TRUE;
 }
 
@@ -292,10 +292,17 @@ void CSLDRDoc::OutputCurveNetwork()
 			}
 			out<<"############"<<endl;
 
-			for(unsigned int i=0;i<m_FlowComplex->tricells.size();i++)
-			{
-				if(m_FlowComplex->m_2cells[m_FlowComplex->Locate2cell(m_FlowComplex->tricells[i]->_2cell)]->flag)
-					out<<"f "<< m_FlowComplex->tricells[i]->m_points[0]+1<<" "<<m_FlowComplex->tricells[i]->m_points[1]+1<<" "<<m_FlowComplex->tricells[i]->m_points[2]+1<<endl;
+			for(unsigned int i=0;i<m_FlowComplex->m_patches.size();i++){
+				CP_Patch *pPatch = m_FlowComplex->m_patches[i];
+				if(pPatch->flag){
+					for (unsigned int j = 0; j <pPatch->m_2cells.size(); j++){
+						CP_2cell *p2cell = m_FlowComplex->m_2cells[pPatch->m_2cells[j]];
+						for(unsigned int k=0;k<p2cell->m_triangle.size();k++){
+							CP_Triganle3D *pTri = m_FlowComplex->tricells[p2cell->m_triangle[k]];
+							out<<"f "<< pTri->m_points[0]+1<<" "<<pTri->m_points[1]+1<<" "<<pTri->m_points[2]+1<<endl;
+						}//k
+					}
+				}
 			}
 		}
 	}//curve

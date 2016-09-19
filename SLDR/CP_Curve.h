@@ -90,6 +90,7 @@ public:
 class CP_PolyLine3D{
 public:
 	vector<CP_Point3D> m_points;
+	vector<int> idx;//点在0cells中的编号
 	vector<vector<int>> cycle;//组成最小环的边
 	bool tag;//标记预期非流形面片的边界曲线
 	int s,e;//两端点的在0cells中的下标

@@ -45,7 +45,7 @@ public:
 	Delaunay T;
 	CP_FlowComplex *m_FlowComplex;
 	std::vector<CP_PolyLine3D> *m_VT_PolyLine;
-	bool showResult;
+	bool showResult;//多线程中不能调用view的变量
 	bool IsProcess;
 public:
 	FCCR(void);
@@ -65,7 +65,10 @@ public:
 	void deleteTriangle(vector<CP_Triganle3D*> &non_gabriel_triangles,const Triangle &tri);
 	void generOBJ();
 
-	void IFCPolyline();
+	void ImprovedFlowcomplex();
+	void ImprovedThicken();
+	void ImprovedFindCyclesForAllPatches();
+	void ImprovedPolyline();
 	void ShortestCycle();
 	void ConfirmClassification();
 	void SetSymmetricCurveTagTrue();
