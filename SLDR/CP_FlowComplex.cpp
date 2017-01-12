@@ -7,7 +7,6 @@
 #include <algorithm>
 using namespace std;
 
-
 CP_Triganle3D::CP_Triganle3D()
 {
 	_patch=-1;
