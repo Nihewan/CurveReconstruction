@@ -205,6 +205,8 @@ BOOL CSLDRDoc::OnOpenDocument(LPCTSTR lpszPathName)
 		pMain->EnableDocking(CBRS_ALIGN_ANY);
 		pMain->DockPane(pMain->m_ctrlPane);
 
+		pMain->m_ucsEditor.Create(_T("UCS Editor"), pMain, CRect(300, 0, 600, 300), TRUE, IDD_DIALOG_UCSEDIT,
+			WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_LEFT | CBRS_FLOAT_MULTI);
 		CRect rect;
 		pView->GetClientRect(&rect);
 		pView->OnSize(0, rect.Width(), rect.Height());

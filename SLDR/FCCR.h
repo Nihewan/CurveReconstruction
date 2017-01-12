@@ -5,6 +5,7 @@
 #include <CGAL/Delaunay_triangulation_3.h>
 #include <CGAL/Cartesian_converter.h>
 #include <CGAL/Cartesian.h> 
+using namespace std;
 
 typedef CGAL::Exact_predicates_inexact_constructions_kernel IK;
 typedef CGAL::Exact_predicates_exact_constructions_kernel EK;
@@ -69,7 +70,7 @@ public:
 	void ImprovedThicken();
 	void ImprovedFindCyclesForAllPatches();
 	void ImprovedPolyline();
-	void ShortestCycle();
+	void ImprovedPruningAndTopoComplete();
 	void ConfirmClassification();
 	void SetSymmetricCurveTagTrue();
 	bool IsExistSharpChange(CP_PolyLine3D &poly);

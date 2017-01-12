@@ -9,6 +9,7 @@
 #include "FCCRCtrlDialog.h"
 #include "afxdialogex.h"
 #include "CP_FlowComplex.h"
+#include "ParaDialog.h"
 // FCCRCtrlDialog 对话框
 
 //#define WM_RESULT WM_USER+500
@@ -34,15 +35,15 @@ FCCRCtrlDialog::FCCRCtrlDialog(CWnd* pParent /*=NULL*/)
 	seltriangle=-1;
 	selpoly=-1;
 	selpatch=-1;
-	selcycle=-1;
+	showDelaunay=false;
 	showvoids=false;
 	showcircum=false;
 	showbystep=false;
 	showdarts=false;
+	showinteriorpatches=false;
+	showRMF=false;
+
 	mTrans=1.0;
-	play=0;
-	pos=0;
-	pause=false;
 }
 
 FCCRCtrlDialog::~FCCRCtrlDialog()
@@ -63,9 +64,6 @@ BEGIN_MESSAGE_MAP(FCCRCtrlDialog, CDialogEx)
 	ON_BN_CLICKED(IDC_CHECK_TRI, &FCCRCtrlDialog::OnBnClickedCheckTri)
 	ON_BN_CLICKED(IDC_CHECK_2CELL, &FCCRCtrlDialog::OnBnClickedCheck2cell)
 	ON_BN_CLICKED(IDC_CLEAR, &FCCRCtrlDialog::OnBnClickedClear)
-	ON_EN_CHANGE(IDC_EDIT_VOIDS, &FCCRCtrlDialog::OnEnChangeEditVoids)
-	ON_EN_CHANGE(IDC_EDIT_EPSILON, &FCCRCtrlDialog::OnEnChangeEditEpsilon)
-	ON_EN_CHANGE(IDC_EDIT_FEASA, &FCCRCtrlDialog::OnEnChangeEditFeasa)
 	ON_BN_CLICKED(IDC_CHECK_POLYLINE, &FCCRCtrlDialog::OnBnClickedCheckPolyline)
 	ON_BN_CLICKED(IDC_CHECK_CREATOR, &FCCRCtrlDialog::OnBnClickedCheckCreator)
 ON_NOTIFY(TVN_SELCHANGED, IDC_INFOTREE, &FCCRCtrlDialog::OnTvnSelchangedInfotree)
@@ -74,6 +72,10 @@ ON_BN_CLICKED(IDC_CHECK4, &FCCRCtrlDialog::OnBnClickedCheck4)
 ON_BN_CLICKED(IDC_CHECK_PATCH, &FCCRCtrlDialog::OnBnClickedCheckPatch)
 ON_BN_CLICKED(IDC_CHECK_NONGABRIEL, &FCCRCtrlDialog::OnBnClickedCheckShowByStep)
 ON_BN_CLICKED(IDC_SHOW_DARTS, &FCCRCtrlDialog::OnBnClickedShowDarts)
+ON_BN_CLICKED(IDC_BUTTON_Para, &FCCRCtrlDialog::OnBnClickedButtonPara)
+ON_BN_CLICKED(IDC_CHECK5, &FCCRCtrlDialog::OnBnClickedCheckShowInterior)
+ON_BN_CLICKED(IDC_CHECK6, &FCCRCtrlDialog::OnBnClickedCheckShowRMF)
+ON_BN_CLICKED(IDC_CHECK_DELAUNAY, &FCCRCtrlDialog::OnBnClickedShowDelaunay)
 END_MESSAGE_MAP()
 
 
@@ -82,6 +84,7 @@ END_MESSAGE_MAP()
 void FCCRCtrlDialog::SetItems(CP_FlowComplex *FlowComplex,vector<CP_PolyLine3D> *VT_PolyLine)
 {
 	fccr.m_FlowComplex=FlowComplex;
+	fccr.m_FlowComplex->inputCurves=VT_PolyLine->size();
 	fccr.m_VT_PolyLine=VT_PolyLine;
 }
 
@@ -193,16 +196,6 @@ void FCCRCtrlDialog::SetTreePatches()
 	}//creators
 }
 
-void FCCRCtrlDialog::SetTreeCycles(){
-	CString cstr;
-	m_treeCtrl.DeleteAllItems(); 
-	for(unsigned int i=0;i<fccr.m_FlowComplex->cycles.size();i++)
-	{
-		cstr.Format("cycle:%d",i);//2cell在m_2cell中的index
-		HTREEITEM hpatch=m_treeCtrl.InsertItem(cstr);
-	}//creators
-}
-
 void FCCRCtrlDialog::OnBnClickedSelect2cell()
 {
 	// TODO: 在此添加控件通知处理程序代码
@@ -270,19 +263,19 @@ void FCCRCtrlDialog::OnBnClickedClear()
 	selcreator=-1;
 	sel3cell=-1;
 	sel2cell=-1;
-	selcycle=-1;
 	seltriangle=-1;
 	selpoly=-1;
 	selpatch=-1;
+	showDelaunay=false;
 	showvoids=false;
 	showcircum=false;
 	showbystep=false;
 	showdarts=false;
+	showinteriorpatches=false;
+	showRMF=false;
 	mTrans=1.0;
-	play=0;
-	pos=0;
-	pause=false;
 
+	m_treeCtrl.DeleteAllItems();
 	fccr.ReSet();
 	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
 	CSLDRView * pView = (CSLDRView *)(pMain->GetActiveView());
@@ -299,9 +292,6 @@ void FCCRCtrlDialog::OnBnClickedClear()
 	((CButton*)GetDlgItem(IDC_CHECK_CREATOR))->SetCheck(BST_UNCHECKED);
 	((CButton*)GetDlgItem(IDC_CHECK_VOIDS))->SetCheck(BST_UNCHECKED);
 	((CButton*)GetDlgItem(IDC_CHECK_NONGABRIEL))->SetCheck(BST_UNCHECKED);
-	GetDlgItem(IDC_EDIT_EPSILON)->SetWindowText("0.055");
-	GetDlgItem(IDC_EDIT_FEASA)->SetWindowText("0.7");
-	GetDlgItem(IDC_EDIT_VOIDS)->SetWindowText("0");
 	pView->Invalidate();
 }
 
@@ -311,55 +301,11 @@ BOOL FCCRCtrlDialog::OnInitDialog()
 	CDialogEx::OnInitDialog();
 
 	// TODO:  在此添加额外的初始化
-	GetDlgItem(IDC_EDIT_EPSILON)->SetWindowText("0.055");
-	GetDlgItem(IDC_EDIT_FEASA)->SetWindowText("0.7");
-	GetDlgItem(IDC_EDIT_VOIDS)->SetWindowText("0");
 	((CButton*)GetDlgItem(IDC_CHECK1))->SetCheck(BST_CHECKED);
 	CSliderCtrl *pSlidCtrl=(CSliderCtrl*)GetDlgItem(IDC_SLIDER_TANSPARENT);
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// 异常: OCX 属性页应返回 FALSE
 }
-
-void FCCRCtrlDialog::OnEnChangeEditVoids()
-{
-	// TODO:  如果该控件是 RICHEDIT 控件，它将不
-	// 发送此通知，除非重写 CDialogEx::OnInitDialog()
-	// 函数并调用 CRichEditCtrl().SetEventMask()，
-	// 同时将 ENM_CHANGE 标志“或”运算到掩码中。
-
-	// TODO:  在此添加控件通知处理程序代码
-	CString str;   
-	GetDlgItemText(IDC_EDIT_VOIDS,str);
-	fccr.voids=_ttoi(str);
-}
-
-
-void FCCRCtrlDialog::OnEnChangeEditEpsilon()
-{
-	// TODO:  如果该控件是 RICHEDIT 控件，它将不
-	// 发送此通知，除非重写 CDialogEx::OnInitDialog()
-	// 函数并调用 CRichEditCtrl().SetEventMask()，
-	// 同时将 ENM_CHANGE 标志“或”运算到掩码中。
-
-	// TODO:  在此添加控件通知处理程序代码
-	CString str;   
-	GetDlgItemText(IDC_EDIT_EPSILON,str);
-	fccr.epsilon=atof(str);
-}
-
-void FCCRCtrlDialog::OnEnChangeEditFeasa()
-{
-	// TODO:  如果该控件是 RICHEDIT 控件，它将不
-	// 发送此通知，除非重写 CDialogEx::OnInitDialog()
-	// 函数并调用 CRichEditCtrl().SetEventMask()，
-	// 同时将 ENM_CHANGE 标志“或”运算到掩码中。
-
-	// TODO:  在此添加控件通知处理程序代码
-	CString str;   
-	GetDlgItemText(IDC_EDIT_FEASA,str);
-	fccr.feasa=atof(str);
-}
-
 
 void FCCRCtrlDialog::OnBnClickedCheckPolyline()
 {
@@ -376,17 +322,25 @@ void FCCRCtrlDialog::OnBnClickedCheckCreator()
 	// TODO: 在此添加控件通知处理程序代码
 	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
 	CSLDRView * pView = (CSLDRView *)(pMain->GetActiveView());
-	if(!showcreators&&pView->showFC)
-	{
-		showvoids=false;
-		((CButton*)GetDlgItem(IDC_CHECK_VOIDS))->SetCheck(BST_UNCHECKED);
-		showcreators=true;
-		SetTreeCreator();
-	}else{
-		showcreators=false;
+	if(!pView->showFC){
+		MessageBox("请先选择FlowComplex");
+		((CButton*)GetDlgItem(IDC_CHECK_CREATOR))->SetCheck(BST_UNCHECKED);
 	}
-	selcreator=0;
-	sel3cell=0;
+	else{
+		if(!showcreators)
+		{
+			showvoids=false;
+			showDelaunay=false;
+			((CButton*)GetDlgItem(IDC_CHECK_VOIDS))->SetCheck(BST_UNCHECKED);
+			((CButton*)GetDlgItem(IDC_CHECK_DELAUNAY))->SetCheck(BST_UNCHECKED);
+			showcreators=true;
+			SetTreeCreator();
+		}else{
+			showcreators=false;
+		}
+		selcreator=0;
+		sel3cell=0;
+	}
 	pView->Invalidate();
 }
 
@@ -455,11 +409,6 @@ void FCCRCtrlDialog::OnTvnSelchangedInfotree(NMHDR *pNMHDR, LRESULT *pResult)
 		return;
 	}
 
-	if(pView->showCycles){
-		if(seltype=="cycle"){
-			selcycle=atoi(strText.Right(strText.GetLength()-strText.Find(":")-1));
-		}
-	}
 	pView->Invalidate();
 	return;
 }
@@ -470,14 +419,22 @@ void FCCRCtrlDialog::OnBnClickedCheckVoids()
 	// TODO: 在此添加控件通知处理程序代码
 	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
 	CSLDRView * pView = (CSLDRView *)(pMain->GetActiveView());
-	if(!showvoids&&pView->showFC)
-	{
-		showcreators=false;
-		((CButton*)GetDlgItem(IDC_CHECK_CREATOR))->SetCheck(BST_UNCHECKED);
-		showvoids=true;
-		SetTree3cells();
-	}else
-		showvoids=false;
+	if(!pView->showFC){
+		MessageBox("请先选择FlowComplex");
+		((CButton*)GetDlgItem(IDC_CHECK_VOIDS))->SetCheck(BST_UNCHECKED);
+	}
+	else{
+		if(!showvoids)
+		{
+			showcreators=false;
+			showDelaunay=false;
+			((CButton*)GetDlgItem(IDC_CHECK_CREATOR))->SetCheck(BST_UNCHECKED);
+			((CButton*)GetDlgItem(IDC_CHECK_DELAUNAY))->SetCheck(BST_UNCHECKED);
+			showvoids=true;
+			SetTree3cells();
+		}else
+			showvoids=false;
+	}
 	pView->Invalidate();
 }
 
@@ -537,33 +494,29 @@ void FCCRCtrlDialog::OnImprovedFCReconstruction()
 	thread=AfxBeginThread(ThreadImrovedFC,this);
 }
 
-void FCCRCtrlDialog::OnPlayFC()
+void FCCRCtrlDialog::OnImprovedFCPolyline()
 {
-	pFCthread=AfxBeginThread(ThreadPlayFC,this);
+	thread=AfxBeginThread(ThreadImrovedFCPoyline,this);
 }
 
-UINT  ThreadPlayFC(LPVOID pParam) 
-{  
-	FCCRCtrlDialog *dlg=(FCCRCtrlDialog*)pParam;
-	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
-	CSLDRView * pView = (CSLDRView *)(pMain->GetActiveView());
-	CSLDRDoc* pDoc = pView->GetDocument();
-	int num=0;
-	//if(dlg->selpoly!=-1)
-	    num=static_cast<int>(dlg->fccr.m_FlowComplex->m_patches.size()-dlg->fccr.m_FlowComplex->oripatches);
-	
-	for(int i=0;i<num;i++)
-	{
-		dlg->play++;
-		dlg->pos=(dlg->play*100)/num;
-		//delay
-		::PostMessage(pMain->m_hWnd,WM_RESULT_FCPLAY,0,0);
+void FCCRCtrlDialog::OnImprovedFCFlowComplex()
+{
+	thread=AfxBeginThread(ThreadImrovedFCFlowComplex,this);
+}
 
-		Sleep(1000);
-	}
-	dlg->play=0;//演示完后显示FC，不显示动画
-	::PostMessage(pMain->m_hWnd,WM_RESULT_FCPLAY,0,0);
-	return 0;
+void FCCRCtrlDialog::OnImprovedFCSpreadMerge()
+{
+	thread=AfxBeginThread(ThreadImrovedFCSpreadMerge,this);
+}
+
+void FCCRCtrlDialog::OnImprovedFCFindingCycles()
+{
+	thread=AfxBeginThread(ThreadImrovedFCFindingCycles,this);
+}
+
+void FCCRCtrlDialog::OnImprovedFCPruning()
+{
+	thread=AfxBeginThread(ThreadImrovedFCPruningAndComplete,this);
 }
 
 UINT  ThreadFunc(LPVOID pParam) 
@@ -571,9 +524,12 @@ UINT  ThreadFunc(LPVOID pParam)
 	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
 	CSLDRView * pView = (CSLDRView *)(pMain->GetActiveView());
 	clock_t start,end;
+	clock_t starttotal,endtotal;
+	cout<<"********************FC Method***********************"<<endl;
 	//polyline
 	FCCRCtrlDialog *fc=(FCCRCtrlDialog*)pParam;
 	start = clock();
+	starttotal=clock();
 	fc->fccr.ToPolyLine();
 	end = clock();
 	cout<<"time for polyline: "<<(double)(end-start)/CLOCKS_PER_SEC<<endl;
@@ -597,8 +553,11 @@ UINT  ThreadFunc(LPVOID pParam)
 	start = clock();
 	fc->fccr.OnThicken();
 	end = clock();
+	endtotal=clock();
 	cout<<"time for Thicken and Pruning: "<<(double)(end-start)/CLOCKS_PER_SEC<<endl;
-	
+	cout<<"total time:"<<(double)(endtotal-starttotal)/CLOCKS_PER_SEC<<endl;
+	cout<<"*************************End************************"<<endl;
+
 	fc->fccr.showResult=true;
 	fc->fccr.IsProcess=true;
 	fc->SetTreePatches();
@@ -611,9 +570,13 @@ UINT  ThreadImrovedFC(LPVOID pParam)
 	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
 	CSLDRView * pView = (CSLDRView *)(pMain->GetActiveView());
 	clock_t start,end;
+	clock_t starttotal,endtotal;
+	clock_t starttop,endtop;
+	cout<<"********************IFC Method**********************"<<endl;
 	//polyline
 	FCCRCtrlDialog *fc=(FCCRCtrlDialog*)pParam;
 	start = clock();
+	starttotal=clock();
 	fc->fccr.ImprovedPolyline();
 	end = clock();
 	cout<<"time for polyline: "<<(double)(end-start)/CLOCKS_PER_SEC<<endl;
@@ -623,51 +586,123 @@ UINT  ThreadImrovedFC(LPVOID pParam)
 	end = clock();
 	cout<<"time for Delauny: "<<(double)(end-start)/CLOCKS_PER_SEC<<endl;
 	//flow complex
-	//pMain->m_ctrlPaneFCCR->m_dialog.fccr.filename=pDoc->filename;
 	start = clock();
 	fc->fccr.ImprovedFlowcomplex();
 	end = clock();
 	cout<<"time for compute Flow Complex: "<<(double)(end-start)/CLOCKS_PER_SEC<<endl;
-	// topological reconstruction
-	start = clock();
-	fc->fccr.OnCollapse();
-	end = clock();
-	cout<<"time for collapse: "<<(double)(end-start)/CLOCKS_PER_SEC<<endl;
 	//thicken
 	start = clock();
+	starttop=clock();
+	fc->fccr.OnCollapse();
 	fc->fccr.ImprovedThicken();
 	end = clock();
-	cout<<"time for Thicken and Pruning: "<<(double)(end-start)/CLOCKS_PER_SEC<<endl;
+	cout<<"time for Spread And Merge: "<<(double)(end-start)/CLOCKS_PER_SEC<<endl;
 	//findcycyles
 	start = clock();
 	fc->fccr.ImprovedFindCyclesForAllPatches();
 	end = clock();
 	cout<<"time for find cycles for wrong patches: "<<(double)(end-start)/CLOCKS_PER_SEC<<endl;
+	//pruning and complete topology
+	start = clock();
+	fc->fccr.ImprovedPruningAndTopoComplete();
+	end = clock();
+	cout<<"time for pruning and complete topology: "<<(double)(end-start)/CLOCKS_PER_SEC<<endl;
 
+	endtotal=clock();
+	endtop=clock();
+	cout<<"total time:"<<(double)(endtotal-starttotal)/CLOCKS_PER_SEC<<endl;
+	cout<<"topological time:"<<(double)(endtop-starttop)/CLOCKS_PER_SEC<<endl;
+	fc->fccr.m_FlowComplex->NonmanifoldCurves();
+	cout<<"**************************End***********************"<<endl;
 	fc->fccr.showResult=true;
 	fc->fccr.IsProcess=true;
 	fc->SetTreePatches();
-	::PostMessage(pMain->m_hWnd,WM_RESULT,0,0);
+	::PostMessage(pMain->m_hWnd,WM_RESULT_PRUNING,0,0);
 	return 0;
 }
 
-void FCCRCtrlDialog::OnPlayFCPause()
-{
-	if(!pause){
-		pause=true;
-		pFCthread->SuspendThread();
-	}
-	else{
-		pause=false;
-		pFCthread->ResumeThread();
-	}
+UINT  ThreadImrovedFCPoyline(LPVOID pParam) 
+{  
+	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
+	CSLDRView * pView = (CSLDRView *)(pMain->GetActiveView());
+	clock_t start,end;
+	cout<<"********************IFC Method**********************"<<endl;
+	//polyline
+	FCCRCtrlDialog *fc=(FCCRCtrlDialog*)pParam;
+	start = clock();
+	fc->fccr.ImprovedPolyline();
+	end = clock();
+	cout<<"time for polyline: "<<(double)(end-start)/CLOCKS_PER_SEC<<endl;
+	::PostMessage(pMain->m_hWnd,WM_RESULT_POLYLINE,0,0);
+	return 0;
 }
 
-void FCCRCtrlDialog::OnIFCMethodNext()
-{
-	thread->ResumeThread();
+UINT  ThreadImrovedFCFlowComplex(LPVOID pParam) 
+{  
+	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
+	CSLDRView * pView = (CSLDRView *)(pMain->GetActiveView());
+	clock_t start,end;
+	//flow complex
+	FCCRCtrlDialog *fc=(FCCRCtrlDialog*)pParam;
+	start = clock();
+	fc->fccr.OnDelaunyTriangulation();
+	fc->fccr.ImprovedFlowcomplex();
+	end = clock();
+	cout<<"time for compute Flow Complex: "<<(double)(end-start)/CLOCKS_PER_SEC<<endl;
+	::PostMessage(pMain->m_hWnd,WM_RESULT_FLOWCOMPLEX,0,0);
+	return 0;
 }
 
+UINT  ThreadImrovedFCSpreadMerge(LPVOID pParam) 
+{  
+	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
+	CSLDRView * pView = (CSLDRView *)(pMain->GetActiveView());
+	clock_t start,end;
+	// topological reconstruction
+	FCCRCtrlDialog *fc=(FCCRCtrlDialog*)pParam;
+	start = clock();
+	fc->fccr.OnCollapse();
+	fc->fccr.ImprovedThicken();
+	end = clock();
+	cout<<"time for Spread And Merge: "<<(double)(end-start)/CLOCKS_PER_SEC<<endl;
+	::PostMessage(pMain->m_hWnd,WM_RESULT_MERGE,0,0);
+	return 0;
+}
+
+UINT  ThreadImrovedFCFindingCycles(LPVOID pParam) 
+{  
+	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
+	CSLDRView * pView = (CSLDRView *)(pMain->GetActiveView());
+	clock_t start,end;
+	//findcycyles
+	FCCRCtrlDialog *fc=(FCCRCtrlDialog*)pParam;
+	start = clock();
+	fc->fccr.ImprovedFindCyclesForAllPatches();
+	end = clock();
+	cout<<"time for find cycles for wrong patches: "<<(double)(end-start)/CLOCKS_PER_SEC<<endl;
+	::PostMessage(pMain->m_hWnd,WM_RESULT_CYCLES,0,0);
+	return 0;
+}
+
+UINT  ThreadImrovedFCPruningAndComplete(LPVOID pParam)
+{  
+	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
+	CSLDRView * pView = (CSLDRView *)(pMain->GetActiveView());
+	clock_t start,end;
+	//findcycyles
+	FCCRCtrlDialog *fc=(FCCRCtrlDialog*)pParam;
+	start = clock();
+	fc->fccr.ImprovedPruningAndTopoComplete();
+	end = clock();
+	cout<<"time for pruning and complete topology: "<<(double)(end-start)/CLOCKS_PER_SEC<<endl;
+	fc->fccr.m_FlowComplex->NonmanifoldCurves();
+	cout<<"**************************End***********************"<<endl;
+	fc->fccr.showResult=true;
+	fc->fccr.IsProcess=true;
+	fc->SetTreePatches();
+	::PostMessage(pMain->m_hWnd,WM_RESULT_PRUNING,0,0);
+	return 0;
+}
 
 void FCCRCtrlDialog::OnBnClickedShowDarts()
 {
@@ -675,5 +710,58 @@ void FCCRCtrlDialog::OnBnClickedShowDarts()
 	showdarts=!showdarts;
 	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
 	CSLDRView * pView = (CSLDRView *)(pMain->GetActiveView());
+	pView->Invalidate();
+}
+
+
+void FCCRCtrlDialog::OnBnClickedButtonPara()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	ParaDialog m_paradialog;
+	m_paradialog.fccr=&fccr;
+	m_paradialog.DoModal();
+}
+
+
+void FCCRCtrlDialog::OnBnClickedCheckShowInterior()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	showinteriorpatches=!showinteriorpatches;
+	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
+	CSLDRView * pView = (CSLDRView *)(pMain->GetActiveView());
+	pView->Invalidate();
+}
+
+
+void FCCRCtrlDialog::OnBnClickedCheckShowRMF()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	showRMF=!showRMF;
+	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
+	CSLDRView * pView = (CSLDRView *)(pMain->GetActiveView());
+	pView->Invalidate();
+}
+
+
+void FCCRCtrlDialog::OnBnClickedShowDelaunay()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
+	CSLDRView * pView = (CSLDRView *)(pMain->GetActiveView());
+	if(!pView->showFC){
+		MessageBox("请先选择FlowComplex");
+		((CButton*)GetDlgItem(IDC_CHECK_DELAUNAY))->SetCheck(BST_UNCHECKED);
+	}
+	else{
+		if(!showDelaunay&&pView->showFC)
+		{
+			showvoids=false;
+			showcreators=false;
+			((CButton*)GetDlgItem(IDC_CHECK_CREATOR))->SetCheck(BST_UNCHECKED);
+			((CButton*)GetDlgItem(IDC_CHECK_VOIDS))->SetCheck(BST_UNCHECKED);
+			showDelaunay=true;
+		}else
+			showDelaunay=false;
+	}
 	pView->Invalidate();
 }

@@ -41,7 +41,11 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
 	ON_WM_SETCURSOR()
 	ON_COMMAND(ID_BUTTON_SAVECNW, &CMainFrame::OnButtonSavecnw)
 	ON_MESSAGE(WM_RESULT,&CMainFrame::ShowResult)
-	ON_MESSAGE(WM_RESULT_FCPLAY,&CMainFrame::ShowFCPlay)
+	ON_MESSAGE(WM_RESULT_POLYLINE,&CMainFrame::ShowPolyline)
+	ON_MESSAGE(WM_RESULT_FLOWCOMPLEX,&CMainFrame::ShowFlowComplex)
+	ON_MESSAGE(WM_RESULT_MERGE,&CMainFrame::ShowMerge)
+	ON_MESSAGE(WM_RESULT_CYCLES,&CMainFrame::ShowCycles)
+	ON_MESSAGE(WM_RESULT_PRUNING,&CMainFrame::ShowPruning)
 	ON_MESSAGE(WM_RESULT_REFRESH,&CMainFrame::ResultRefresh)
 END_MESSAGE_MAP()
 
@@ -268,7 +272,7 @@ void CMainFrame::OnShowWindow(BOOL bShow, UINT nStatus)
 
 int CMainFrame::ShowUCSEditor() {
 	m_ucsEditor.ShowPane(TRUE, TRUE, TRUE);
-
+	
 	m_ucsEditor.EnableDocking(CBRS_ALIGN_ANY);
 	EnableDocking(CBRS_ALIGN_ANY);
 	DockPane(&m_ucsEditor);
@@ -312,19 +316,64 @@ LRESULT  CMainFrame::ShowResult(WPARAM wParam,LPARAM lParam)
 	CSLDRView * pView = (CSLDRView *)(GetActiveView());
 	pView->fcEnable=true;
 	pView->ifcEnable=true;
+	pView->showPreprocessEnable=true;
 	pView->Invalidate();
 	return 0;
 }
 
-LRESULT  CMainFrame::ShowFCPlay(WPARAM wParam,LPARAM lParam)
+LRESULT  CMainFrame::ShowPolyline(WPARAM wParam,LPARAM lParam)
 {
 	CSLDRView * pView = (CSLDRView *)(GetActiveView());
-	CMFCRibbonBar* pRibbon = ((CMainFrame*) AfxGetMainWnd())->GetRibbonBar();
-	CMFCRibbonProgressBar* pProgressBar = DYNAMIC_DOWNCAST(
-		CMFCRibbonProgressBar, pRibbon->FindByID(ID_PROGRESS_PLAYFC));
-	pProgressBar->SetPos(m_ctrlPaneFCCR->m_dialog.pos,true);
-	if(m_ctrlPaneFCCR->m_dialog.play==0)
-		pView->playEnable=true;
+	pView->showFCEnable=true;
+	pView->showInputP=true;
+	pView->Invalidate();
+	return 0;
+}
+
+LRESULT  CMainFrame::ShowFlowComplex(WPARAM wParam,LPARAM lParam)
+{
+	CSLDRView * pView = (CSLDRView *)(GetActiveView());
+	pView->showMergeEnable=true;
+	pView->showInputP=false;
+	pView->showFC=true;
+	pView->Invalidate();
+	return 0;
+}
+
+LRESULT  CMainFrame::ShowMerge(WPARAM wParam,LPARAM lParam)
+{
+	CSLDRView * pView = (CSLDRView *)(GetActiveView());
+	pView->showCyclesEnable=true;
+	pView->showFC=false;
+	pView->showTop=true;
+	pView->Invalidate();
+	return 0;
+}
+
+LRESULT  CMainFrame::ShowCycles(WPARAM wParam,LPARAM lParam)
+{
+	CSLDRView * pView = (CSLDRView *)(GetActiveView());
+	pView->showPruningEnable=true;
+	pView->showTop=false;
+	pView->showCycles=true;
+	pView->Invalidate();
+	return 0;
+}
+
+LRESULT  CMainFrame::ShowPruning(WPARAM wParam,LPARAM lParam)
+{
+	CSLDRView * pView = (CSLDRView *)(GetActiveView());
+	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
+	pView->showCycles=false;
+
+	pView->showPolyEnable=true;
+	pView->showFCEnable=true;
+	pView->showMergeEnable=true;
+	pView->showCyclesEnable=true;
+	pView->showPruningEnable=true;
+	pView->fcEnable=true;
+	pView->ifcEnable=true;
+	pView->showPreprocessEnable=true;
 	pView->Invalidate();
 	return 0;
 }

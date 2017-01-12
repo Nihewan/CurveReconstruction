@@ -128,13 +128,29 @@ void CP_LineSegment3D::Split2PolyLine(double ratio)
 /************************************************************************/
 void CP_PolyLine3D::Draw()
 {
-	glBegin(GL_LINE_STRIP);
-	for (unsigned int i = 0; i < m_points.size(); i++)
+	glPushAttrib (GL_ALL_ATTRIB_BITS);
+	glEnable(GL_POLYGON_OFFSET_LINE);
+	glPolygonOffset(4.5f, 5.0f);
+
+	glDepthMask(GL_FALSE);
+	glEnable (GL_LINE_SMOOTH);
+	glHint (GL_LINE_SMOOTH_HINT, GL_NICEST);
+
+	for (unsigned int i = 0; i < m_points.size()-1; i++)
 	{
 		glNormal3f(0.0f,0.0f,0.0f);
+		glBegin(GL_LINE_STRIP);
 		glVertex3d(m_points[i].m_x, m_points[i].m_y, m_points[i].m_z);
+		glVertex3d(m_points[i+1].m_x, m_points[i+1].m_y, m_points[i+1].m_z);
+		glEnd();
 	}
-	glEnd();
+
+	glDepthMask(GL_TRUE);
+	glDisable(GL_LINE_SMOOTH);
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glDisable(GL_POLYGON_OFFSET_LINE);
+	glPopAttrib();
 }
 
 void CP_PolyLine3D::ZoomDraw()

@@ -23,7 +23,7 @@ END_MESSAGE_MAP()
 int CUCSEditorPane::OnCreate(LPCREATESTRUCT lpCreateStruct) {
 	if (CDockablePane::OnCreate(lpCreateStruct) == -1)
 		return -1;
-
+	
 	if (!m_dialog.Create(IDD_DIALOG_UCSEDIT, this)) {
 		MessageBox(_T("未能初始化窗口"), _T("ERROR"));
 		return -1;

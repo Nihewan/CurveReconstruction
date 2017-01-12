@@ -145,6 +145,7 @@
     <ClInclude Include="FCCRCtrlDialog.h" />
     <ClInclude Include="FCCRCtrlPane.h" />
     <ClInclude Include="mathlib.h" />
+    <ClInclude Include="ParaDialog.h" />
     <ClInclude Include="propertiesnames.h" />
     <ClInclude Include="CP_HomogenousCSys.h" />
     <ClInclude Include="CP_TopologyExt.h" />
@@ -162,6 +163,7 @@
     <ClInclude Include="IObjectiveFuncCalculator.h" />
     <ClInclude Include="rec_curve.h" />
     <ClInclude Include="rec_surface.h" />
+    <ClInclude Include="SurfaceOptimization.h" />
     <ClInclude Include="surface_basic.h" />
     <ClInclude Include="surface_triangulation.h" />
     <ClInclude Include="topo_geometricoper.h" />
@@ -231,6 +233,7 @@
     <ClCompile Include="FCCR.cpp" />
     <ClCompile Include="FCCRCtrlDialog.cpp" />
     <ClCompile Include="FCCRCtrlPane.cpp" />
+    <ClCompile Include="ParaDialog.cpp" />
     <ClCompile Include="rec_bodyassembly.cpp" />
     <ClCompile Include="est_refplane.cpp" />
     <ClCompile Include="est_surface.cpp" />
@@ -239,6 +242,7 @@
     <ClCompile Include="rec_curve.cpp" />
     <ClCompile Include="rec_loopdirect.cpp" />
     <ClCompile Include="rec_surface.cpp" />
+    <ClCompile Include="SurfaceOptimization.cpp" />
     <ClCompile Include="surface_basic.cpp" />
     <ClCompile Include="surface_triangulation.cpp" />
     <ClCompile Include="topo_geometricoper.cpp" />
@@ -282,11 +286,19 @@
     <Image Include="C:\Users\Administrator\Desktop\test.bmp" />
     <Image Include="C:\Users\Administrator\Desktop\x.bmp" />
     <Image Include="C:\Users\Administrator\Desktop\z.bmp" />
+    <Image Include="C:\Users\jixiaofei\Desktop\Project1.bmp" />
     <Image Include="res\2015073109573166_easyicon_net_60.900726392252.png" />
     <Image Include="res\2015073109573166_easyicon_net_60.9007263922521.bmp" />
     <Image Include="res\3D_Cube_32px_1074515_easyicon.net.png" />
     <Image Include="res\bitmap1.bmp" />
     <Image Include="res\bitmap3.bmp" />
+    <Image Include="res\bitmap4.bmp" />
+    <Image Include="res\bitmap5.bmp" />
+    <Image Include="res\icon.bmp" />
+    <Image Include="res\icon1.bmp" />
+    <Image Include="res\icon2.bmp" />
+    <Image Include="res\icon3.bmp" />
+    <Image Include="res\icon4.bmp" />
     <Image Include="res\Project1.bmp" />
     <Image Include="res\x.bmp" />
     <Image Include="res\z.bmp" />

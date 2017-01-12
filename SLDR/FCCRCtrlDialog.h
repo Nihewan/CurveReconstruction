@@ -9,10 +9,19 @@
 
 UINT ThreadFunc(LPVOID pParam);//FC method
 UINT ThreadImrovedFC(LPVOID pParam);//IFC method
-UINT ThreadPlayFC(LPVOID pParam);//FC动画
+UINT ThreadImrovedFCPoyline(LPVOID pParam);//IFC method Poyline
+UINT ThreadImrovedFCFlowComplex(LPVOID pParam);//IFC method FlowComplex
+UINT ThreadImrovedFCSpreadMerge(LPVOID pParam);//IFC method SpreadMerge
+UINT ThreadImrovedFCFindingCycles(LPVOID pParam);//IFC method FindingCycles
+UINT ThreadImrovedFCPruningAndComplete(LPVOID pParam);//IFC method PruningAndComplete
 #define WM_RESULT WM_USER+100
 #define WM_RESULT_FCPLAY WM_USER+101
 #define WM_RESULT_REFRESH WM_USER+102
+#define WM_RESULT_POLYLINE WM_USER+103
+#define WM_RESULT_FLOWCOMPLEX WM_USER+104
+#define WM_RESULT_MERGE WM_USER+105
+#define WM_RESULT_CYCLES WM_USER+106
+#define WM_RESULT_PRUNING WM_USER+107
 
 class FCCRCtrlDialog : public CDialogEx
 {
@@ -38,15 +47,14 @@ public:
 	int seltriangle;
 	int selpoly;
 	int selpatch;
-	int selcycle;
 	bool showvoids;
+	bool showDelaunay;
 	bool showcircum;
 	bool showbystep;
 	bool showdarts;
+	bool showinteriorpatches;
+	bool showRMF;
 	double mTrans; 
-	int play;
-	int pos;
-	bool pause;
 public:
 	FCCRCtrlDialog(CWnd* pParent = NULL);   // 标准构造函数
 	virtual ~FCCRCtrlDialog();
@@ -63,12 +71,14 @@ public:
 	void SetTreeCreator();
 	void SetTree3cells();
 	void SetTreePatches();
-	void SetTreeCycles();
 	void OnButtonReconstruction();
+
 	void OnImprovedFCReconstruction();
-	void OnPlayFC();
-	void OnPlayFCPause();
-	void OnIFCMethodNext();
+	void OnImprovedFCPolyline();
+	void OnImprovedFCFlowComplex();
+	void OnImprovedFCSpreadMerge();
+	void OnImprovedFCFindingCycles();
+	void OnImprovedFCPruning();
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnBnClickedSelect2cell();
@@ -78,9 +88,6 @@ public:
 	afx_msg void OnBnClickedCheck2cell();
 	afx_msg void OnBnClickedClear();
 	virtual BOOL OnInitDialog();
-	afx_msg void OnEnChangeEditVoids();
-	afx_msg void OnEnChangeEditEpsilon();
-	afx_msg void OnEnChangeEditFeasa();
 	afx_msg void OnBnClickedCheckPolyline();
 	afx_msg void OnBnClickedCheckCreator();
 	afx_msg void OnTvnSelchangedInfotree(NMHDR *pNMHDR, LRESULT *pResult);
@@ -90,4 +97,8 @@ public:
 	afx_msg void OnBnClickedCheckCircum();
 	afx_msg void OnBnClickedCheckShowByStep();
 	afx_msg void OnBnClickedShowDarts();
+	afx_msg void OnBnClickedButtonPara();
+	afx_msg void OnBnClickedCheckShowInterior();
+	afx_msg void OnBnClickedCheckShowRMF();
+	afx_msg void OnBnClickedShowDelaunay();
 };

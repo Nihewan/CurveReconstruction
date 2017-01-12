@@ -76,7 +76,11 @@ public:
 	afx_msg BOOL OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
 	afx_msg void OnButtonSavecnw();
 	afx_msg LRESULT  ShowResult(WPARAM wParam,LPARAM  lParam);
-	afx_msg LRESULT  ShowFCPlay(WPARAM wParam,LPARAM  lParam);
+	afx_msg LRESULT  ShowPolyline(WPARAM wParam,LPARAM  lParam);
+	afx_msg LRESULT  ShowFlowComplex(WPARAM wParam,LPARAM  lParam);
+	afx_msg LRESULT  ShowMerge(WPARAM wParam,LPARAM  lParam);
+	afx_msg LRESULT  ShowCycles(WPARAM wParam,LPARAM  lParam);
+	afx_msg LRESULT  ShowPruning(WPARAM wParam,LPARAM  lParam);
 	afx_msg LRESULT  ResultRefresh(WPARAM wParam,LPARAM  lParam);
 };
 

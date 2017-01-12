@@ -27,6 +27,8 @@
 #include "MainFrm.h"
 #include "ArcBall.h"    
 #include "CP_FlowComplex.h"
+#include "SurfaceOptimization.h"
+
 #include <fstream>
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -58,11 +60,11 @@ BEGIN_MESSAGE_MAP(CSLDRView, CView)
 	ON_WM_MOUSEWHEEL()
 	ON_WM_LBUTTONUP()
 	ON_COMMAND(ID_POLYLINE, &CSLDRView::OnPolyline)
-	ON_COMMAND(ID_DELAUNY, &CSLDRView::OnDelauny)
+	ON_COMMAND(ID_DELAUNY, &CSLDRView::OnPruning)
 	ON_COMMAND(ID_FLOWCOMPLEX, &CSLDRView::OnFlowcomplex)
-	ON_COMMAND(ID_COLLAPSE, &CSLDRView::OnCollapse)
+	ON_COMMAND(ID_COLLAPSE, &CSLDRView::OnSpreadAndMerge)
 	ON_WM_KEYUP()
-	ON_COMMAND(ID_BUTTON2, &CSLDRView::OnThicken)
+	ON_COMMAND(ID_BUTTON2, &CSLDRView::OnFindingCycles)
 	ON_COMMAND(ID_BUTTON5, &CSLDRView::OnFCReconstruction)
 	ON_UPDATE_COMMAND_UI(ID_POLYLINE, &CSLDRView::OnUpdatePolyline)
 	ON_UPDATE_COMMAND_UI(ID_DELAUNY, &CSLDRView::OnUpdateDelauny)
@@ -90,14 +92,12 @@ BEGIN_MESSAGE_MAP(CSLDRView, CView)
 	ON_COMMAND(ID_SLIDER_EXPONENT2, &CSLDRView::OnSliderExponent2)
 	ON_WM_RBUTTONDOWN()
 	ON_UPDATE_COMMAND_UI(ID_BUTTON5, &CSLDRView::OnUpdateFCReconstruction)
-	ON_COMMAND(ID_BUTTON_PLAY, &CSLDRView::OnButtonPlay)
-	ON_COMMAND(ID_BUTTON_PAUSE, &CSLDRView::OnButtonPause)
-	ON_UPDATE_COMMAND_UI(ID_BUTTON_PLAY, &CSLDRView::OnUpdateButtonPlay)
-	ON_COMMAND(ID_BUTTON_PLAYCELL, &CSLDRView::OnButtonPlaycell)
 	ON_COMMAND(ID_BUTTON_IMPROVEDFC, &CSLDRView::OnButtonImprovedfc)
-	ON_COMMAND(ID_BUTTON_NEXT, &CSLDRView::OnButtonNext)
 	ON_UPDATE_COMMAND_UI(ID_BUTTON_IMPROVEDFC, &CSLDRView::OnUpdateButtonImprovedfc)
-	ON_UPDATE_COMMAND_UI(ID_BUTTON_NEXT, &CSLDRView::OnUpdateButtonNext)
+	ON_COMMAND(ID_BUTTON_PREPROCESS, &CSLDRView::OnButtonPreprocess)
+	ON_UPDATE_COMMAND_UI(ID_BUTTON_PREPROCESS, &CSLDRView::OnUpdateButtonPreprocess)
+	ON_COMMAND(ID_CHECK_TWOSIDE, &CSLDRView::OnCheckTwoside)
+	ON_UPDATE_COMMAND_UI(ID_CHECK_TWOSIDE, &CSLDRView::OnUpdateCheckTwoside)
 END_MESSAGE_MAP()
 
 // CSLDRView 构造/析构
@@ -114,26 +114,34 @@ CSLDRView::CSLDRView()
 	selectedpatch=-1;
 	selectedpoly=-1;
 	moveonpoly=-1;
+
 	fcEnable=true;
 	ifcEnable=true;
-	playEnable=true;
-	showDelauny=false;
+	showPruning=false;
 	showFC=false;
 	showInputP=false;
+	showTop=false;
+	showCycles=false;
+
+	showPolyEnable=true;
+	showFCEnable=false;
+	showMergeEnable=false;
+	showCyclesEnable=false;
+	showPruningEnable=false;
+	showPreprocessEnable=false;
+
 	shiftDown=false;
 	CtrlDown=false;
 	CKeyDown=false;
     which=0;
-	showTop=false;
-	showThicken=false;
-	showCycles=false;
-	mSpecular=0.25;
+	twoSide=false;
+	mSpecular=0.45;
 	mShine=45;
 	mDiffuse=0.8;
 	light0=true;
 	light1=true;
 	light2=true;
-	mAmbient0=0.25;
+	mAmbient0=0.16;
 	mSpecular0=0.23;
 	mDiffuse0=0.7;
 
@@ -164,23 +172,31 @@ void CSLDRView::ReSet()
 	selectedpatch=-1;
 	selectedpoly=-1;
 	moveonpoly=-1;
+
 	fcEnable=true;
 	ifcEnable=true;
-	playEnable=true;
-	showDelauny=false;
+	showPruning=false;
 	showFC=false;
 	showInputP=false;
 	showTop=false;
-	showThicken=false;
 	showCycles=false;
+
+	showPolyEnable=true;
+	showFCEnable=false;
+	showMergeEnable=false;
+	showCyclesEnable=false;
+	showPruningEnable=false;
+	showPreprocessEnable=false;
+
 	which=0;
-	mSpecular=0.25;
+	twoSide=false;
+	mSpecular=0.45;
 	mShine=45;
 	mDiffuse=0.8;
 	light0=true;
 	light1=true;
 	light2=true;
-	mAmbient0=0.25;
+	mAmbient0=0.16;
 	mSpecular0=0.23;
 	mDiffuse0=0.7;
 
@@ -226,6 +242,7 @@ void CSLDRView::drawString(const char* str)
 
 void  CSLDRView::drawData()
 {
+	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
 	CSLDRDoc* pDoc = GetDocument();
 	ASSERT_VALID(pDoc);
 	if (!pDoc)
@@ -248,14 +265,20 @@ void  CSLDRView::drawData()
 	//显示数据
 	glColor3f(0.2f, 0.2f, 0.2f);
 	glNormal3f(1.0f,1.0f,1.0f);
-	glRasterPos3f(-halfSize+100,-halfSize+100,0);
+	glRasterPos3f(-halfSize-300,-halfSize+100,0);
 	char c[8];
-	_itoa_s(pDoc->m_FlowComplex->m_0cells.size(),c,10);
+	_itoa_s(pDoc->m_FlowComplex->inputCurves,c,10);
+	drawString("Curves: ");drawString(c);drawString("              ");
+
+	_itoa_s(pDoc->m_FlowComplex->inputPoints,c,10);
 	drawString("Vertices: ");drawString(c);drawString("              ");
 
-	_itoa_s(pDoc->m_FlowComplex->tricells.size(),c,10);
+	if(pMain->m_ctrlPaneFCCR->m_dialog.fccr.IsProcess)
+		_itoa_s(pDoc->m_FlowComplex->res_triangle_num,c,10);
+	else
+		_itoa_s(pDoc->m_FlowComplex->tricells.size(),c,10);
 	drawString("Faces: ");drawString(c);drawString("              ");
-
+	
 	_itoa_s(pDoc->m_FlowComplex->m_2cells.size(),c,10);
 	drawString("2cells: ");drawString(c);drawString("              ");
 
@@ -264,6 +287,9 @@ void  CSLDRView::drawData()
 
 	_itoa_s(pDoc->m_FlowComplex->mergededge,c,10);
 	drawString("mergededge: ");drawString(c);drawString("              ");
+
+	_itoa_s(pDoc->m_FlowComplex->respatches,c,10);
+	drawString("Patches: ");drawString(c);drawString("              ");
 
 	if(selectedpatch!=-1)
 	{
@@ -288,11 +314,10 @@ void  CSLDRView::drawData()
 	//然后回到3D。将投影矩阵设置成3D的投影矩阵
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	
+
 	SetProjectionMatrix(swidth,sheight);
 	glMatrixMode(GL_MODELVIEW);
 	//glViewport(0, 0, swidth, sheight);
-
 	//glLoadIdentity();
 }
 
@@ -354,14 +379,14 @@ void CSLDRView::OnDraw(CDC* pDC)
 
 	glEnable(GL_AUTO_NORMAL);
 	glEnable(GL_NORMALIZE);	
-	//glEnable(GL_DEPTH_TEST);
-	glDisable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
+	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
-
+	
+	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,twoSide);//双面光照
 	InitMaterial();
 
 	glShadeModel(GL_SMOOTH);
@@ -385,7 +410,7 @@ void CSLDRView::OnDraw(CDC* pDC)
 		glEnable(GL_LIGHT1);
 	if(light2)
 		glEnable(GL_LIGHT2);
-	drawScene();
+	//drawScene();
 	
 	if(pDoc->format=="dxf")
 	{
@@ -441,81 +466,13 @@ void CSLDRView::OnDraw(CDC* pDC)
 		glColor3d(1.0, 1.0, 1.0);
 		CF_BodyUtils::DrawSolidBody(pAsmbBody->GetBody(0));
 		
-		CAxis3D::DrawAxis(&pDoc->m_boundBox, m_rotate);
+		//CAxis3D::DrawAxis(&pDoc->m_boundBox, m_rotate);
 	}else if(pDoc->format=="curve")
 	{  
 		glScalef(m_Scale, m_Scale, m_Scale);
-
-		//polyline
-		if(pMain->m_ctrlPaneFCCR->m_dialog.fccr.IsProcess)
-		{
-			glLineWidth(2);
-
-			if(pMain->m_ctrlPaneFCCR->m_dialog.play>0&&selectedpoly!=-1)
-			{
-				for(unsigned int j=1;j<pDoc->m_FlowComplex->m_PolyLine[selectedpoly].cycle[pMain->m_ctrlPaneFCCR->m_dialog.play-1].size();++j)
-				{
-					glColor3f(1.0,0.5, 0.5);
-					glLineWidth(4);
-					pDoc->m_FlowComplex->m_PolyLine[pDoc->m_FlowComplex->m_PolyLine[selectedpoly].cycle[pMain->m_ctrlPaneFCCR->m_dialog.play-1][j]].ZoomDraw();
-				}
-			}
-			for (unsigned int i = 0; i < pDoc->m_FlowComplex->m_PolyLine.size(); i++)
-			{
-				if(selectedpoly==i||moveonpoly==i){
-					glColor3f(0.33, 0.47, 0.93);
-					glLineWidth(4);
-				}
-				else{
-					glColor3f(0.9, 0.68, 0.24);
-					glLineWidth(2);
-				}
-				if(!pMain->m_ctrlPaneFCCR->m_dialog.showpoly){
-					if(!pDoc->m_FlowComplex->m_PolyLine[i].tag&&(moveonpoly!=i)&&(selectedpoly!=i))
-					{	
-						glColor3f(0.0, 1.0, 0.0);
-					}
-					pDoc->m_FlowComplex->m_PolyLine[i].Draw();
-				}
-			}
-		}else
-		{
-			glLineWidth(2);
-			//没有折线预处理时显示原始线框
-			for (unsigned int i = 0; i < pDoc->VT_PolyLine->size(); i++)
-			{
-				if(selectedpoly==i||moveonpoly==i){
-					glColor3f(0.33, 0.47, 0.93);
-					glLineWidth(4);
-				}
-				else{
-					glColor3f(0.9, 0.68, 0.24);
-					glLineWidth(2);
-				}/*修改模型，polyline中根据cut输出新模型*/
-				(*pDoc->VT_PolyLine)[i].Draw();
-			}
-		}
-
 		//0cells
 		if(showInputP){
 			pDoc->m_FlowComplex->DrawPoints();
-			//for(unsigned int i=0;i<pDoc->m_FlowComplex->m_3cells.size();i++)
-			//{//3cell空间包含的circums
-			//	CP_3cell *p3cell=pDoc->m_FlowComplex->m_3cells[i];
-			//	for(int j=0;j<p3cell->m_circums.size();j++)
-			//	{
-			//		glPointSize(3.0f);glColor3f(1.0f,0.0,0.0);
-			//		glBegin(GL_POINTS);//必须是加上s，要不然显示不了
-			//		glVertex3f(pDoc->m_FlowComplex->m_circums[p3cell->m_circums[j]].m_x, pDoc->m_FlowComplex->m_circums[p3cell->m_circums[j]].m_y,pDoc->m_FlowComplex->m_circums[p3cell->m_circums[j]].m_z);
-			//		glEnd();
-			//	}
-			//}
-			//cout<<play<<endl;
-			
-		}
-		//delauny
-		if(showDelauny){
-			pDoc->m_FlowComplex->DrawDelaunyTriangles();
 		}
 
 		if(pMain->m_ctrlPaneFCCR->m_dialog.showdarts)
@@ -526,95 +483,24 @@ void CSLDRView::OnDraw(CDC* pDC)
 		//flow complex
 		if(showFC)
 		{
-			if(!pMain->m_ctrlPaneFCCR->m_dialog.showvoids){
-				if(pMain->m_ctrlPaneFCCR->m_dialog.play>0)
-				{
-					for (int i = 0; i <pMain->m_ctrlPaneFCCR->m_dialog.play; i++)
-					{
-						CP_2cell *p2cell = pDoc->m_FlowComplex->m_2cells[i];
-						glColor4f(0.7,0.7,0.7,1.0);
-						pDoc->m_FlowComplex->Draw2cell(*p2cell);
-						if(pMain->m_ctrlPaneFCCR->m_dialog.triboundary)
-							pDoc->m_FlowComplex->DrawTriangleBoundary(*p2cell);
-						if(pMain->m_ctrlPaneFCCR->m_dialog._2cellboundary)
-							pDoc->m_FlowComplex->Draw2cellBoundary(*p2cell);
-					}//i
-					
-				}//play
-				else{
-				if(pMain->m_ctrlPaneFCCR->m_dialog.showcreators)//半透明效果
-					glDepthMask(GL_FALSE);
-				for (unsigned int i = 0; i <pDoc->m_FlowComplex->m_2cells.size(); i++)
-				{
-					CP_2cell *p2cell = pDoc->m_FlowComplex->m_2cells[i];
-					if(pMain->m_ctrlPaneFCCR->m_dialog.showcreators){
-						if(p2cell->type==1){//
-							if(pMain->m_ctrlPaneFCCR->m_dialog.selcreator==-1)
-								glColor4f(0.7,0.3,0.3,0.6);
-							else if(pMain->m_ctrlPaneFCCR->m_dialog.selcreator==i)
-								glColor4f(0.85,0.7,0.32,0.9);
-							else
-								glColor4f(0.7,0.55,0.55,0.6);
-						}
-						else
-							glColor4f(0.7,0.7,0.7,0.5);
-					}else{
-						glColor4f(0.7,0.7,0.7,1.0);
-					}
-					
-					pDoc->m_FlowComplex->Draw2cell(*p2cell);
-					if(pMain->m_ctrlPaneFCCR->m_dialog.triboundary)
-						pDoc->m_FlowComplex->DrawTriangleBoundary(*p2cell);
-
-					if(pMain->m_ctrlPaneFCCR->m_dialog._2cellboundary)
-						pDoc->m_FlowComplex->Draw2cellBoundary(*p2cell);
-
-				}//2cell
-
-				if(pMain->m_ctrlPaneFCCR->m_dialog.showcreators)
-					glDepthMask(GL_TRUE);
-				}
-			}else
-			{
+			if(pMain->m_ctrlPaneFCCR->m_dialog.showDelaunay){
+				pDoc->m_FlowComplex->DrawDelaunyTriangles();
+			}else if(pMain->m_ctrlPaneFCCR->m_dialog.showvoids){
 				if(pMain->m_ctrlPaneFCCR->m_dialog.sel3cell!=-1)
 				{
 					int _3cell=pMain->m_ctrlPaneFCCR->m_dialog.sel3cell;
-					CP_3cell* p3cell=pDoc->m_FlowComplex->m_3cells[_3cell];
-					//if(p3cell->flag){
-					for(unsigned int j=0;j<pDoc->m_FlowComplex->m_3cells[_3cell]->m_2cells.size();j++)
-					{
-						CP_2cell *p2cell=pDoc->m_FlowComplex->m_2cells[pDoc->m_FlowComplex->m_3cells[_3cell]->m_2cells[j]];
-						if(pMain->m_ctrlPaneFCCR->m_dialog.sel2cell==p2cell->index||(p2cell->type==1))
-							glColor4f(0.7,0.0,0.0,pMain->m_ctrlPaneFCCR->m_dialog.mTrans);
-						else
-							glColor4f(0.7,0.7,0.7,pMain->m_ctrlPaneFCCR->m_dialog.mTrans);
-
-						for(unsigned int k=0;k<p2cell->m_triangle.size();k++)
-						{
-							CP_Triganle3D *pTri = pDoc->m_FlowComplex->tricells[p2cell->m_triangle[k]];
-							if(pMain->m_ctrlPaneFCCR->m_dialog.seltriangle==p2cell->m_triangle[k])
-								glColor4f(0.7,0.3,0.3,pMain->m_ctrlPaneFCCR->m_dialog.mTrans);
-							else if(pMain->m_ctrlPaneFCCR->m_dialog.seltriangle!=-1)
-								glColor4f(0.7,0.7,0.7,pMain->m_ctrlPaneFCCR->m_dialog.mTrans);
-							pDoc->m_FlowComplex->DrawTriangle(*pTri);
-						}//k
-						//if(pMain->m_ctrlPaneFCCR->m_dialog.sel2cell==p2cell->index)
-						if(pMain->m_ctrlPaneFCCR->m_dialog._2cellboundary)
-							pDoc->m_FlowComplex->Draw2cellBoundary(*p2cell);//显示是哪个2cell的triangle
-
-						if(pMain->m_ctrlPaneFCCR->m_dialog.triboundary)
-							pDoc->m_FlowComplex->DrawTriangleBoundary(*p2cell);
-					}//j
-					
-					//for(unsigned int j=0;j<p3cell->m_circums.size();j++)
-					//{
-					//	glPointSize(3.0f);glColor3f(1.0f,0.0,0.0);
-					//	glBegin(GL_POINTS);//必须是加上s，要不然显示不了
-					//	glVertex3f(pDoc->m_FlowComplex->m_circums[p3cell->m_circums[j]].m_x, pDoc->m_FlowComplex->m_circums[p3cell->m_circums[j]].m_y,pDoc->m_FlowComplex->m_circums[p3cell->m_circums[j]].m_z);
-					//	glEnd();
-					//}
-					//}
+					pDoc->m_FlowComplex->DrawVoids(_3cell,pMain->m_ctrlPaneFCCR->m_dialog.sel2cell,
+						pMain->m_ctrlPaneFCCR->m_dialog.seltriangle,pMain->m_ctrlPaneFCCR->m_dialog._2cellboundary,
+						pMain->m_ctrlPaneFCCR->m_dialog.triboundary,pMain->m_ctrlPaneFCCR->m_dialog.mTrans);
 				}
+			}else
+			{
+				if(pMain->m_ctrlPaneFCCR->m_dialog.showcreators)//半透明效果
+					glDepthMask(GL_FALSE);
+				pDoc->m_FlowComplex->DrawFlowComplex(pMain->m_ctrlPaneFCCR->m_dialog.showcreators,pMain->m_ctrlPaneFCCR->m_dialog.selcreator,
+					pMain->m_ctrlPaneFCCR->m_dialog._2cellboundary,pMain->m_ctrlPaneFCCR->m_dialog.triboundary);
+				if(pMain->m_ctrlPaneFCCR->m_dialog.showcreators)
+					glDepthMask(GL_TRUE);
 			}
 		}//showFC
 
@@ -622,7 +508,6 @@ void CSLDRView::OnDraw(CDC* pDC)
 		{
 			for (unsigned int i = 0; i <pDoc->m_FlowComplex->topo.size(); i++)
 			{
-				
 				CP_2cell *p2cell = pDoc->m_FlowComplex->m_2cells[pDoc->m_FlowComplex->topo[i]];
 				glColor4f(0.7f,0.7f,0.7f,1.0f);
 				pDoc->m_FlowComplex->Draw2cell(*p2cell);
@@ -632,46 +517,9 @@ void CSLDRView::OnDraw(CDC* pDC)
 				if(pMain->m_ctrlPaneFCCR->m_dialog._2cellboundary)
 					pDoc->m_FlowComplex->Draw2cellBoundary(*p2cell);
 			}//2cell
-		}//showFC
+		}//showTop
 
-		if(showThicken)
-		{
-			for(unsigned int i=0;i<pDoc->m_FlowComplex->m_patches.size();i++)
-			{
-				CP_Patch *pPatch = pDoc->m_FlowComplex->m_patches[i];
-				for (unsigned int j = 0; j <pPatch->m_2cells.size(); j++)
-				{
-					CP_2cell *p2cell = pDoc->m_FlowComplex->m_2cells[pPatch->m_2cells[j]];
-					glColor3f(0.7f,0.7f,0.7f);
-					pDoc->m_FlowComplex->Draw2cell(*p2cell);
-					if(pMain->m_ctrlPaneFCCR->m_dialog.triboundary)
-						pDoc->m_FlowComplex->DrawTriangleBoundary(*p2cell);
-
-					if(pMain->m_ctrlPaneFCCR->m_dialog._2cellboundary)
-						pDoc->m_FlowComplex->Draw2cellBoundary(*p2cell);
-				}//j
-			}//i
-		}//showThicken
-
-		if(pMain->m_ctrlPaneFCCR->m_dialog.edgeByDegree)
-		{//2cell只在边界处相交，因为在非边界相交的地方degree==1会被消去
-			for (unsigned int i = 0; i <pDoc->m_FlowComplex->m_1cells.size(); i++)
-			{
-				CurveSegment* pcurve=pDoc->m_FlowComplex->m_1cells[i];
-				glLineWidth(3);
-				//if (pcurve->degree>2&&!pcurve->isBoundary)
-				if (pcurve->degree>2/*(int)pcurve->incidentpatch.size()>2&&pcurve->isBoundary==-1*/)
-				{
-					glColor3f(0.0, 0.0, 1.0);
-					glBegin(GL_LINE_STRIP);
-					glVertex3d(pDoc->m_FlowComplex->m_0cells[pcurve->sp].m_x,pDoc->m_FlowComplex->m_0cells[pcurve->sp].m_y,pDoc->m_FlowComplex->m_0cells[pcurve->sp].m_z);
-					glVertex3d(pDoc->m_FlowComplex->m_0cells[pcurve->ep].m_x,pDoc->m_FlowComplex->m_0cells[pcurve->ep].m_y,pDoc->m_FlowComplex->m_0cells[pcurve->ep].m_z);
-					glEnd();
-				}
-			}//i
-		}
-
-		if(pMain->m_ctrlPaneFCCR->m_dialog.fccr.showResult&&!pMain->m_ctrlPaneFCCR->m_dialog.showbystep)
+		if(showCycles)
 		{
 			if(selectedpatch!=-1)
 			{
@@ -686,7 +534,82 @@ void CSLDRView::OnDraw(CDC* pDC)
 					if(pMain->m_ctrlPaneFCCR->m_dialog.triboundary)
 						pDoc->m_FlowComplex->DrawTriangleBoundary(*p2cell);
 				}
-				pDoc->m_FlowComplex->DrawPatchBoundary(*pPatch,CtrlDown,CKeyDown,which);
+				pDoc->m_FlowComplex->DrawPatchBoundary(*pPatch,CtrlDown,CKeyDown,which,pMain->m_ctrlPaneFCCR->m_dialog.showRMF);
+			}
+			for(int i=0;i<pDoc->m_FlowComplex->oripatches;i++)
+			{
+				if(pDoc->m_FlowComplex->m_patches[i]->flag&&i!=selectedpatch){
+					CP_Patch *pPatch = pDoc->m_FlowComplex->m_patches[i];
+					for (unsigned int j = 0; j <pPatch->m_2cells.size(); j++)
+					{
+						if(selectedpatch==-1)
+							glColor4f(0.7,0.7,0.7,1.0);
+						else if(selectedpatch!=-1)
+							glColor4f(0.7,0.7,0.7,1.0-(CtrlDown||CKeyDown||(selectedpatch!=-1))*0.4);//按下ctrl显示环
+
+						CP_2cell *p2cell = pDoc->m_FlowComplex->m_2cells[pPatch->m_2cells[j]];
+						pDoc->m_FlowComplex->Draw2cell(*p2cell);
+						if(pMain->m_ctrlPaneFCCR->m_dialog.triboundary)
+							pDoc->m_FlowComplex->DrawTriangleBoundary(*p2cell);
+
+						if(pMain->m_ctrlPaneFCCR->m_dialog._2cellboundary)
+							pDoc->m_FlowComplex->Draw2cellBoundary(*p2cell);
+					}//j
+				}
+			}//i
+			for(unsigned int i=0;i<pDoc->m_FlowComplex->connectedPatches.size();++i){
+				int _patch=pDoc->m_FlowComplex->connectedPatches[i];
+				if(_patch!=selectedpatch){
+					CP_Patch *pPatch = pDoc->m_FlowComplex->m_patches[_patch];
+					for (unsigned int j = 0; j <pPatch->m_2cells.size(); j++)
+					{
+						if(selectedpatch==-1)
+							glColor4f(0.7,0.5,0.5,1.0);
+						else if(selectedpatch!=-1)
+							glColor4f(0.7,0.7,0.7,1.0-(CtrlDown||CKeyDown||(selectedpatch!=-1))*0.4);//按下ctrl显示环
+						CP_2cell *p2cell = pDoc->m_FlowComplex->m_2cells[pPatch->m_2cells[j]];
+						pDoc->m_FlowComplex->Draw2cell(*p2cell);
+						if(pMain->m_ctrlPaneFCCR->m_dialog.triboundary)
+							pDoc->m_FlowComplex->DrawTriangleBoundary(*p2cell);
+
+						if(pMain->m_ctrlPaneFCCR->m_dialog._2cellboundary)
+							pDoc->m_FlowComplex->Draw2cellBoundary(*p2cell);
+					}//j
+				}
+			}
+		}//showThicken
+
+		if(pMain->m_ctrlPaneFCCR->m_dialog.fccr.showResult)
+		{
+			if(selectedpatch!=-1)
+			{
+				CP_Patch *pPatch = pDoc->m_FlowComplex->m_patches[selectedpatch];
+				for (unsigned int j = 0; j <pPatch->m_2cells.size(); j++)
+				{
+					glColor4f(pDoc->r[2],pDoc->g[2],pDoc->b[2],1.0);
+					CP_2cell *p2cell = pDoc->m_FlowComplex->m_2cells[pPatch->m_2cells[j]];
+					pDoc->m_FlowComplex->Draw2cell(*p2cell);
+					glColor4f(0.1,0.6,0.1,1.0);
+					glLineWidth(1.0f);
+					if(pMain->m_ctrlPaneFCCR->m_dialog.triboundary)
+						pDoc->m_FlowComplex->DrawTriangleBoundary(*p2cell);
+				}
+				pDoc->m_FlowComplex->DrawPatchBoundary(*pPatch,CtrlDown,CKeyDown,which,pMain->m_ctrlPaneFCCR->m_dialog.showRMF);
+			}
+
+			if(pMain->m_ctrlPaneFCCR->m_dialog.showinteriorpatches)
+			{
+				for(unsigned int i=0;i<pDoc->m_FlowComplex->interior_patches.size();++i){
+					int _patch=pDoc->m_FlowComplex->interior_patches[i];
+					CP_Patch *pPatch = pDoc->m_FlowComplex->m_patches[_patch];
+					for (unsigned int j = 0; j <pPatch->m_2cells.size(); j++)
+					{
+						glColor4f(1.0,0.5,0.5,0.6);
+						CP_2cell *p2cell = pDoc->m_FlowComplex->m_2cells[pPatch->m_2cells[j]];
+						pDoc->m_FlowComplex->Draw2cell(*p2cell);
+					}
+					pDoc->m_FlowComplex->DrawPatchBoundary(*pPatch,true,CKeyDown,which,pMain->m_ctrlPaneFCCR->m_dialog.showRMF);
+				}
 			}
 
 			for(unsigned int i=0;i<pDoc->m_FlowComplex->m_patches.size();i++)
@@ -696,12 +619,12 @@ void CSLDRView::OnDraw(CDC* pDC)
 					for (unsigned int j = 0; j <pPatch->m_2cells.size(); j++)
 					{
 						CP_2cell *p2cell = pDoc->m_FlowComplex->m_2cells[pPatch->m_2cells[j]];
-						if(pMain->m_ctrlPaneFCCR->m_dialog.selectpatchEnable)
+						if(pMain->m_ctrlPaneFCCR->m_dialog.selectpatchEnable||pMain->m_ctrlPaneFCCR->m_dialog.showinteriorpatches)
 						{//突出选取的patch
-							if(selectedpatch==-1)
+							if(selectedpatch==-1&&!pMain->m_ctrlPaneFCCR->m_dialog.showinteriorpatches)
 								glColor4f(pDoc->r[pPatch->color],pDoc->g[pPatch->color],pDoc->b[pPatch->color],1.0);
-							else
-								glColor4f(0.7,0.7,0.7,1.0-(CtrlDown||CKeyDown||(selectedpatch!=-1))*0.4);//按下ctrl显示环
+							else if(selectedpatch!=-1||pMain->m_ctrlPaneFCCR->m_dialog.showinteriorpatches)
+								glColor4f(0.7,0.7,0.7,1.0-(CtrlDown||CKeyDown||(selectedpatch!=-1)||pMain->m_ctrlPaneFCCR->m_dialog.showinteriorpatches)*0.4);//按下ctrl显示环
 
 						}else if(pMain->m_ctrlPaneFCCR->m_dialog.select2cellEnable)
 						{//突出选取的2cell
@@ -710,16 +633,15 @@ void CSLDRView::OnDraw(CDC* pDC)
 							else
 								glColor4f(0.7,0.7,0.7,1.0);
 						}else{
-							if(pMain->m_ctrlPaneFCCR->m_dialog.randomColor&&!pPatch->wrong)//错误的面片显示为白色
+							if(pMain->m_ctrlPaneFCCR->m_dialog.fccr.IsProcess&&pMain->m_ctrlPaneFCCR->m_dialog.randomColor&&!pPatch->wrong)//错误的面片显示为白色
 								glColor4f(pDoc->r[pPatch->color],pDoc->g[pPatch->color],pDoc->b[pPatch->color],1.0);
 							else
 								glColor4f(0.7,0.7,0.7,1.0);
 						}
-						
 						pDoc->m_FlowComplex->Draw2cell(*p2cell);
 						//边界
 						if(pMain->m_ctrlPaneFCCR->m_dialog.triboundary){
-							glColor3f(0.0,0.0,0.0);
+							glColor4f(0.0,0.0,0.0,1.0);
 							pDoc->m_FlowComplex->DrawTriangleBoundary(*p2cell);
 						}
 
@@ -732,11 +654,6 @@ void CSLDRView::OnDraw(CDC* pDC)
 				}//flag
 			}//i
 
-			if(selectedpatch!=-1)
-			{
-				CP_Patch *pPatch = pDoc->m_FlowComplex->m_patches[selectedpatch];
-				pDoc->m_FlowComplex->DrawPatchBoundary(*pPatch,CtrlDown,CKeyDown,which);
-			}
 			if(pMain->m_ctrlPaneFCCR->m_dialog.selpatch!=-1)
 			{
 				CP_Patch *pPatch = pDoc->m_FlowComplex->m_patches[pMain->m_ctrlPaneFCCR->m_dialog.selpatch];
@@ -748,61 +665,91 @@ void CSLDRView::OnDraw(CDC* pDC)
 				pDoc->m_FlowComplex->Draw2cellBoundary(*p2cell);
 			}
 		}//showResult
-		else if(pMain->m_ctrlPaneFCCR->m_dialog.fccr.showResult&&pMain->m_ctrlPaneFCCR->m_dialog.showbystep)
-		{
-
-			if(pMain->m_ctrlPaneFCCR->m_dialog.play>0)
-			{
-				for(int i=pDoc->m_FlowComplex->oripatches;i<pDoc->m_FlowComplex->oripatches+pMain->m_ctrlPaneFCCR->m_dialog.play;++i)
-				{
-					if(pDoc->m_FlowComplex->m_patches[i]->flag)
-					{
-						CP_Patch *pPatch = pDoc->m_FlowComplex->m_patches[i];
-						for (unsigned int j = 0; j <pPatch->m_2cells.size(); j++)
-						{
-							CP_2cell *p2cell = pDoc->m_FlowComplex->m_2cells[pPatch->m_2cells[j]];
-							glColor4f(pDoc->r[pPatch->color],pDoc->g[pPatch->color],pDoc->b[pPatch->color],0.6);
-							pDoc->m_FlowComplex->Draw2cell(*p2cell);
-						}
-					}
-				}//i
-			}
-
-			 glDepthMask(GL_FALSE);
-             for(int i=0;i<pDoc->m_FlowComplex->oripatches;++i)
-			 {
-				 if(pDoc->m_FlowComplex->m_patches[i]->flag)
-				 {
-                     CP_Patch *pPatch = pDoc->m_FlowComplex->m_patches[i];
-					 for (unsigned int j = 0; j <pPatch->m_2cells.size(); j++)
-					 {
-						 CP_2cell *p2cell = pDoc->m_FlowComplex->m_2cells[pPatch->m_2cells[j]];
 		
-						 glColor4f(0.7,0.7,0.7,0.4);
-						 pDoc->m_FlowComplex->Draw2cell(*p2cell);
-						 //边界
-						 if(pMain->m_ctrlPaneFCCR->m_dialog.triboundary)
-							 pDoc->m_FlowComplex->DrawTriangleBoundary(*p2cell);
 
-						 if(pMain->m_ctrlPaneFCCR->m_dialog._2cellboundary)
-							 pDoc->m_FlowComplex->Draw2cellBoundary(*p2cell);
-					 }//j
-				 }//falg
-			 }//i
-			 glDepthMask(GL_TRUE);
-		}
-
-		if(showCycles){
-			cout<<pMain->m_ctrlPaneFCCR->m_dialog.selcycle<<endl;
-			if(pMain->m_ctrlPaneFCCR->m_dialog.selcycle!=-1){
-				glColor3f(1.0,0.5, 0.5);
-				glColor3f(pDoc->r[pMain->m_ctrlPaneFCCR->m_dialog.selcycle%6],pDoc->g[pMain->m_ctrlPaneFCCR->m_dialog.selcycle%6],pDoc->b[pMain->m_ctrlPaneFCCR->m_dialog.selcycle%6]);
-				for(unsigned int j=0;j<pDoc->m_FlowComplex->cycles[pMain->m_ctrlPaneFCCR->m_dialog.selcycle].size();++j){
-					glLineWidth(4);
-					pDoc->m_FlowComplex->m_PolyLine[pDoc->m_FlowComplex->cycles[pMain->m_ctrlPaneFCCR->m_dialog.selcycle][j]].ZoomDraw();
+		//pruning
+		if(showPruning){
+			glColor3f(0.9, 0.0, 0.0);
+			glLineWidth(4);
+			for(unsigned int i=0;i<pDoc->m_FlowComplex->cycles.size();++i){
+				for(unsigned int j=0;j<pDoc->m_FlowComplex->cycles[i].size();++j){
+					pDoc->m_FlowComplex->m_PolyLine[pDoc->m_FlowComplex->cycles[i][j]].Draw();
 				}
 			}
 		}
+
+		//polyline
+		if(showFCEnable||pMain->m_ctrlPaneFCCR->m_dialog.fccr.IsProcess)
+		{
+
+			for (unsigned int i = 0; i < pDoc->m_FlowComplex->m_PolyLine.size(); i++)
+			{
+				if(selectedpoly==i||moveonpoly==i){
+					glColor4f(0.33, 0.47, 0.93,1.0);
+					glLineWidth(4);
+				}
+				else{
+					glColor4f(0.0, 0.0, 0.0,1.0);
+					glLineWidth(3.0);
+				}
+				if(!pMain->m_ctrlPaneFCCR->m_dialog.showpoly){
+					if(!pDoc->m_FlowComplex->m_PolyLine[i].tag&&(moveonpoly!=i)&&(selectedpoly!=i))
+					{	
+						glColor4f(0.0, 1.0, 0.0,1.0);
+
+					}
+					pDoc->m_FlowComplex->m_PolyLine[i].Draw();
+				}
+			}
+		}else
+		{
+			//没有折线预处理时显示原始线框
+			for (unsigned int i = 0; i < pDoc->VT_PolyLine->size(); i++)
+			{
+				if(selectedpoly==i||moveonpoly==i){
+					glColor4f(0.33, 0.47, 0.93,1.0);
+					glLineWidth(4);
+				}
+				else{
+					glColor4f(0.0, 0.0, 0.0,1.0); 
+					glLineWidth(2.0);
+				}/*修改模型，polyline中根据cut输出新模型*/
+				(*pDoc->VT_PolyLine)[i].Draw();
+			}
+		}
+
+		if(pMain->m_ctrlPaneFCCR->m_dialog.edgeByDegree)
+		{//2cell只在边界处相交，因为在非边界相交的地方degree==1会被消去
+			glDepthMask(GL_FALSE);
+			glEnable (GL_LINE_SMOOTH);
+			glHint (GL_LINE_SMOOTH_HINT, GL_NICEST);
+			for (unsigned int i = 0; i <pDoc->m_FlowComplex->m_1cells.size(); i++)
+			{
+				CurveSegment* pcurve=pDoc->m_FlowComplex->m_1cells[i];
+				glLineWidth(3);
+				//if (pcurve->degree>2&&!pcurve->isBoundary)
+				if (pcurve->newdegree>2/*(int)pcurve->incidentpatch.size()>2&&pcurve->isBoundary==-1*/)
+				{
+					glColor3f(0.173, 0.51, 1.0);
+					glBegin(GL_LINE_STRIP);
+					glNormal3f(0, 0, 1);
+					glVertex3d(pDoc->m_FlowComplex->m_0cells[pcurve->sp].m_x,pDoc->m_FlowComplex->m_0cells[pcurve->sp].m_y,pDoc->m_FlowComplex->m_0cells[pcurve->sp].m_z);
+					glVertex3d(pDoc->m_FlowComplex->m_0cells[pcurve->ep].m_x,pDoc->m_FlowComplex->m_0cells[pcurve->ep].m_y,pDoc->m_FlowComplex->m_0cells[pcurve->ep].m_z);
+					glEnd();
+				}else if(pcurve->newdegree==1){
+					glColor3f(1.0, 0.447, 0.463);
+					glBegin(GL_LINE_STRIP);
+					glNormal3f(0, 0, 1);
+					glVertex3d(pDoc->m_FlowComplex->m_0cells[pcurve->sp].m_x,pDoc->m_FlowComplex->m_0cells[pcurve->sp].m_y,pDoc->m_FlowComplex->m_0cells[pcurve->sp].m_z);
+					glVertex3d(pDoc->m_FlowComplex->m_0cells[pcurve->ep].m_x,pDoc->m_FlowComplex->m_0cells[pcurve->ep].m_y,pDoc->m_FlowComplex->m_0cells[pcurve->ep].m_z);
+					glEnd();
+				}
+
+			}//i
+
+			glDepthMask(GL_TRUE);
+		}
+
 		drawData();
 	}//curve
 
@@ -1064,6 +1011,11 @@ void CSLDRView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 		         if(selectedpatch!=-1&&which>=(int)pDoc->m_FlowComplex->m_patches[selectedpatch]->cycle.size()-1)
 					 which=(int)pDoc->m_FlowComplex->m_patches[selectedpatch]->cycle.size()-1;
 		break;
+	case 'M':
+		CSLDRDoc* pDoc = GetDocument();
+		pDoc->m_FlowComplex->TopologyComplete();
+		pDoc->m_FlowComplex->ProcessingInteriorPatch();
+		break;
 	}
 	
 	this->Invalidate();
@@ -1311,19 +1263,33 @@ void CSLDRView::FindPatch(CPoint point)
 	SetModelViewMatrix();
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT ); // 必须要Clear buffer
 	glScalef(m_Scale, m_Scale, m_Scale);
-	for(unsigned int i=0;i<pDoc->m_FlowComplex->m_patches.size();i++)
-	{
-		CP_Patch *pPatch = pDoc->m_FlowComplex->m_patches[i];
-		if(pPatch->flag){
-			glPushName(i);
-			for (unsigned int j = 0; j <pPatch->m_2cells.size(); j++)
-			{
-				CP_2cell *p2cell = pDoc->m_FlowComplex->m_2cells[pPatch->m_2cells[j]];
-				pDoc->m_FlowComplex->Draw2cell(*p2cell);
-			}//j
+	if(pMain->m_ctrlPaneFCCR->m_dialog.fccr.showResult){
+		for(unsigned int i=0;i<pDoc->m_FlowComplex->m_patches.size();i++)
+		{
+			CP_Patch *pPatch = pDoc->m_FlowComplex->m_patches[i];
+			if(pPatch->flag){
+				glPushName(i);
+				pDoc->m_FlowComplex->DrawPatch(*pDoc->m_FlowComplex->m_patches[i]);
+				glPopName();
+			}
+		}//i
+	}else if(showCycles){
+		for(int i=0;i<pDoc->m_FlowComplex->oripatches;i++)
+		{
+			if(pDoc->m_FlowComplex->m_patches[i]->flag){
+				glPushName(i);
+				pDoc->m_FlowComplex->DrawPatch(*pDoc->m_FlowComplex->m_patches[i]);
+				glPopName();
+			}
+		}//i
+		for(unsigned int i=0;i<pDoc->m_FlowComplex->connectedPatches.size();++i){
+			int _patch=pDoc->m_FlowComplex->connectedPatches[i];
+			glPushName(_patch);
+			pDoc->m_FlowComplex->DrawPatch(*pDoc->m_FlowComplex->m_patches[_patch]);
 			glPopName();
 		}
-	}//i
+	}
+	
 
 	glPopMatrix();
 	// SwapBuffers(dc.m_hDC);
@@ -1421,7 +1387,7 @@ void CSLDRView::ProcessHits(GLint hits, GLuint buffer[])
 		for (j = 0; j < numberOfNames; j++,ptr++) {
 			if(pMain->m_ctrlPaneFCCR->m_dialog.fccr.IsProcess&&pMain->m_ctrlPaneFCCR->m_dialog.select2cellEnable)
 				selected2cell=*ptr;
-			else if(pMain->m_ctrlPaneFCCR->m_dialog.fccr.IsProcess&&pMain->m_ctrlPaneFCCR->m_dialog.selectpatchEnable)
+			else if(showPruningEnable&&pMain->m_ctrlPaneFCCR->m_dialog.selectpatchEnable)
 				selectedpatch=*ptr;
 			else if(shiftDown){
 				//selectedpoly=*ptr;
@@ -1468,7 +1434,7 @@ void CSLDRView::OnLButtonDown(UINT nFlags, CPoint point)
 		{
 			Find2cell(point);
 		}
-		else if(pMain->m_ctrlPaneFCCR->m_dialog.fccr.IsProcess&&pMain->m_ctrlPaneFCCR->m_dialog.selectpatchEnable)
+		else if(showPruningEnable&&pMain->m_ctrlPaneFCCR->m_dialog.selectpatchEnable)
 		{
 			FindPatch(point);
 		}
@@ -1477,19 +1443,12 @@ void CSLDRView::OnLButtonDown(UINT nFlags, CPoint point)
 			selectedpoly=moveonpoly;
 			pMain->m_ctrlPaneFCCR->m_dialog.selpoly=selectedpoly;
 			cout<<selectedpoly<<":"<<endl;
-			//cout<<pDoc->m_FlowComplex->m_PolyLine[selectedpoly].s<<","<<pDoc->m_FlowComplex->m_PolyLine[selectedpoly].e<<endl;
-			/*for(unsigned int k=0;k<pDoc->m_FlowComplex->m_PolyLine[selectedpoly].cycle.size();++k)
-			{for(unsigned int j=1;j<pDoc->m_FlowComplex->m_PolyLine[selectedpoly].cycle[k].size();++j)
-			{
-			cout<<setprecision(10)<<pDoc->m_FlowComplex->m_PolyLine[pDoc->m_FlowComplex->m_PolyLine[selectedpoly].cycle[k][j]].GetLength()<<",";
-			}cout<<endl;}*/
-			/*for(unsigned int k=0;k<pDoc->m_FlowComplex->m_PolyLine[selectedpoly].cycle.size();++k)
-			{	
-				printf("%.20f",pDoc->m_FlowComplex->GetCycleLength(pDoc->m_FlowComplex->m_PolyLine[selectedpoly].cycle[k]));
-				cout<<endl;
-			}*/
-			//cout<<pDoc->m_FlowComplex->m_PolyLine[selectedpoly].cycle.size()<<endl;
-			//cout<<pDoc->m_FlowComplex->m_PolyLine[selectedpoly].sharppointv.size()<<endl;
+			int s=pDoc->m_FlowComplex->m_PolyLine[selectedpoly].s;
+			cout<<s<<":"<<pDoc->m_FlowComplex->m_0cells[s].m_x<<" "<<pDoc->m_FlowComplex->m_0cells[s].m_y<<" "<<pDoc->m_FlowComplex->m_0cells[s].m_z<<endl;
+			int e=pDoc->m_FlowComplex->m_PolyLine[selectedpoly].e;
+			cout<<e<<":"<<pDoc->m_FlowComplex->m_0cells[e].m_x<<" "<<pDoc->m_FlowComplex->m_0cells[e].m_y<<" "<<pDoc->m_FlowComplex->m_0cells[e].m_z<<endl;
+
+			pDoc->m_FlowComplex->GenerateCycle(selectedpoly);
 		}
 
 		if(selected2cell!=-1)
@@ -1511,18 +1470,11 @@ void CSLDRView::OnLButtonDown(UINT nFlags, CPoint point)
 			}
 			//pDoc->m_FlowComplex->PatchNormalConsensus(selectedpatch);
 			cout<<selectedpatch<<endl;
-			for(unsigned int i=0;i<pDoc->m_FlowComplex->m_patches[selectedpatch]->m_boundary.size();++i)
+			for(unsigned int i=0;i<pDoc->m_FlowComplex->m_patches[selectedpatch]->m_boundary.size();++i){
+				if(pDoc->m_FlowComplex->m_patches[selectedpatch]->m_boundary[i]->isBoundary!=-1)
 				cout<<pDoc->m_FlowComplex->m_patches[selectedpatch]->m_boundary[i]->newdegree<<",";
+			}//i
 			cout<<endl;
-			/*CP_Patch* pPatch=pDoc->m_FlowComplex->m_patches[selectedpatch];
-			for(unsigned i=0;i<pPatch->cycle.size();++i){
-				cout<<"cycle"<<i<<":";
-				for(unsigned int j=1;j<pPatch->cycle[i].size();++j)
-				{
-					cout<<pPatch->cycle[i][j]<<",";
-				}cout<<endl;
-			}*/
-			//selectedpatch=pDoc->m_FlowComplex->m_patches[selectedpatch]->pairedp;
 		}
 	}
 
@@ -1544,9 +1496,9 @@ double Area(double a, double b, double c)
 BOOL CSLDRView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
-	m_Scale += 0.1 *zDelta/2 ;
+	m_Scale += 0.05 *zDelta/2 ;
 	if(m_Scale<0)
-		m_Scale=0.0;
+		m_Scale=0.2;
 	InvalidateRect(NULL, FALSE);
 	return CView::OnMouseWheel(nFlags, zDelta, pt);
 }
@@ -1568,71 +1520,49 @@ void CSLDRView::OnPolyline()
 {
 	// TODO: 在此添加命令处理程序代码
 	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
-	if(pMain->m_ctrlPaneFCCR->m_dialog.fccr.IsProcess)
+	CSLDRDoc* pDoc = GetDocument();
+	if(pDoc->format=="curve")
 	{
-		if(showThicken||showDelauny||showFC||showTop)
-		{
-			showThicken=false;
-			showDelauny=false;
-			showFC=false;
-			showTop=false;
-		}
-		if(showInputP)
-		{
-			showInputP=false;
-			pMain->m_ctrlPaneFCCR->m_dialog.fccr.showResult=true;
-			pMain->m_ctrlPaneFCCR->m_dialog.SetTreePatches();
-		}else
-		{
-			showInputP=true;
-			pMain->m_ctrlPaneFCCR->m_dialog.fccr.showResult=false;
+		if(!showFCEnable){
+			fcEnable=false;
+			ifcEnable=false;
+			pMain->m_ctrlPaneFCCR->m_dialog.OnImprovedFCPolyline();
+		}else{
+			if(showCycles||showPruning||showFC||showTop)
+			{
+				showCycles=false;
+				showPruning=false;
+				showFC=false;
+				showTop=false;
+			}
+			if(showInputP)
+			{
+				showInputP=false;
+				pMain->m_ctrlPaneFCCR->m_dialog.fccr.showResult=true;
+				pMain->m_ctrlPaneFCCR->m_dialog.SetTreePatches();
+			}else
+			{
+				showInputP=true;
+				pMain->m_ctrlPaneFCCR->m_dialog.fccr.showResult=false;
+			}
 		}
 	}else
-		MessageBox("请先使用重建步骤");
+		MessageBox("请先打开文件或清空后再操作");
 	Invalidate(); 
 }
-
-
-void CSLDRView::OnDelauny()
-{
-	// TODO: 在此添加命令处理程序代码
-	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
-	if(pMain->m_ctrlPaneFCCR->m_dialog.fccr.IsProcess)
-	{
-		if(showInputP||showThicken||showFC||showTop)
-		{
-			showInputP=false;
-			showThicken=false;
-			showFC=false;
-			showTop=false;
-		}
-		if(showDelauny)
-		{
-			showDelauny=false;
-			pMain->m_ctrlPaneFCCR->m_dialog.fccr.showResult=true;
-			pMain->m_ctrlPaneFCCR->m_dialog.SetTreePatches();
-		}else
-		{
-			showDelauny=true;
-			pMain->m_ctrlPaneFCCR->m_dialog.fccr.showResult=false;
-		}
-	}else
-		MessageBox("请先使用重建步骤");
-	Invalidate(); 
-}
-
 
 void CSLDRView::OnFlowcomplex()
 {
 	// TODO: 在此添加命令处理程序代码
 	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
-	if(pMain->m_ctrlPaneFCCR->m_dialog.fccr.IsProcess)
-	{
-		if(showInputP||showDelauny||showThicken||showTop)
+	if(!showMergeEnable){
+		pMain->m_ctrlPaneFCCR->m_dialog.OnImprovedFCFlowComplex();
+	}else{
+		if(showInputP||showPruning||showCycles||showTop)
 		{
 			showInputP=false;
-			showDelauny=false;
-			showThicken=false;
+			showPruning=false;
+			showCycles=false;
 			showTop=false;
 		}
 		if(showFC)
@@ -1645,25 +1575,24 @@ void CSLDRView::OnFlowcomplex()
 			showFC=true;
 			pMain->m_ctrlPaneFCCR->m_dialog.fccr.showResult=false;
 		}
-		
-	}else
-		MessageBox("请先使用重建步骤");
+	}
 	Invalidate(); 
 }
 
 
-void CSLDRView::OnCollapse()
+void CSLDRView::OnSpreadAndMerge()
 {
 	// TODO: 在此添加命令处理程序代码
 	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
-	if(pMain->m_ctrlPaneFCCR->m_dialog.fccr.IsProcess)
-	{
-		if(showInputP||showDelauny||showFC||showThicken)
+	if(!showCyclesEnable){
+		pMain->m_ctrlPaneFCCR->m_dialog.OnImprovedFCSpreadMerge();
+	}else{
+		if(showInputP||showPruning||showFC||showCycles)
 		{
 			showInputP=false;
-			showDelauny=false;
+			showPruning=false;
 			showFC=false;
-			showThicken=false;
+			showCycles=false;
 		}
 		if(showTop)
 		{
@@ -1675,37 +1604,66 @@ void CSLDRView::OnCollapse()
 			showTop=true;
 			pMain->m_ctrlPaneFCCR->m_dialog.fccr.showResult=false;
 		}
-	}else
-		MessageBox("请先使用重建步骤");
+	}
 	Invalidate(); 
 }
 
 
-void CSLDRView::OnThicken()
+void CSLDRView::OnFindingCycles()
 {
 	// TODO: 在此添加命令处理程序代码
 	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
-	if(pMain->m_ctrlPaneFCCR->m_dialog.fccr.IsProcess)
-	{
-		if(showInputP||showDelauny||showFC||showTop)
+	if(!showPruningEnable){
+		pMain->m_ctrlPaneFCCR->m_dialog.OnImprovedFCFindingCycles();
+	}else{
+		if(showInputP||showPruning||showFC||showTop)
 		{
 			showInputP=false;
-			showDelauny=false;
+			showPruning=false;
 			showFC=false;
 			showTop=false;
 		}
-		if(showThicken)
+		if(showCycles)
 		{
-			showThicken=false;
+			showCycles=false;
 			pMain->m_ctrlPaneFCCR->m_dialog.fccr.showResult=true;
 			pMain->m_ctrlPaneFCCR->m_dialog.SetTreePatches();
 		}else
 		{
-			showThicken=true;
+			showCycles=true;
 			pMain->m_ctrlPaneFCCR->m_dialog.fccr.showResult=false;
 		}
-	}else
-		MessageBox("请先使用重建步骤");
+	}
+	Invalidate(); 
+}
+
+
+void CSLDRView::OnPruning()
+{
+	// TODO: 在此添加命令处理程序代码
+	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
+	if(!pMain->m_ctrlPaneFCCR->m_dialog.fccr.IsProcess){
+		showCycles=false;
+		pMain->m_ctrlPaneFCCR->m_dialog.OnImprovedFCPruning();
+	}else{
+		if(showInputP||showCycles||showFC||showTop)
+		{
+			showInputP=false;
+			showCycles=false;
+			showFC=false;
+			showTop=false;
+		}
+		if(showPruning)
+		{
+			showPruning=false;
+			pMain->m_ctrlPaneFCCR->m_dialog.fccr.showResult=true;
+			pMain->m_ctrlPaneFCCR->m_dialog.SetTreePatches();
+		}else
+		{
+			showPruning=true;
+			pMain->m_ctrlPaneFCCR->m_dialog.fccr.showResult=false;
+		}
+	}
 	Invalidate(); 
 }
 
@@ -1742,47 +1700,54 @@ void CSLDRView::OnFCReconstruction()
 	{
 		fcEnable=false;
 		ifcEnable=false;
+		showPolyEnable=false;
 		pMain->m_ctrlPaneFCCR->m_dialog.OnButtonReconstruction();
 	}else
 		MessageBox("请先打开文件或清空后再操作");
 }
 
-
 void CSLDRView::OnUpdatePolyline(CCmdUI *pCmdUI)
 {
 	// TODO: 在此添加命令更新用户界面处理程序代码
+	pCmdUI->Enable(showPolyEnable);
 	pCmdUI->SetCheck(showInputP);
 }
-
-
-void CSLDRView::OnUpdateDelauny(CCmdUI *pCmdUI)
-{
-	// TODO: 在此添加命令更新用户界面处理程序代码
-	pCmdUI->SetCheck(showDelauny);
-}
-
 
 void CSLDRView::OnUpdateFlowcomplex(CCmdUI *pCmdUI)
 {
 	// TODO: 在此添加命令更新用户界面处理程序代码
-	pCmdUI->SetCheck(showFC);
+	if(!showFCEnable)
+		pCmdUI->Enable(showFCEnable);
+	else
+		pCmdUI->SetCheck(showFC);
 }
-
 
 void CSLDRView::OnUpdateCollapse(CCmdUI *pCmdUI)
 {
 	// TODO: 在此添加命令更新用户界面处理程序代码
-	pCmdUI->SetCheck(showTop);
+	if(!showMergeEnable)
+		pCmdUI->Enable(showMergeEnable);
+	else
+		pCmdUI->SetCheck(showTop);
 }
-
 
 void CSLDRView::OnUpdateButton2(CCmdUI *pCmdUI)
 {
 	// TODO: 在此添加命令更新用户界面处理程序代码
-	pCmdUI->SetCheck(showThicken);
+	if(!showCyclesEnable)
+		pCmdUI->Enable(showCyclesEnable);
+	else
+		pCmdUI->SetCheck(showCycles);
 }
 
-
+void CSLDRView::OnUpdateDelauny(CCmdUI *pCmdUI)
+{
+	// TODO: 在此添加命令更新用户界面处理程序代码
+	if(!showPruningEnable)
+		pCmdUI->Enable(showPruningEnable);
+	else
+		pCmdUI->SetCheck(showPruning);
+}
 
 void CSLDRView::OnSliderSpecular()
 {
@@ -2000,47 +1965,6 @@ void CSLDRView::OnUpdateFCReconstruction(CCmdUI *pCmdUI)
 	pCmdUI->Enable(fcEnable);
 }
 
-
-void CSLDRView::OnButtonPlay()
-{
-	// TODO: 在此添加命令处理程序代码
-	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
-	CSLDRDoc* pDoc = GetDocument();
-	if(pDoc->format=="curve"&&pMain->m_ctrlPaneFCCR->m_dialog.fccr.IsProcess)
-	{
-		playEnable=false;
-		pMain->m_ctrlPaneFCCR->m_dialog.OnPlayFC();
-	}else
-		MessageBox("请先打开文件或重建处理后再操作");
-}
-
-
-void CSLDRView::OnButtonPause()
-{
-	// TODO: 在此添加命令处理程序代码
-	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
-	CSLDRDoc* pDoc = GetDocument();
-	if(pDoc->format=="curve"&&pMain->m_ctrlPaneFCCR->m_dialog.fccr.IsProcess&&pMain->m_ctrlPaneFCCR->m_dialog.play>0)
-	{
-		pMain->m_ctrlPaneFCCR->m_dialog.OnPlayFCPause();
-	}else
-		MessageBox("请先点击play");
-}
-
-
-void CSLDRView::OnUpdateButtonPlay(CCmdUI *pCmdUI)
-{
-	// TODO: 在此添加命令更新用户界面处理程序代码
-	pCmdUI->Enable(playEnable);
-}
-
-
-void CSLDRView::OnButtonPlaycell()
-{
-	// TODO: 在此添加命令处理程序代码
-	cout<<"aaa"<<endl;
-}
-
 void CSLDRView::OnButtonImprovedfc()
 {
 	// 与FC方法大致相同，修改其中的一些步骤 
@@ -2050,40 +1974,10 @@ void CSLDRView::OnButtonImprovedfc()
 	{
 		fcEnable=false;
 		ifcEnable=false;
+		showPolyEnable=false;
 		pMain->m_ctrlPaneFCCR->m_dialog.OnImprovedFCReconstruction();
 	}else
 		MessageBox("请先打开文件或清空后再操作");
-}
-
-
-void CSLDRView::OnButtonNext()
-{
-	// TODO: 在此添加命令处理程序代码
-	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
-	if(pMain->m_ctrlPaneFCCR->m_dialog.fccr.IsProcess)
-	{
-		if(showThicken||showDelauny||showFC||showTop||showInputP)
-		{
-			showThicken=false;
-			showDelauny=false;
-			showFC=false;
-			showTop=false;
-			showInputP=false;
-		}
-		if(showCycles)
-		{
-			showCycles=false;
-			pMain->m_ctrlPaneFCCR->m_dialog.fccr.showResult=true;
-			pMain->m_ctrlPaneFCCR->m_dialog.SetTreePatches();
-		}else
-		{
-			showCycles=true;
-			pMain->m_ctrlPaneFCCR->m_dialog.fccr.showResult=false;
-			pMain->m_ctrlPaneFCCR->m_dialog.SetTreeCycles();
-		}
-	}else
-		MessageBox("请先使用重建步骤");
-	Invalidate(); 
 }
 
 void CSLDRView::OnUpdateButtonImprovedfc(CCmdUI *pCmdUI)
@@ -2093,8 +1987,33 @@ void CSLDRView::OnUpdateButtonImprovedfc(CCmdUI *pCmdUI)
 }
 
 
-void CSLDRView::OnUpdateButtonNext(CCmdUI *pCmdUI)
+void CSLDRView::OnButtonPreprocess()
+{
+	// TODO: 在此添加命令处理程序代码
+	CSLDRDoc* pDoc = GetDocument();
+	SurfaceOptimization surface_optimization(pDoc->m_FlowComplex);
+	surface_optimization.ElimateDegenerateTriangles();
+	Invalidate();
+}
+
+
+void CSLDRView::OnUpdateButtonPreprocess(CCmdUI *pCmdUI)
 {
 	// TODO: 在此添加命令更新用户界面处理程序代码
-	pCmdUI->SetCheck(showCycles);
+	pCmdUI->Enable(showPreprocessEnable);
+}
+
+
+void CSLDRView::OnCheckTwoside()
+{
+	// TODO: 在此添加命令处理程序代码
+	twoSide=!twoSide;
+	Invalidate();
+}
+
+
+void CSLDRView::OnUpdateCheckTwoside(CCmdUI *pCmdUI)
+{
+	// TODO: 在此添加命令更新用户界面处理程序代码
+	pCmdUI->SetCheck(twoSide);
 }

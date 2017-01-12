@@ -10,6 +10,7 @@
 #include "cp_pointvector.h"
 #include "gl/GLU.h"
 #include "glut.h"
+#include "glext.h"
 //////////////////////////////////////////////////////////////////////////
 /////////////////////////以图形式存储的曲线端点//////////////////////////////
 //////////////////////////////////////////////////////////////////////////
@@ -85,11 +86,12 @@ class CP_Triganle3D
 public:
 	int m_points[3];
 	double m_color[3];
+	double area;
 	bool normalsetted;
 	int _2cell; //构造2-cell时设置三角面片所属的2-cell
+	int _patch;//-1时表示不存在了
 	std::vector<int> m_adjTriangle;//邻接的三角面片
 	double minx,maxx,miny,maxy;
-	int aa;
 public:
 	CP_Triganle3D();
 	CP_Triganle3D(int p0, int p1, int p2);
@@ -113,7 +115,10 @@ class CurveSegment :public CP_LineSegment3D
 {
 public:
 	int sp,ep;
-	int degree,tmpdegree,newdegree;//-1:curve,1~：边，0度数为0,newdegree检查最后的patch内部问题
+	//-1:curve,1~：边，0度数为0,
+	//tmpdegree 1确定creator、destoryer时的cutbrunch 2为新patch的环路寻找连通分量时使用
+	//newdegree检查最后的patch内部问题
+	int degree,tmpdegree,newdegree;
 	int isBoundary;//如果不是边界，编号为-1;如果是，编号为曲线编号
 	vector<int> incident2cell;//the index of incident 2cell 目前编号
 	int _triangle;//patch和2cell的边界处对应的三角形,用于patch间法向一致
@@ -169,6 +174,7 @@ public:
 	vector<CurveSegment*> m_boundary;//cllapse
 	vector<CurveSegment> boundary;//找到内部邻接三角形
 	vector<int> m_adjPatch;
+	vector<int> m_triangle;//曲面优化时存放三角形，不用再在2cell中寻找
 	bool visited;
 	int index;//在fc中m_patch vector中的编号
 	int color;//颜色编号
@@ -179,11 +185,12 @@ public:
 	int pairedp;
 	double dihedral;
 	vector<GraphList*> forest;//所有连通分量
-	vector<vector<int>> cycle;//组成最小环的边
+	vector<vector<int>> cycle;//组成最小环的边，对于wrong true的patch可能有多个
+	vector<vector<int>> polygon;//cycle对应的polyline
 	vector<int> path;
 	vector<CP_Vector3D> r;
 	vector<vector<int>> patches;//每个patch用三角形的编号表示 
-	vector<vector<int>> polygon;//cycle对应的polyline
+	vector<int> m_bcurve;//排除wrong true后的准确边界
 public:
 	CP_Patch(void);
 	~CP_Patch(void);
@@ -197,8 +204,13 @@ public:
 	bool show;
 	unsigned int inputPoints;
 	unsigned int inputCurveSegments;
+	int inputCurves;//采样点
 	int oripatches;//最初的patch
+	int ori2cells;//最初的2cells,展示flow complex
+	int respatches;
+	int res_triangle_num;
 	double minx,maxx,miny,maxy,minz,maxz;
+	int perweight,biweight;
 	GraphList graph;
 	vector<CP_Point3D> m_0cells;
 	vector<CP_Point3D> m_critical;
@@ -218,10 +230,14 @@ public:
 	vector<int> topo;
 	int mergededge;
 	vector<int> temporaryfalse; 
+	map<int,int> delaunyexist;//x为Delauny编号，y是已占用的patch
+	vector<vector<int> > overlap_by_delauny;//<x,y>,x为delauny编号，y是重叠的patch编号
+	vector<vector<int> > curve_incident_patch;
+	vector<int> minpatch;
 	vector<vector<int>> cycles;
-	vector<vector<CP_Vector3D>> cyclesr;
-	map<int,int> delaunyexist;
-
+	vector<int> interior_patches;
+	vector<int> connectedPatches;//连接型面片
+	vector<int> vec_curve_degree;
 public:
 	CP_FlowComplex();
 	~CP_FlowComplex();
@@ -277,6 +293,9 @@ public:
 	void SeekCreatorPatch(int i);//i为第i个3cell
 	void SeekDestoryerPatch();
 	void GetPatchBoundary(int i);//i为patch编号
+	double GetCyclelength(const vector<int> &cycle);
+	double GetTriangleArea(const CP_Triganle3D &tri);
+	double GetSumTriangleArea(const vector<int> &vt);
 	//画
 	void DrawPoints();
 	void DrawDelaunyTriangles();
@@ -285,32 +304,47 @@ public:
 	void DrawTriangleBoundary(const CP_2cell &p2cell);
 	void Draw2cell(const CP_2cell &p2cell);
 	void Draw2cellBoundary(const CP_2cell &p2cell);
+	void DrawPatch(const CP_Patch &pPatch);
 	void DrawPatchBoundary(const CP_Patch &pPatch);
-	void DrawPatchBoundary(const CP_Patch &pPatch,bool connection,bool cycle,int which);
+	void DrawPatchBoundary(const CP_Patch &pPatch,bool connection,bool cycle,int which,bool RMF);
 	void DrawDarts();
+	void DrawVoids(int _3cell,int sel2cell,int seltriangle,bool _2cellboundary,bool triboundary,double mTrans);
+	void DrawFlowComplex(bool showcreators,int selcreator,bool _2cellboundary,bool triboundary);
 	//改进的方法
+	void SetPatchFlagFalse(int i);
+	void SetPatchFlagTrue(int i);
+	double Dihedral(const CP_Triganle3D &t1,const CP_Triganle3D &t2);
 	void BuildGraphFromCurves(const vector<int>& poly,GraphList &graphall);
 	vector<GraphList*> GetConnectedComponents(GraphList& graphall);
 	void NoDulplicateDarts(const VertexNode& v,vector<int>& poly2delete);
 	void AddTreeWithoutbranch(vector<GraphList*>& resgraph,GraphList* tmpforest);
-	void FindShortestCycleForComponent(vector<vector<int> > &cycle,const GraphList& ptree,int i);
-	void FindShortestCycle(int i);
+	void FindShortestCycleForComponent(vector<vector<int> > &cycle,const GraphList& ptree,bool degreeEnable);
 	double GetCycleLength(vector<int> &cycle);
 	int ConnectToPolyBothEnds(int i);
 	void FindCyclesForaCurve(int i);
 	bool ContainSubCycle(const vector<int> &newpath);
 	void ComputeDelaunyPatchForCycles(CP_Patch &patch);
-	vector<int> TriangulatingSinglePolygon(vector<vector<int>>& patches,const vector<int>& polygon,int s,int e);
+	vector<int> TriangulatingSinglePolygon(const vector<int>& polygon,int s,int e,CP_Triganle3D *t,vector<vector<int> >& dp,vector<vector<int> >& vt,double& cost);
 	void CheckInteriorForPatch(int _patch,const vector<int>& newpatch);
+	vector<int> ElimateInteriorPatch(vector<int>& group);
+	void ElimateRecursive(vector<int>& group,vector<int>& res,vector<int>& tmp,int &quality_max,int quality);
+	void ProcessingOverlappingPatch();
+	void ProcessingInteriorPatch();
+	void ConstructFromCycle(const vector<int> &cycle,vector<int> &newpatch);
+	int IsCycleExistInPatches(const vector<int>& cycle);
+	void AddPatchForCycles(const vector<int> &newpatch,const vector<int>& cycle);
+	void GenerateCycle(int polyidx);
+	void NonmanifoldCurves();
+	void TopologyComplete();
 
 	int TopologicalEnable(const CurveSegment &curve,const CP_Patch &patchl,const CP_Patch &patchr);
+	double JointNormalAngleOfNeighbourPatch(CurveSegment &curve,CP_Patch &patchl,CP_Patch &patchr);
 	double DihedralOfNeighbourPatch(CurveSegment &curve,CP_Patch &patchl,CP_Patch &patchr);
 	void MergePatch(CurveSegment &curve,CP_Patch &pl,CP_Patch &pr);
 	double ComputeCost(const vector<int> &path);
 	double ComputeCycleCost(const vector<int> &path,vector<CP_Vector3D> &r);
 	double ComputePathCost(const vector<int> &path);
 	CP_Vector3D rotateNormal(const CP_Vector3D &normal, const CP_Vector3D &axis, const double &angle);
-	void GenerateCycleRMF();
 };
 extern double dist(const CP_Point3D &x,const CP_Point3D &y);
 extern double Area(double a,double b,double c);

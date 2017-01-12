@@ -51,16 +51,22 @@ public:
 	GLfloat m_yPos;
 	CPoint m_MouseDownPoint;
 	CString format;
-	bool showDelauny;
+	bool showPruning;
 	bool IsProcess;
 	bool fcEnable;
 	bool ifcEnable;
-	bool playEnable;
 	bool showFC;
 	bool showInputP;
 	bool showTop;
-	bool showThicken;
 	bool showCycles;
+	bool showPolyEnable;
+	bool showFCEnable;
+	bool showMergeEnable;
+	bool showCyclesEnable;
+	bool showPruningEnable;
+	
+	bool showPreprocessEnable;
+
 	int selected2cell;
 	int selectedpatch;
 	int selectedpoly;
@@ -69,6 +75,7 @@ public:
 	bool CtrlDown;
 	bool CKeyDown;
 	int which;
+	bool twoSide;
 	double mDiffuse,mSpecular,mShine;
 	double mDiffuse0,mSpecular0,mAmbient0;
 	double mDiffuse1,mSpecular1,mAmbient1;
@@ -93,7 +100,7 @@ public:
 	void ProcessHits(GLint hits, GLuint buffer[]);
 	void SetProjectionMatrix(int cx, int cy);
 	void SetModelViewMatrix() ;
-	void  drawScene();
+	void drawScene();
 	void drawString(const char* str);
 	void drawData();
 	
@@ -132,11 +139,11 @@ public:
 	afx_msg BOOL OnMouseWheel(UINT nFlags, short zDelta, CPoint pt);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnPolyline();
-	afx_msg void OnDelauny();
+	afx_msg void OnPruning();
 	afx_msg void OnFlowcomplex();
-	afx_msg void OnCollapse();
+	afx_msg void OnSpreadAndMerge();
 	afx_msg void OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags);
-	afx_msg void OnThicken();
+	afx_msg void OnFindingCycles();
 	afx_msg void OnFCReconstruction();
 	afx_msg void OnUpdatePolyline(CCmdUI *pCmdUI);
 	afx_msg void OnUpdateDelauny(CCmdUI *pCmdUI);
@@ -164,14 +171,12 @@ public:
 	afx_msg void OnSliderExponent2();
 	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnUpdateFCReconstruction(CCmdUI *pCmdUI);
-	afx_msg void OnButtonPlay();
-	afx_msg void OnButtonPause();
-	afx_msg void OnUpdateButtonPlay(CCmdUI *pCmdUI);
-	afx_msg void OnButtonPlaycell();
 	afx_msg void OnButtonImprovedfc();
-	afx_msg void OnButtonNext();
 	afx_msg void OnUpdateButtonImprovedfc(CCmdUI *pCmdUI);
-	afx_msg void OnUpdateButtonNext(CCmdUI *pCmdUI);
+	afx_msg void OnButtonPreprocess();
+	afx_msg void OnUpdateButtonPreprocess(CCmdUI *pCmdUI);
+	afx_msg void OnCheckTwoside();
+	afx_msg void OnUpdateCheckTwoside(CCmdUI *pCmdUI);
 };
 
 #ifndef _DEBUG  // SLDRView.cpp 中的调试版本
