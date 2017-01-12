@@ -729,7 +729,7 @@ void CSLDRView::OnDraw(CDC* pDC)
 				glLineWidth(3);
 				//if (pcurve->degree>2&&!pcurve->isBoundary)
 				if (pcurve->newdegree>2/*(int)pcurve->incidentpatch.size()>2&&pcurve->isBoundary==-1*/)
-				{
+				{ 
 					glColor3f(0.173, 0.51, 1.0);
 					glBegin(GL_LINE_STRIP);
 					glNormal3f(0, 0, 1);

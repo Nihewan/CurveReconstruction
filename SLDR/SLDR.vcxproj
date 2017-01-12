@@ -49,8 +49,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>include;D:\boost_1_55_0;D:\CGAL-4.4\include;D:\CGAL-4.4\auxiliary\gmp\include;$(IncludePath)</IncludePath>
-    <LibraryPath>lib;D:\CGAL-4.4\lib;D:\CGAL-4.4\auxiliary\gmp\lib;D:\boost_1_55_0\boost_1_55_0\boost_vc_110\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(BOOSTDIR);$(IncludePath);include;$(CGALDIR)\include;D:\CGAL-4.4\auxiliary\gmp\include</IncludePath>
+    <LibraryPath>$(CGALDIR)\lib;$(BoostLibs);lib;D:\CGAL-4.4\auxiliary\gmp\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
