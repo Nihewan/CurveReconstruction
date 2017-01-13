@@ -555,6 +555,7 @@ void CSLDRView::OnDraw(CDC* pDC)
 						if(pMain->m_ctrlPaneFCCR->m_dialog._2cellboundary)
 							pDoc->m_FlowComplex->Draw2cellBoundary(*p2cell);
 					}//j
+					pDoc->m_FlowComplex->DrawPatchBoundary(*pPatch,CtrlDown,CKeyDown,which,pMain->m_ctrlPaneFCCR->m_dialog.showRMF);
 				}
 			}//i
 			for(unsigned int i=0;i<pDoc->m_FlowComplex->connectedPatches.size();++i){
@@ -564,7 +565,7 @@ void CSLDRView::OnDraw(CDC* pDC)
 					for (unsigned int j = 0; j <pPatch->m_2cells.size(); j++)
 					{
 						if(selectedpatch==-1)
-							glColor4f(0.7,0.5,0.5,1.0);
+							glColor4f(pDoc->r[2],pDoc->g[2],pDoc->b[2],1.0);
 						else if(selectedpatch!=-1)
 							glColor4f(0.7,0.7,0.7,1.0-(CtrlDown||CKeyDown||(selectedpatch!=-1))*0.4);//按下ctrl显示环
 						CP_2cell *p2cell = pDoc->m_FlowComplex->m_2cells[pPatch->m_2cells[j]];
@@ -575,6 +576,8 @@ void CSLDRView::OnDraw(CDC* pDC)
 						if(pMain->m_ctrlPaneFCCR->m_dialog._2cellboundary)
 							pDoc->m_FlowComplex->Draw2cellBoundary(*p2cell);
 					}//j
+					//if(selectedpatch==-1)
+					//	pDoc->m_FlowComplex->DrawPatchBoundary(*pPatch,CtrlDown,CKeyDown,which,pMain->m_ctrlPaneFCCR->m_dialog.showRMF);
 				}
 			}
 		}//showThicken
@@ -1496,7 +1499,7 @@ double Area(double a, double b, double c)
 BOOL CSLDRView::OnMouseWheel(UINT nFlags, short zDelta, CPoint pt)
 {
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
-	m_Scale += 0.05 *zDelta/2 ;
+	m_Scale += 0.05 *zDelta/4 ;
 	if(m_Scale<0)
 		m_Scale=0.2;
 	InvalidateRect(NULL, FALSE);

@@ -1239,8 +1239,8 @@ void CP_FlowComplex::DrawPatchBoundary(const CP_Patch &pPatch,bool connection,bo
 	{   
 		//如果wrong，画绿的边界
 		if(connection){
-			glColor4f(0.0, 1.0, 0.0,1.0);
-			glLineWidth(4.5f);
+			glColor3f(0.4, 1.0, 0.4);
+			glLineWidth(3.5f);
 			vector<int> poly;
 			for(unsigned i=0;i<pPatch.forest.size();++i){
 				GraphList *ptree=pPatch.forest[i];
@@ -1263,8 +1263,8 @@ void CP_FlowComplex::DrawPatchBoundary(const CP_Patch &pPatch,bool connection,bo
 			if(num>0){
 				for(unsigned int j=0;j<pPatch.cycle[which].size();++j)
 				{
-					glColor4f(0.7,0.0, 0.0,1.0);
-					glLineWidth(5);
+					glColor4f(1.0,0.4, 0.4,1.0);
+					glLineWidth(3.5);
 					m_PolyLine[pPatch.cycle[which][j]].Draw();
 				}
 			}

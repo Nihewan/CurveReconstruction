@@ -1146,6 +1146,19 @@ void FCCR::OnThicken()
 	m_FlowComplex->SeekDestoryerPatch();
 	m_FlowComplex->oripatches=m_FlowComplex->m_patches.size();
 	
+	int degree1=0,degree3=0;
+	for (unsigned int i = 0; i <m_FlowComplex->m_1cells.size(); i++)
+	{
+		CurveSegment* pcurve=m_FlowComplex->m_1cells[i];
+		if (pcurve->degree>2)
+		{ 
+			degree3++;
+		}else if(pcurve->degree==1){
+			degree1++;
+		}
+	}//i
+	cout<<"degree1:"<<degree1<<endl;
+	cout<<"degree3:"<<degree3<<endl;
 	//patch法向
 	m_FlowComplex->ResetTriNormalset();
 	m_FlowComplex->Reset2cellVisited();
@@ -1751,7 +1764,19 @@ void FCCR::ImprovedPruningAndTopoComplete(){
 			}
 		}
 	}
-//	cout<<m_FlowComplex->tricells.size()<<","<<m_FlowComplex->m_patches.size()<<endl;
+	int degree1=0,degree3=0;
+	for (unsigned int i = 0; i <m_FlowComplex->m_1cells.size(); i++)
+	{
+		CurveSegment* pcurve=m_FlowComplex->m_1cells[i];
+		if (pcurve->newdegree>2)
+		{ 
+			degree3++;
+		}else if(pcurve->newdegree==1){
+			degree1++;
+		}
+	}//i
+	cout<<"degree1:"<<degree1<<endl;
+	cout<<"degree3:"<<degree3<<endl;
 	//patch法向
 	m_FlowComplex->ResetTriNormalset();
 	m_FlowComplex->Reset2cellVisited();
