@@ -12,5 +12,8 @@ public:
 	void ElimateDegenerateTriangles();
 	void MergeDegenerateTrianglesIn2cell();
 	void ElimateDegenerateTrianglesInPatch();
+	void ResetPointsAndAdjacent();
+	bool obtusetri(const CP_Triganle3D &tri);
+	void SwapEdge(CP_Triganle3D &ltri,CP_Triganle3D &rtri);
 };
 

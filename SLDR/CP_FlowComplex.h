@@ -85,7 +85,6 @@ class CP_Triganle3D
 {
 public:
 	int m_points[3];
-	double m_color[3];
 	double area;
 	bool normalsetted;
 	int _2cell; //构造2-cell时设置三角面片所属的2-cell
@@ -238,6 +237,7 @@ public:
 	vector<int> interior_patches;
 	vector<int> connectedPatches;//连接型面片
 	vector<int> vec_curve_degree;
+	vector<int> obt;
 public:
 	CP_FlowComplex();
 	~CP_FlowComplex();

@@ -1012,6 +1012,7 @@ void CP_FlowComplex::ClearAll()
 	vector<int>().swap(interior_patches);
 	vector<int>().swap(connectedPatches);
 	vector<int>().swap(vec_curve_degree);
+	vector<int>().swap(obt);
 }
 
 void CP_FlowComplex::DrawPoints()

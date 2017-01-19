@@ -667,9 +667,22 @@ void CSLDRView::OnDraw(CDC* pDC)
 				CP_2cell *p2cell=pDoc->m_FlowComplex->m_2cells[pDoc->m_FlowComplex->Locate2cell(pMain->m_ctrlPaneFCCR->m_dialog.sel2cell)];
 				pDoc->m_FlowComplex->Draw2cellBoundary(*p2cell);
 			}
+
+			for(unsigned int i=0;i<pDoc->m_FlowComplex->obt.size();++i){
+				glColor4f(1.0,0.3,0.3,1.0);
+				CP_Triganle3D *pTri = pDoc->m_FlowComplex->tricells[pDoc->m_FlowComplex->obt[i]];
+				pDoc->m_FlowComplex->DrawTriangle(*pTri);
+				glBegin(GL_LINE_LOOP);
+				if(pMain->m_ctrlPaneFCCR->m_dialog.triboundary){
+					glLineWidth(1.0f);
+					glColor3f(0.0,0.0,0.0);
+				for (unsigned int j = 0; j < 3; j++)
+					glVertex3f(pDoc->m_FlowComplex->m_0cells[pTri->m_points[j]].m_x, pDoc->m_FlowComplex->m_0cells[pTri->m_points[j]].m_y, pDoc->m_FlowComplex->m_0cells[pTri->m_points[j]].m_z);
+				}
+				glEnd();
+			}
 		}//showResult
 		
-
 		//pruning
 		if(showPruning){
 			glColor3f(0.9, 0.0, 0.0);
@@ -752,7 +765,6 @@ void CSLDRView::OnDraw(CDC* pDC)
 
 			glDepthMask(GL_TRUE);
 		}
-
 		drawData();
 	}//curve
 
