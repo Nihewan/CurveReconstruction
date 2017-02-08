@@ -201,7 +201,7 @@ public:
 	unsigned int desN;
 	unsigned int _3cellN;
 	bool show;
-	unsigned int inputPoints;
+	int inputPoints;
 	unsigned int inputCurveSegments;
 	int inputCurves;//采样点
 	int oripatches;//最初的patch
@@ -302,6 +302,7 @@ public:
 	void DrawNonGabrielTriangles();
 	void DrawTriangle(const CP_Triganle3D &tri);
 	void DrawTriangleBoundary(const CP_2cell &p2cell);
+	void DrawTriangleBoundary(const CP_Patch &p2cell);
 	void Draw2cell(const CP_2cell &p2cell);
 	void Draw2cellBoundary(const CP_2cell &p2cell);
 	void DrawPatch(const CP_Patch &pPatch);

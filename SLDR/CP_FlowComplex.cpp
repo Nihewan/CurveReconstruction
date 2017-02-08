@@ -1019,7 +1019,7 @@ void CP_FlowComplex::DrawPoints()
 {
 	glColor3f(1.0, 0.0, 0.0);
 	glPointSize(6.0f);
-	for (unsigned int j = 0; j < inputPoints; j++)
+	for (int j = 0; j < inputPoints; j++)
 	{
 		glBegin(GL_POINTS);//必须是加上s，要不然显示不了
 		glNormal3f(1.0f,1.0f,1.0f);
@@ -1082,6 +1082,8 @@ void CP_FlowComplex::DrawNonGabrielTriangles()
 
 void CP_FlowComplex::DrawTriangle(const CP_Triganle3D &tri)
 {
+	glEnable(GL_POLYGON_OFFSET_FILL);
+	glPolygonOffset(1.0f, 1.0f);
 	CP_Vector3D ntmp = (m_0cells[tri.m_points[1]] - m_0cells[tri.m_points[0]]) ^ (m_0cells[tri.m_points[2]] -m_0cells[tri.m_points[0]]);
 	glBegin(GL_POLYGON);
 	glNormal3f(ntmp.m_x, ntmp.m_y, ntmp.m_z);
@@ -1091,7 +1093,7 @@ void CP_FlowComplex::DrawTriangle(const CP_Triganle3D &tri)
 	glNormal3f(ntmp.m_x, ntmp.m_y, ntmp.m_z);
 	glVertex3f(m_0cells[tri.m_points[2]].m_x, m_0cells[tri.m_points[2]].m_y, m_0cells[tri.m_points[2]].m_z);
 	glEnd();
-
+	glDisable(GL_POLYGON_OFFSET_FILL);
 }
 
 void CP_FlowComplex::DrawTriangleBoundary(const CP_2cell &p2cell)
@@ -1121,21 +1123,40 @@ void CP_FlowComplex::DrawTriangleBoundary(const CP_2cell &p2cell)
 	glPopAttrib();
 }
 
+void CP_FlowComplex::DrawTriangleBoundary(const CP_Patch &pPatch)
+{
+	glPushAttrib (GL_ALL_ATTRIB_BITS);
+	glEnable(GL_POLYGON_OFFSET_LINE);
+	glPolygonOffset(-1.0f, -1.0f);
+
+	glDepthMask(GL_FALSE);
+	glEnable (GL_LINE_SMOOTH);
+	glHint (GL_LINE_SMOOTH_HINT, GL_NICEST);
+	glLineWidth(1.0f);
+	glColor3f(0.0,0.0,0.0);
+	for(unsigned int k=0;k<pPatch.m_triangle.size();k++)
+	{
+		CP_Triganle3D *pTri = tricells[pPatch.m_triangle[k]];
+		glBegin(GL_LINE_LOOP);
+		for (unsigned int j = 0; j < 3; j++)
+			glVertex3f(m_0cells[pTri->m_points[j]].m_x, m_0cells[pTri->m_points[j]].m_y, m_0cells[pTri->m_points[j]].m_z);
+		glEnd();
+	}//k
+	glDisable(GL_LINE_SMOOTH);
+	glDepthMask(GL_TRUE);
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glDisable(GL_POLYGON_OFFSET_LINE);
+	glPopAttrib();
+}
+
 void CP_FlowComplex::Draw2cell(const CP_2cell &p2cell)
 {
-	glEnable(GL_POLYGON_OFFSET_FILL);
-	if(p2cell.type==1)
-	{
-		glPolygonOffset(1.0f, 1.0f);
-	}
-	else
-		glPolygonOffset(0.5f, 1.0f);
 	for(unsigned int k=0;k<p2cell.m_triangle.size();k++)
 	{
 		CP_Triganle3D *pTri = tricells[p2cell.m_triangle[k]];
 		DrawTriangle(*pTri);
 	}//k
-	glDisable(GL_POLYGON_OFFSET_FILL);
 }
 
 void CP_FlowComplex::Draw2cellBoundary(const CP_2cell &p2cell)

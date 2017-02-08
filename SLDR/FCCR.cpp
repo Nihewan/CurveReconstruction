@@ -13,7 +13,8 @@ FCCR::FCCR(void)
 	epsilon=0.045;
 	feasa=0.7;
 
-	showResult=false;
+	showIFCResult=false;
+	showOptResult=false;
 	IsProcess=false;
 }
 
@@ -30,7 +31,8 @@ void FCCR::ReSet()
 	feasa=0.7;
 	filename="";
 
-	showResult=false;
+	showIFCResult=false;
+	showOptResult=false;
 	IsProcess=false;
 
 	T.clear();

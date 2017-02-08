@@ -46,7 +46,8 @@ public:
 	Delaunay T;
 	CP_FlowComplex *m_FlowComplex;
 	std::vector<CP_PolyLine3D> *m_VT_PolyLine;
-	bool showResult;//多线程中不能调用view的变量
+	bool showIFCResult;//多线程中不能调用view的变量
+	bool showOptResult;
 	bool IsProcess;
 public:
 	FCCR(void);
@@ -75,4 +76,5 @@ public:
 	void SetSymmetricCurveTagTrue();
 	bool IsExistSharpChange(CP_PolyLine3D &poly);
 };
+
 

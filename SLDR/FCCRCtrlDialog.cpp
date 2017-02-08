@@ -398,7 +398,7 @@ void FCCRCtrlDialog::OnTvnSelchangedInfotree(NMHDR *pNMHDR, LRESULT *pResult)
 		return;
 	}
 
-	if (fccr.showResult)
+	if (fccr.showIFCResult)
 	{
 		if(seltype=="patch"){
 			selpatch=atoi(strText.Right(strText.GetLength()-strText.Find(":")-1));
@@ -558,7 +558,7 @@ UINT  ThreadFunc(LPVOID pParam)
 	cout<<"total time:"<<(double)(endtotal-starttotal)/CLOCKS_PER_SEC<<endl;
 	cout<<"*************************End************************"<<endl;
 
-	fc->fccr.showResult=true;
+	fc->fccr.showIFCResult=true;
 	fc->fccr.IsProcess=true;
 	fc->SetTreePatches();
 	::PostMessage(pMain->m_hWnd,WM_RESULT,0,0);
@@ -614,7 +614,7 @@ UINT  ThreadImrovedFC(LPVOID pParam)
 	cout<<"topological time:"<<(double)(endtop-starttop)/CLOCKS_PER_SEC<<endl;
 	fc->fccr.m_FlowComplex->NonmanifoldCurves();
 	cout<<"**************************End***********************"<<endl;
-	fc->fccr.showResult=true;
+	fc->fccr.showIFCResult=true;
 	fc->fccr.IsProcess=true;
 	fc->SetTreePatches();
 	::PostMessage(pMain->m_hWnd,WM_RESULT_PRUNING,0,0);
@@ -697,7 +697,7 @@ UINT  ThreadImrovedFCPruningAndComplete(LPVOID pParam)
 	cout<<"time for pruning and complete topology: "<<(double)(end-start)/CLOCKS_PER_SEC<<endl;
 	fc->fccr.m_FlowComplex->NonmanifoldCurves();
 	cout<<"**************************End***********************"<<endl;
-	fc->fccr.showResult=true;
+	fc->fccr.showIFCResult=true;
 	fc->fccr.IsProcess=true;
 	fc->SetTreePatches();
 	::PostMessage(pMain->m_hWnd,WM_RESULT_PRUNING,0,0);
