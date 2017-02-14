@@ -106,6 +106,65 @@ void SurfaceOptimization::ElimateDegenerateTrianglesInPatch()
 			}
 		}//flag
 	}//n
+	 
+	//2.定位needles
+	for(unsigned int n=0;n<m_FlowComplex->m_patches.size();++n){
+		CP_Patch *pPatch = m_FlowComplex->m_patches[n];
+		if(pPatch->flag){
+			for(unsigned int j=0;j<pPatch->m_triangle.size();++j){
+				CP_Triganle3D *tri=m_FlowComplex->tricells[pPatch->m_triangle[j]];
+				if(tri->_patch!=-1){
+					for(int i=0;i<3;i++)
+					{
+						CP_Vector3D i1(m_FlowComplex->m_0cells[tri->m_points[(i+1)%3]].m_x-m_FlowComplex->m_0cells[tri->m_points[i%3]].m_x,m_FlowComplex->m_0cells[tri->m_points[(i+1)%3]].m_y-m_FlowComplex->m_0cells[tri->m_points[i%3]].m_y,m_FlowComplex->m_0cells[tri->m_points[(i+1)%3]].m_z-m_FlowComplex->m_0cells[tri->m_points[i%3]].m_z);
+						CP_Vector3D i2(m_FlowComplex->m_0cells[tri->m_points[(i+2)%3]].m_x-m_FlowComplex->m_0cells[tri->m_points[i%3]].m_x,m_FlowComplex->m_0cells[tri->m_points[(i+2)%3]].m_y-m_FlowComplex->m_0cells[tri->m_points[i%3]].m_y,m_FlowComplex->m_0cells[tri->m_points[(i+2)%3]].m_z-m_FlowComplex->m_0cells[tri->m_points[i%3]].m_z);
+						i1.Normalize();
+						i2.Normalize();
+						if(i1*i2>=cos(30*PI/180)){
+							tri->_patch=-1;
+							int p=tri->m_points[(i+1)%3];
+							int q=tri->m_points[(i+2)%3];
+							int newidx=m_FlowComplex->m_0cells.size();
+							m_FlowComplex->m_0cells.push_back(CP_Point3D((m_FlowComplex->m_0cells[p].m_x+m_FlowComplex->m_0cells[q].m_x)/2.0,(m_FlowComplex->m_0cells[p].m_y+m_FlowComplex->m_0cells[q].m_y)/2.0,(m_FlowComplex->m_0cells[p].m_z+m_FlowComplex->m_0cells[q].m_z)/2.0));
+							//删除含pq边的三角形
+							vector<int> v=m_FlowComplex->GetIncidentTri(m_FlowComplex->m_0cells[tri->m_points[(i+1)%3]],m_FlowComplex->m_0cells[tri->m_points[(i+2)%3]]);
+							for(unsigned int k=0;k<v.size();++k){
+								m_FlowComplex->tricells[v[k]]->_patch=-1;
+							}
+							//删除含p、q点的三角形改为newidx
+							for(unsigned int k=0;k<m_FlowComplex->m_0cells[p].m_adjTriangle.size();++k){
+								CP_Triganle3D* ptri=m_FlowComplex->tricells[m_FlowComplex->m_0cells[p].m_adjTriangle[k]];
+								if(ptri->_patch!=-1){
+									for(int m=0;m<3;++m){
+										if(ptri->m_points[m]==p){
+											ptri->m_points[m]=newidx;//m_FlowComplex->obt.push_back(m_FlowComplex->m_0cells[p].m_adjTriangle[k]);
+										}
+									}//m
+								}
+							}//k
+							for(unsigned int k=0;k<m_FlowComplex->m_0cells[q].m_adjTriangle.size();++k){
+								CP_Triganle3D* ptri=m_FlowComplex->tricells[m_FlowComplex->m_0cells[q].m_adjTriangle[k]];
+								if(ptri->_patch!=-1){
+									for(int m=0;m<3;++m){
+										if(ptri->m_points[m]==q){
+											ptri->m_points[m]=newidx;//m_FlowComplex->obt.push_back(m_FlowComplex->m_0cells[q].m_adjTriangle[k]);
+										}
+									}//m
+								}
+							}//k
+						}//30
+					}//i
+				}//_patch!=-1
+			}//j
+			//从面片中清除已无效的三角形
+			for(vector<int>::iterator it=pPatch->m_triangle.begin();it!=pPatch->m_triangle.end();){
+				if(m_FlowComplex->tricells[*it]->_patch==-1){
+					pPatch->m_triangle.erase(it);
+				}else
+					++it;
+			}
+		}
+	}
 }
 
 void SurfaceOptimization::SetTrianglePatch()
