@@ -18,9 +18,11 @@ CP_Triganle3D::CP_Triganle3D(int p0, int p1, int p2)
 	m_points[1] = p1;
 	m_points[2] = p2;
 
+	radius=0.0;
 	normalsetted=false;
 	//	_2cell=-1;
 	_patch=-1;
+	flag=false;
 }
 
 CP_Triganle3D::~CP_Triganle3D(void)
@@ -1093,6 +1095,33 @@ void CP_FlowComplex::DrawTriangle(const CP_Triganle3D &tri)
 	glNormal3f(ntmp.m_x, ntmp.m_y, ntmp.m_z);
 	glVertex3f(m_0cells[tri.m_points[2]].m_x, m_0cells[tri.m_points[2]].m_y, m_0cells[tri.m_points[2]].m_z);
 	glEnd();
+	/*CP_Vector3D n1,n2,n3;
+	for(unsigned int i=0;i<m_0cells[tri.m_points[0]].m_adjTriangle.size();++i){
+		CP_Triganle3D *pTri=tricells[m_0cells[tri.m_points[0]].m_adjTriangle[i]];
+		CP_Vector3D ntmp = (m_0cells[pTri->m_points[1]] - m_0cells[pTri->m_points[0]]) ^ (m_0cells[pTri->m_points[2]] -m_0cells[pTri->m_points[0]]);
+		n1+=ntmp;
+	}
+	n1/=m_0cells[tri.m_points[0]].m_adjTriangle.size();
+	for(unsigned int i=0;i<m_0cells[tri.m_points[1]].m_adjTriangle.size();++i){
+		CP_Triganle3D *pTri=tricells[m_0cells[tri.m_points[1]].m_adjTriangle[i]];
+		CP_Vector3D ntmp = (m_0cells[pTri->m_points[1]] - m_0cells[pTri->m_points[0]]) ^ (m_0cells[pTri->m_points[2]] -m_0cells[pTri->m_points[0]]);
+		n2+=ntmp;
+	}
+	n2/=m_0cells[tri.m_points[1]].m_adjTriangle.size();
+	for(unsigned int i=0;i<m_0cells[tri.m_points[2]].m_adjTriangle.size();++i){
+		CP_Triganle3D *pTri=tricells[m_0cells[tri.m_points[2]].m_adjTriangle[i]];
+		CP_Vector3D ntmp = (m_0cells[pTri->m_points[1]] - m_0cells[pTri->m_points[0]]) ^ (m_0cells[pTri->m_points[2]] -m_0cells[pTri->m_points[0]]);
+		n3+=ntmp;
+	}
+	n3/=m_0cells[tri.m_points[2]].m_adjTriangle.size();
+	glBegin(GL_POLYGON);
+	glNormal3f(n1.m_x, n1.m_y, n1.m_z);
+	glVertex3f(m_0cells[tri.m_points[0]].m_x, m_0cells[tri.m_points[0]].m_y, m_0cells[tri.m_points[0]].m_z);
+	glNormal3f(n2.m_x, n2.m_y, n2.m_z);
+	glVertex3f(m_0cells[tri.m_points[1]].m_x, m_0cells[tri.m_points[1]].m_y, m_0cells[tri.m_points[1]].m_z);
+	glNormal3f(n3.m_x, n3.m_y, n3.m_z);
+	glVertex3f(m_0cells[tri.m_points[2]].m_x, m_0cells[tri.m_points[2]].m_y, m_0cells[tri.m_points[2]].m_z);
+	glEnd();*/
 	glDisable(GL_POLYGON_OFFSET_FILL);
 }
 
@@ -1212,35 +1241,13 @@ void CP_FlowComplex::DrawPatchBoundary(const CP_Patch &pPatch)
 		else if(pPatch.m_boundary[j]->newdegree==2)
 			glColor3f(0.0, 1.0, 0.0);
 		else if(pPatch.m_boundary[j]->newdegree>=3)
-			glColor3f(0.173, 0.51, 1.0);
+			glColor3f(0.0, 0.0, 1.0);
 		glBegin(GL_LINE_STRIP);
 		glVertex3d(m_0cells[pPatch.m_boundary[j]->sp].m_x,m_0cells[pPatch.m_boundary[j]->sp].m_y,m_0cells[pPatch.m_boundary[j]->sp].m_z);
 		glVertex3d(m_0cells[pPatch.m_boundary[j]->ep].m_x,m_0cells[pPatch.m_boundary[j]->ep].m_y,m_0cells[pPatch.m_boundary[j]->ep].m_z);
 		glEnd();
 		
 	}
-
-	//if(pPatch.wrong)
-	//{//如果wrong，画绿的边界
-	//	glColor3f(0.0, 1.0, 0.0);
-	//	glLineWidth(4.5f);
-	//	vector<int> poly;
-	//	for(unsigned i=0;i<pPatch.forest.size();++i){
-	//		GraphList *ptree=pPatch.forest[i];
-	//		for(unsigned int j=0;j<ptree->adjList.size();++j)
-	//		{
-	//			EdgeNode *e=ptree->adjList[j].firstedge;
-	//			while(e)
-	//			{
-	//				if(find(poly.begin(),poly.end(),e->polyindex)==poly.end())
-	//					poly.push_back(e->polyindex);
-	//				e=e->next;
-	//			}
-	//		}
-	//	}
-	//	for(auto p:poly)
-	//		m_PolyLine[p].Draw();
-	//}
 
 	glDisable(GL_LINE_SMOOTH);
 	glDepthMask(GL_TRUE);
@@ -1250,19 +1257,73 @@ void CP_FlowComplex::DrawPatchBoundary(const CP_Patch &pPatch)
 	glPopAttrib();
 }
 
-void CP_FlowComplex::DrawPatchBoundary(const CP_Patch &pPatch,bool connection,bool cycle,int which,bool RMF)
+void Arrow(GLdouble x1,GLdouble y1,GLdouble z1,GLdouble x2,GLdouble y2,GLdouble z2,GLdouble D)
 {
-	/*glPushAttrib (GL_ALL_ATTRIB_BITS);
-	glEnable(GL_POLYGON_OFFSET_LINE);
-	glPolygonOffset(-1.5f, -1.0f);*/
+	double x=x2-x1;
+	double y=y2-y1;
+	double z=z2-z1;
+	double L=sqrt(x*x+y*y+z*z);
 
-	//glDepthMask(GL_FALSE);
+	GLUquadricObj *quadObj;
+
+	glPushMatrix ();
+
+	glTranslated(x1,y1,z1);
+
+	if((x!=0.)||(y!=0.)) {
+		glRotated(atan2(y,x)/RADPERDEG,0.,0.,1.);
+		glRotated(atan2(sqrt(x*x+y*y),z)/RADPERDEG,0.,1.,0.);
+	} else if (z<0){
+		glRotated(180,1.,0.,0.);
+	}
+
+	glTranslatef(0,0,L-4*D);
+
+	quadObj = gluNewQuadric ();
+	gluQuadricDrawStyle (quadObj, GLU_FILL);
+	gluQuadricNormals (quadObj, GLU_SMOOTH);
+	gluCylinder(quadObj, 2*D, 0.0, 4*D, 32, 1);
+	gluDeleteQuadric(quadObj);
+
+	quadObj = gluNewQuadric ();
+	gluQuadricDrawStyle (quadObj, GLU_FILL);
+	gluQuadricNormals (quadObj, GLU_SMOOTH);
+	gluDisk(quadObj, 0.0, 2*D, 32, 1);
+	gluDeleteQuadric(quadObj);
+
+	glTranslatef(0,0,-L+4*D);
+
+	quadObj = gluNewQuadric ();
+	gluQuadricDrawStyle (quadObj, GLU_FILL);
+	gluQuadricNormals (quadObj, GLU_SMOOTH);
+	gluCylinder(quadObj, D, D, L-4*D, 32, 1);
+	gluDeleteQuadric(quadObj);
+
+	quadObj = gluNewQuadric ();
+	gluQuadricDrawStyle (quadObj, GLU_FILL);
+	gluQuadricNormals (quadObj, GLU_SMOOTH);
+	gluDisk(quadObj, 0.0, D, 32, 1);
+	gluDeleteQuadric(quadObj);
+
+	glPopMatrix ();
+
+}
+
+void CP_FlowComplex::DrawPatchBoundary(CP_Patch &pPatch,bool connection,bool cycle,int which,bool RMF)
+{
+	glPushAttrib (GL_ALL_ATTRIB_BITS);
+	glEnable(GL_POLYGON_OFFSET_LINE);
+	glPolygonOffset(-1.5f, -1.0f);
+
+	glDepthMask(GL_FALSE);
+	glEnable (GL_LINE_SMOOTH);
+	glHint (GL_LINE_SMOOTH_HINT, GL_NICEST);
 	if(pPatch.wrong&&(connection||cycle))
 	{   
 		//如果wrong，画绿的边界
 		if(connection){
-			glColor3f(0.4, 1.0, 0.4);
-			glLineWidth(3.5f);
+			glColor3f(0.0, 1.0, 0.0);
+			glLineWidth(4.5f);
 			vector<int> poly;
 			for(unsigned i=0;i<pPatch.forest.size();++i){
 				GraphList *ptree=pPatch.forest[i];
@@ -1277,63 +1338,97 @@ void CP_FlowComplex::DrawPatchBoundary(const CP_Patch &pPatch,bool connection,bo
 					}
 				}//j
 			}//i
-			for(auto p:poly)
-				m_PolyLine[p].Draw();
+			for(auto p:poly){
+				for (unsigned int i = 0; i < m_PolyLine[p].m_points.size()-1; i++)
+				{
+					glBegin(GL_LINE_STRIP);
+					glVertex3d(m_PolyLine[p].m_points[i].m_x, m_PolyLine[p].m_points[i].m_y, m_PolyLine[p].m_points[i].m_z);
+					glVertex3d(m_PolyLine[p].m_points[i+1].m_x, m_PolyLine[p].m_points[i+1].m_y, m_PolyLine[p].m_points[i+1].m_z);
+					glEnd();
+				}
+			}
 		}
 		if(cycle){
 			int num=pPatch.cycle.size();
 			if(num>0){
 				for(unsigned int j=0;j<pPatch.cycle[which].size();++j)
 				{
-					glColor4f(1.0,0.4, 0.4,1.0);
-					glLineWidth(3.5);
-					m_PolyLine[pPatch.cycle[which][j]].Draw();
-				}
+					glColor4f(0.0,1.0,0.0,1.0);
+					glLineWidth(4.5f);
+					for (unsigned int i = 0; i < m_PolyLine[pPatch.cycle[which][j]].m_points.size()-1; i++)
+					{
+						glBegin(GL_LINE_STRIP);
+						glVertex3d(m_PolyLine[pPatch.cycle[which][j]].m_points[i].m_x, m_PolyLine[pPatch.cycle[which][j]].m_points[i].m_y, m_PolyLine[pPatch.cycle[which][j]].m_points[i].m_z);
+						glVertex3d(m_PolyLine[pPatch.cycle[which][j]].m_points[i+1].m_x, m_PolyLine[pPatch.cycle[which][j]].m_points[i+1].m_y, m_PolyLine[pPatch.cycle[which][j]].m_points[i+1].m_z);
+						glEnd();
+					}
+				}//j
 			}
 		}
 	}else{
 		for(unsigned int j=0;j<pPatch.m_boundary.size();j++)
 		{
-			glEnable (GL_LINE_SMOOTH);
-			glHint (GL_LINE_SMOOTH_HINT, GL_NICEST);
 			glLineWidth(3.5f);
-			if(pPatch.m_boundary[j]->newdegree==1&&!connection)//wrong false,connection true用来表示内部面
-				glColor3f(1.0, 0.447, 0.463);
-			else if(pPatch.m_boundary[j]->newdegree==2&&!connection)
-				glColor3f(0.4, 1.0, 0.4);
-				//glColor3f(0.7, 0.7, 0.7);
+			if(pPatch.m_boundary[j]->newdegree==1)
+				glColor3f(1.0, 0.0, 0.0);
+			else if(pPatch.m_boundary[j]->newdegree==2)
+				glColor3f(0.0, 1.0, 0.0);
 			else
-				glColor3f(0.33, 0.47, 0.93);
-			glBegin(GL_LINE_STRIP);
+				glColor3f(0.0, 0.0, 1.0);
+			if(find(interior_patches.begin(),interior_patches.end(),pPatch.index)!=interior_patches.end())//wrong false,connection true用来表示内部面
+				glColor3f(0.0, 0.0, 1.0);
+			glBegin(GL_LINES);
 			glVertex3d(m_0cells[pPatch.m_boundary[j]->sp].m_x,m_0cells[pPatch.m_boundary[j]->sp].m_y,m_0cells[pPatch.m_boundary[j]->sp].m_z);
 			glVertex3d(m_0cells[pPatch.m_boundary[j]->ep].m_x,m_0cells[pPatch.m_boundary[j]->ep].m_y,m_0cells[pPatch.m_boundary[j]->ep].m_z);
 			glEnd();
-			glDisable(GL_LINE_SMOOTH);
 		}
 
-		if(!pPatch.wrong&&RMF){
+		if(1/*!pPatch.wrong&&RMF*/){
 			for(unsigned int i=0;i<pPatch.r.size();++i)
 			{
-				glColor4f(0.5,0.1,0.1,1.0);
+				glColor4f(0.0,0.0,1.0,1.0);
 				CP_Vector3D vec(pPatch.r[i].m_x,pPatch.r[i].m_y,pPatch.r[i].m_z);
 				double len = vec.GetLength( );
-				vec.m_x /= len*20; // 注意: 这里没有处理除数为0的情况
-				vec.m_y /= len*20; 
-				vec.m_z /= len*20; 
-				CP_Vector3D b(m_0cells[pPatch.path[i]].m_x+vec.m_x,m_0cells[pPatch.path[i]].m_y+vec.m_y,m_0cells[pPatch.path[i]].m_z+vec.m_z);
+				vec.m_x /= len*35; // 注意: 这里没有处理除数为0的情况
+				vec.m_y /= len*35; 
+				vec.m_z /= len*35; 
+				CP_Point3D b(m_0cells[pPatch.path[i]].m_x+vec.m_x,m_0cells[pPatch.path[i]].m_y+vec.m_y,m_0cells[pPatch.path[i]].m_z+vec.m_z);
 				CP_Point3D a(m_0cells[pPatch.path[i]].m_x,m_0cells[pPatch.path[i]].m_y,m_0cells[pPatch.path[i]].m_z);
-				glBegin(GL_LINES);
-				glVertex3f(a.m_x,a.m_y,a.m_z);
-				glVertex3f(b.m_x,b.m_y,b.m_z);
-				glEnd();
+				Arrow(a.m_x,a.m_y,a.m_z,b.m_x,b.m_y,b.m_z,0.0017);
 			}
-		}
-	}
+			
+			glPointSize(6.0f);
+			for (unsigned int i=0;i<pPatch.interior_points.size();++i)
+			{glColor4f(1.0,0.0,0.0,1.0);
+				CP_Vector3D vec(pPatch.interior_points_normal[i].m_x,pPatch.interior_points_normal[i].m_y,pPatch.interior_points_normal[i].m_z);
+				double len = vec.GetLength( );
+				vec.m_x /= len*35; // 注意: 这里没有处理除数为0的情况
+				vec.m_y /= len*35; 
+				vec.m_z /= len*35; 
+				CP_Point3D b(m_0cells[pPatch.interior_points[i]].m_x+vec.m_x,m_0cells[pPatch.interior_points[i]].m_y+vec.m_y,m_0cells[pPatch.interior_points[i]].m_z+vec.m_z);
+				CP_Point3D a(m_0cells[pPatch.interior_points[i]].m_x,m_0cells[pPatch.interior_points[i]].m_y,m_0cells[pPatch.interior_points[i]].m_z);
+				Arrow(a.m_x,a.m_y,a.m_z,b.m_x,b.m_y,b.m_z,0.0017);
+				if(m_0cells[pPatch.interior_points[i]].flag){
+					glColor4f(0.0,0.0,1.0,1.0);
+					glBegin(GL_POINTS);
+					glVertex3f(m_0cells[pPatch.interior_points[i]].m_x, m_0cells[pPatch.interior_points[i]].m_y,m_0cells[pPatch.interior_points[i]].m_z);
+					glEnd();
+				}
+				//cout<<"中心"<<pPatch.interior_points[i]<<m_0cells[pPatch.interior_points[i]].m_x<<","<<m_0cells[pPatch.interior_points[i]].m_y<<","<<m_0cells[pPatch.interior_points[i]].m_z<<endl;
+				/*for(unsigned int j=0;j<m_0cells[pPatch.interior_points[i]].ring.size();++j){
+					cout<<m_0cells[pPatch.interior_points[i]].weight[j]<<",";
+				}cout<<endl;*/
+				
+			}
 
-	/*glDepthMask(GL_TRUE);
+
+		}//RMF
+	}
+	glDisable(GL_LINE_SMOOTH);
+	glDepthMask(GL_TRUE);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glDisable(GL_POLYGON_OFFSET_LINE);
-	glPopAttrib();*/
+	glPopAttrib();
 }
 
 
@@ -2091,10 +2186,12 @@ double CP_FlowComplex::DihedralOfNeighbourPatch(CurveSegment &curve,CP_Patch &pa
 	return acos(Dihedral(*tricells[tril],*tricells[trir]));
 }
 
-void CP_FlowComplex::MergePatch(CurveSegment &curve,CP_Patch &pl,CP_Patch &pr)
+void CP_FlowComplex::MergePatch(CurveSegment &curve,CP_Patch &pl,CP_Patch &pr,int other)
 {
 	mergededge++;
 	pr.merged=pl.index;
+	pl.patchsize=pl.m_2cells.size();
+	pl.pridx=other;
 
 	for (unsigned int i=0;i<pr.m_2cells.size();++i)
 		m_2cells[pr.m_2cells[i]]->patch=pl.index;
@@ -2858,22 +2955,6 @@ void CP_FlowComplex::ProcessingOverlappingPatch()
 						if(!m_patches[patch_if_exist]->flag){
 							SetPatchFlagTrue(patch_if_exist);//cout<<"有效"<<patch_if_exist;
 						}
-						//bool flag=true;
-						//
-						//map<int,int> mp;
-						//for(unsigned int jj=0;jj<m_patches[minlenidx]->m_2cells.size();++jj){
-						//	int _2cell=m_patches[minlenidx]->m_2cells[jj];
-						//	for(unsigned int k=0;k<m_2cells[_2cell]->delaunytri.size();++k){
-						//		mp[m_2cells[_2cell]->delaunytri[k]]++;
-						//	}
-						//}//jj
-						//for(unsigned int jj=0;jj<m_patches[patch_if_exist]->m_2cells.size();++jj){
-						//	int _2cell=m_patches[patch_if_exist]->m_2cells[jj];
-						//	for(unsigned int k=0;k<m_2cells[_2cell]->delaunytri.size();++k){
-						//		if(mp.count(m_2cells[_2cell]->delaunytri[k])>0){m_patches[patch_if_exist]->flag==false;break;}
-						//	}
-						//}//jj
-						
 						//cout<<patch_if_exist<<"patch_if_exist"<<endl;
 					}//cout<<GetTriangleArea(*delauny2cells[i]);
 					SetPatchFlagFalse(overlap_by_delauny[i][j]);
@@ -2971,6 +3052,7 @@ void CP_FlowComplex::AddPatchForCycles(const vector<int> &newpatch,const vector<
 	pPatch->index=_patch;
 	pPatch->merged=1;
 	pPatch->m_bcurve=cycle;
+	pPatch->delaunay=1;
 	for(auto curve:cycle)
 		vec_curve_degree[curve]++;
 
@@ -3094,17 +3176,8 @@ void CP_FlowComplex::GenerateCycle(int polyidx)
 	}
 }
 
-void CP_FlowComplex::NonmanifoldCurves()
+int CP_FlowComplex::NonmanifoldCurves()
 {
-	vector<int> vec_curve_degree(m_PolyLine.size(),0);
-	for(unsigned int i=0;i<m_patches.size();++i){
-		if(m_patches[i]->flag){
-			for(unsigned int j=0;j<m_patches[i]->m_bcurve.size();++j){
-				int curve=m_patches[i]->m_bcurve[j];
-				vec_curve_degree[curve]++;
-			}
-		}
-	}//i
 	vector<int> vec_degree0;
 	vector<int> vec_degree1;
 	vector<int> vec_non_manifold;
@@ -3116,7 +3189,7 @@ void CP_FlowComplex::NonmanifoldCurves()
 		else if(vec_curve_degree[i]>2)
 			vec_non_manifold.push_back(i);
 	}
-	cout<<"remain non-manifolds："<<vec_degree1.size()+vec_non_manifold.size()<<endl;
+	return vec_degree1.size()+vec_non_manifold.size();
 }
 
 double CP_FlowComplex::GetSumTriangleArea(const vector<int> &vt)
@@ -3159,7 +3232,7 @@ void CP_FlowComplex::TopologyComplete()
 					}
 				}
 				degree1ToFindCycles.push(tmp);
-			}else if(degree_1&&!degree_2&&degree_above2){
+			}else if(degree_1&&!degree_2&&degree_above2){//13度曲线分别连在一起
 				map<int,int> vp;
 				for(auto e:mp){
 					if(e.second==1){
@@ -3187,7 +3260,7 @@ void CP_FlowComplex::TopologyComplete()
 			}
 		}//flag
 	}
-	while(!patch123.empty()){//cout<<degree1ToFindCycles.size()<<","<<patch123.size()<<endl;
+	while(!patch123.empty()){
 		int _patch=patch123.front();
 		vector<int> degree1curve=degree1ToFindCycles.front();
 		patch123.pop();
@@ -3221,11 +3294,11 @@ void CP_FlowComplex::TopologyComplete()
 							bool degree_2=false;
 							bool degree_above2=false;
 							vector<int> tmp;
-							for(unsigned int j=0;j<m_patches[i]->m_bcurve.size();++j){
-								int curve=m_patches[i]->m_bcurve[j];
+							for(unsigned int j=0;j<m_patches[p]->m_bcurve.size();++j){
+								int curve=m_patches[p]->m_bcurve[j];
 								if(vec_curve_degree[curve]==1){
 									degree_1=true;
-									tmp.push_back(vec_curve_degree[curve]);
+									tmp.push_back(curve);
 								}
 								else if(vec_curve_degree[curve]==2)
 									degree_2=true;
@@ -3305,6 +3378,7 @@ CP_Patch::CP_Patch(void)
 	nonmanifoldedge=0;
 	pairedp=-1;
 	dihedral=0;
+	delaunay=0;
 }
 
 

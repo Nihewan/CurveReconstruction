@@ -42,6 +42,7 @@ BOOL ParaDialog::OnInitDialog()
 	GetDlgItem(IDC_EDIT_VOIDS)->SetWindowText("0");
 	GetDlgItem(IDC_BI_WEIGHT)->SetWindowText("0");
 	GetDlgItem(IDC_PER_WEIGHT)->SetWindowText("1");
+	GetDlgItem(IDC_REFINE_ITER)->SetWindowText("4");
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// 异常: OCX 属性页应返回 FALSE
 }
@@ -67,4 +68,8 @@ void ParaDialog::OnBnClickedOk()
 
 	GetDlgItemText(IDC_PER_WEIGHT,str);
 	fccr->m_FlowComplex->perweight=_ttoi(str);
+
+	GetDlgItemText(IDC_REFINE_ITER,str);
+	fccr->surface_optimization.refine_max_iter=_ttoi(str);
 }
+

@@ -5,6 +5,7 @@
 #include <CGAL/Delaunay_triangulation_3.h>
 #include <CGAL/Cartesian_converter.h>
 #include <CGAL/Cartesian.h> 
+#include "SurfaceOptimization.h"
 using namespace std;
 
 typedef CGAL::Exact_predicates_inexact_constructions_kernel IK;
@@ -45,10 +46,12 @@ public:
 	double feasa;
 	Delaunay T;
 	CP_FlowComplex *m_FlowComplex;
+	SurfaceOptimization surface_optimization;
 	std::vector<CP_PolyLine3D> *m_VT_PolyLine;
 	bool showIFCResult;//多线程中不能调用view的变量
 	bool showOptResult;
 	bool IsProcess;
+	bool IsOpt;
 public:
 	FCCR(void);
 	~FCCR(void);

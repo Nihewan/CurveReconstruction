@@ -84,6 +84,7 @@ END_MESSAGE_MAP()
 void FCCRCtrlDialog::SetItems(CP_FlowComplex *FlowComplex,vector<CP_PolyLine3D> *VT_PolyLine)
 {
 	fccr.m_FlowComplex=FlowComplex;
+	fccr.surface_optimization.m_FlowComplex=FlowComplex;
 	fccr.m_FlowComplex->inputCurves=VT_PolyLine->size();
 	fccr.m_VT_PolyLine=VT_PolyLine;
 }
@@ -560,6 +561,7 @@ UINT  ThreadFunc(LPVOID pParam)
 
 	fc->fccr.showIFCResult=true;
 	fc->fccr.IsProcess=true;
+	fc->fccr.m_FlowComplex->type=1;
 	fc->SetTreePatches();
 	::PostMessage(pMain->m_hWnd,WM_RESULT,0,0);
 	return 0;
@@ -612,10 +614,11 @@ UINT  ThreadImrovedFC(LPVOID pParam)
 	endtop=clock();
 	cout<<"total time:"<<(double)(endtotal-starttotal)/CLOCKS_PER_SEC<<endl;
 	cout<<"topological time:"<<(double)(endtop-starttop)/CLOCKS_PER_SEC<<endl;
-	fc->fccr.m_FlowComplex->NonmanifoldCurves();
+	cout<<"remain non-manifolds："<<fc->fccr.m_FlowComplex->NonmanifoldCurves()<<endl;
 	cout<<"**************************End***********************"<<endl;
 	fc->fccr.showIFCResult=true;
 	fc->fccr.IsProcess=true;
+	fc->fccr.m_FlowComplex->type=2;
 	fc->SetTreePatches();
 	::PostMessage(pMain->m_hWnd,WM_RESULT_PRUNING,0,0);
 	return 0;
@@ -695,10 +698,11 @@ UINT  ThreadImrovedFCPruningAndComplete(LPVOID pParam)
 	fc->fccr.ImprovedPruningAndTopoComplete();
 	end = clock();
 	cout<<"time for pruning and complete topology: "<<(double)(end-start)/CLOCKS_PER_SEC<<endl;
-	fc->fccr.m_FlowComplex->NonmanifoldCurves();
+	cout<<"remain non-manifolds："<<fc->fccr.m_FlowComplex->NonmanifoldCurves()<<endl;
 	cout<<"**************************End***********************"<<endl;
 	fc->fccr.showIFCResult=true;
 	fc->fccr.IsProcess=true;
+	fc->fccr.m_FlowComplex->type=2;
 	fc->SetTreePatches();
 	::PostMessage(pMain->m_hWnd,WM_RESULT_PRUNING,0,0);
 	return 0;
@@ -765,3 +769,10 @@ void FCCRCtrlDialog::OnBnClickedShowDelaunay()
 	}
 	pView->Invalidate();
 }
+
+void FCCRCtrlDialog::SmoothCurves(vector<CP_PolyLine3D>* VT_PolyLine)
+{
+	// TODO: 在此添加控件通知处理程序代码
+	
+}
+

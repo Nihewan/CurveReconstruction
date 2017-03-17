@@ -86,6 +86,9 @@ class CP_Triganle3D
 public:
 	int m_points[3];
 	double area;
+	CP_Point3D circumcenter;
+	double radius;
+	bool flag;
 	bool normalsetted;
 	int _2cell; //构造2-cell时设置三角面片所属的2-cell
 	int _patch;//-1时表示不存在了
@@ -176,6 +179,7 @@ public:
 	vector<int> m_triangle;//曲面优化时存放三角形，不用再在2cell中寻找
 	bool visited;
 	int index;//在fc中m_patch vector中的编号
+	int delaunay;
 	int color;//颜色编号
 	bool flag;//存在与否
 	bool wrong;
@@ -190,6 +194,10 @@ public:
 	vector<CP_Vector3D> r;
 	vector<vector<int>> patches;//每个patch用三角形的编号表示 
 	vector<int> m_bcurve;//排除wrong true后的准确边界
+	int patchsize;//展示合并前两个面片大小Merge
+	int pridx;//展示合并时的第三个面片
+	vector<int> interior_points;//patch内部点
+	vector<CP_Vector3D> interior_points_normal;
 public:
 	CP_Patch(void);
 	~CP_Patch(void);
@@ -210,6 +218,7 @@ public:
 	int res_triangle_num;
 	double minx,maxx,miny,maxy,minz,maxz;
 	int perweight,biweight;
+	int type;//1-fc;2-ifc
 	GraphList graph;
 	vector<CP_Point3D> m_0cells;
 	vector<CP_Point3D> m_critical;
@@ -238,6 +247,7 @@ public:
 	vector<int> connectedPatches;//连接型面片
 	vector<int> vec_curve_degree;
 	vector<int> obt;
+	int origin;
 public:
 	CP_FlowComplex();
 	~CP_FlowComplex();
@@ -307,7 +317,7 @@ public:
 	void Draw2cellBoundary(const CP_2cell &p2cell);
 	void DrawPatch(const CP_Patch &pPatch);
 	void DrawPatchBoundary(const CP_Patch &pPatch);
-	void DrawPatchBoundary(const CP_Patch &pPatch,bool connection,bool cycle,int which,bool RMF);
+	void DrawPatchBoundary(CP_Patch &pPatch,bool connection,bool cycle,int which,bool RMF);
 	void DrawDarts();
 	void DrawVoids(int _3cell,int sel2cell,int seltriangle,bool _2cellboundary,bool triboundary,double mTrans);
 	void DrawFlowComplex(bool showcreators,int selcreator,bool _2cellboundary,bool triboundary);
@@ -335,19 +345,20 @@ public:
 	int IsCycleExistInPatches(const vector<int>& cycle);
 	void AddPatchForCycles(const vector<int> &newpatch,const vector<int>& cycle);
 	void GenerateCycle(int polyidx);
-	void NonmanifoldCurves();
+	int NonmanifoldCurves();
 	void TopologyComplete();
 
 	int TopologicalEnable(const CurveSegment &curve,const CP_Patch &patchl,const CP_Patch &patchr);
 	double JointNormalAngleOfNeighbourPatch(CurveSegment &curve,CP_Patch &patchl,CP_Patch &patchr);
 	double DihedralOfNeighbourPatch(CurveSegment &curve,CP_Patch &patchl,CP_Patch &patchr);
-	void MergePatch(CurveSegment &curve,CP_Patch &pl,CP_Patch &pr);
+	void MergePatch(CurveSegment &curve,CP_Patch &pl,CP_Patch &pr,int other);
 	double ComputeCost(const vector<int> &path);
 	double ComputeCycleCost(const vector<int> &path,vector<CP_Vector3D> &r);
 	double ComputePathCost(const vector<int> &path);
 	CP_Vector3D rotateNormal(const CP_Vector3D &normal, const CP_Vector3D &axis, const double &angle);
 };
 extern double dist(const CP_Point3D &x,const CP_Point3D &y);
+extern double distsquare(const CP_Point3D &x,const CP_Point3D &y);
 extern double Area(double a,double b,double c);
 extern int ExistLineSeg(const vector<CurveSegment> &lvec,const CurveSegment &l);
 

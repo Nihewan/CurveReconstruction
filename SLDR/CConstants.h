@@ -24,3 +24,4 @@
 #define MAX_DISTANCE 10000;
 #define FAR_Z -100000;
 #define MAX_CHAR       128
+#define RADPERDEG 0.0174533

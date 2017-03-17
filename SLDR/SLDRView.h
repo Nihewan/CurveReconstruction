@@ -74,6 +74,7 @@ public:
 	bool shiftDown;
 	bool CtrlDown;
 	bool CKeyDown;
+	bool SKeyDown;
 	int which;
 	bool twoSide;
 	double mDiffuse,mSpecular,mShine;
@@ -177,6 +178,7 @@ public:
 	afx_msg void OnUpdateButtonPreprocess(CCmdUI *pCmdUI);
 	afx_msg void OnCheckTwoside();
 	afx_msg void OnUpdateCheckTwoside(CCmdUI *pCmdUI);
+	afx_msg void OnButtonOptimization();
 };
 
 #ifndef _DEBUG  // SLDRView.cpp 中的调试版本

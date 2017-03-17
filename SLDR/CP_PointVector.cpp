@@ -163,6 +163,12 @@ CP_Vector3D::CP_Vector3D (double newx, double newy, double newz):m_x(newx), m_y(
 {
 } 
 
+CP_Vector3D::CP_Vector3D(const CP_Vector3D& v)
+{
+	m_x = v.m_x;
+	m_y = v.m_y;
+	m_z = v.m_z;  
+}
 
 CP_Vector3D& CP_Vector3D::operator += (const CP_Vector3D& v)
 { 

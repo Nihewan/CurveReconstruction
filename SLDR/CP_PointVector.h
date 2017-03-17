@@ -29,6 +29,9 @@ public:
 	std::vector<int> m_adjTriangle;
 	std::vector<int> incidentpoly;//当点不在线段上时为空
 	bool flag;
+	double m_newx,m_newy,m_newz ;
+	std::vector<int> ring;//内部点的1-ring，计算法向
+	std::vector<double> weight;
 public:
     explicit CP_Point3D (double newx=0.0, double newy=0.0, double newz=0.0);
 	CP_Point3D& operator=(const CP_Point3D& tmp);
@@ -76,6 +79,7 @@ public:
 
 public:
     explicit CP_Vector3D (double newx=0.0, double newy=0.0, double newz=0.0);
+	CP_Vector3D(const CP_Vector3D& v) ;
 
     CP_Vector3D& operator += (const CP_Vector3D& v);
     CP_Vector3D& operator -= (const CP_Vector3D& v);

@@ -316,6 +316,7 @@ LRESULT  CMainFrame::ShowResult(WPARAM wParam,LPARAM lParam)
 	CSLDRView * pView = (CSLDRView *)(GetActiveView());
 	pView->fcEnable=true;
 	pView->ifcEnable=true;
+	pView->showPruningEnable=true;//select patch
 	pView->showPreprocessEnable=true;
 	pView->Invalidate();
 	return 0;

@@ -79,6 +79,7 @@ public:
 	void OnImprovedFCSpreadMerge();
 	void OnImprovedFCFindingCycles();
 	void OnImprovedFCPruning();
+	void SmoothCurves(vector<CP_PolyLine3D>* VT_PolyLine);
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnBnClickedSelect2cell();

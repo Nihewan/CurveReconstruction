@@ -16,6 +16,7 @@ FCCR::FCCR(void)
 	showIFCResult=false;
 	showOptResult=false;
 	IsProcess=false;
+	IsOpt=false;
 }
 
 
@@ -34,6 +35,7 @@ void FCCR::ReSet()
 	showIFCResult=false;
 	showOptResult=false;
 	IsProcess=false;
+	IsOpt=false;
 
 	T.clear();
 	m_FlowComplex->ClearAll();
@@ -1242,7 +1244,7 @@ void FCCR::ImprovedFlowcomplex()
 			m_FlowComplex->m_2cells[i]->m_boundary.push_back(lvec[j]);
 		vector<CurveSegment>().swap(lvec);
 	}//i
-
+	
 	//按distance从小到大加到集合中
 	sort(m_FlowComplex->m_2cells.begin(),m_FlowComplex->m_2cells.end(),distanceCmp);
 	//decide creator and destoryer
@@ -1346,7 +1348,7 @@ void FCCR::ImprovedThicken()
 			//对此处1cell的patch合并
 			if(dihedral>=/*(double)PI/2.0*/2.0*PI){p1=-1;p2=-1;}
 			if(p1!=-1&&p2!=-1) {
-				m_FlowComplex->MergePatch(*m_FlowComplex->m_1cells[i],*m_FlowComplex->m_patches[p1],*m_FlowComplex->m_patches[p2]);
+				m_FlowComplex->MergePatch(*m_FlowComplex->m_1cells[i],*m_FlowComplex->m_patches[p1],*m_FlowComplex->m_patches[p2],-1);
 			    m_FlowComplex->m_patches[p1]->dihedral=dihedral;
 			}
 		}//>2
@@ -1384,6 +1386,9 @@ void FCCR::ImprovedThicken()
 	}
 	
 	//第二步：迭代加入creator patch
+	//int x=(int)m_FlowComplex->m_3cells.size();
+	//cout<<"迭代次数"<<x<<endl;
+	//m_FlowComplex->origin=(int)m_FlowComplex->m_patches.size();
 	for(int i=(int)m_FlowComplex->m_3cells.size()-1;i>=0;i--)
 	{
 		//wrong patch 2cell visited重置，参与重新组合
@@ -1451,7 +1456,7 @@ void FCCR::ImprovedThicken()
 			int patchnum=m_FlowComplex->m_1cells[j]->incidentpatch.size();
 			if(patchnum>2)
 			{
-				int p1=-1,p2=-1;//一对patch的编号
+				int p1=-1,p2=-1,p3=-1;//一对patch的编号
 				double  dihedral=PI*1000;//余弦值
 				int nonmanifolds=MAX_DISTANCE;
 				int topoOnTwoSide=0;
@@ -1464,6 +1469,7 @@ void FCCR::ImprovedThicken()
 					for (int m=k+1;m<patchnum;m++)
 					{
 						CP_Patch *pPatchr=m_FlowComplex->m_patches[m_FlowComplex->m_1cells[j]->incidentpatch[m]];
+						p3=m_FlowComplex->m_1cells[j]->incidentpatch[(m+1)%patchnum];
 						while(pPatchr->merged!=pPatchr->index)
 						{
 							pPatchr=m_FlowComplex->m_patches[pPatchr->merged];
@@ -1491,12 +1497,11 @@ void FCCR::ImprovedThicken()
 				//对此处1cell的patch合并
 				if(dihedral>=/*(double)PI/2.0*/2.0*PI){p1=-1;p2=-1;}
 				if(p1!=-1&&p2!=-1){
-					m_FlowComplex->MergePatch(*m_FlowComplex->m_1cells[j],*m_FlowComplex->m_patches[p1],*m_FlowComplex->m_patches[p2]);
+					m_FlowComplex->MergePatch(*m_FlowComplex->m_1cells[j],*m_FlowComplex->m_patches[p1],*m_FlowComplex->m_patches[p2],p3);
 					m_FlowComplex->m_patches[p1]->dihedral=dihedral;
 				}			
 			}//>2
 		}//j 1cell
-		//如果每次都检查内部面可能删除过多的面有漏洞
 	}//i 3cell
 
 	//消除内部面,先合并再去掉内部面，最后同时去除，保持亏格
@@ -1731,6 +1736,7 @@ void FCCR::ImprovedPruningAndTopoComplete(){
 	}//i
 
 	m_FlowComplex->ProcessingOverlappingPatch();
+	m_FlowComplex->ProcessingInteriorPatch();
 	vector<int> vec_degree0;
 	vector<int> vec_degree1;
 	vector<int> vec_non_manifold;
@@ -1749,11 +1755,15 @@ void FCCR::ImprovedPruningAndTopoComplete(){
 			m_FlowComplex->GenerateCycle(e);
 	}
 
-	m_FlowComplex->ProcessingInteriorPatch(); 
-	m_FlowComplex->TopologyComplete();
-	m_FlowComplex->ProcessingInteriorPatch();
-	m_FlowComplex->ProcessingInteriorPatch();
-
+	int old=0,maxIter=5,iter=0;
+	while(old!=m_FlowComplex->NonmanifoldCurves()&&iter<maxIter){
+		old=m_FlowComplex->NonmanifoldCurves();
+		m_FlowComplex->TopologyComplete();
+		m_FlowComplex->ProcessingInteriorPatch();
+		m_FlowComplex->ProcessingInteriorPatch();
+		iter++;
+	}
+	m_FlowComplex->ProcessingOverlappingPatch();
 	for(unsigned int i=0;i<m_FlowComplex->m_patches.size();i++)
 	{
 		CP_Patch *pPatch = m_FlowComplex->m_patches[i];
@@ -1779,6 +1789,20 @@ void FCCR::ImprovedPruningAndTopoComplete(){
 	}//i
 	cout<<"degree1:"<<degree1<<endl;
 	cout<<"degree3:"<<degree3<<endl;
+	//for(unsigned int n=0;n<m_FlowComplex->m_patches.size();++n){
+	//	CP_Patch *pPatch = m_FlowComplex->m_patches[n];
+	//	if(pPatch->flag&&pPatch->delaunay==0){
+	//		//polygon三角化,newpatch里为triangle的编号
+	//		vector<int> newpatch;
+	//		m_FlowComplex->ConstructFromCycle(pPatch->m_bcurve,newpatch);
+	//		if(newpatch.size()>0){
+	//			m_FlowComplex->SetPatchFlagFalse(pPatch->index);
+	//			m_FlowComplex->AddPatchForCycles(newpatch,pPatch->m_bcurve);
+	//		}else{
+	//			cout<<"error"<<pPatch->index<<endl;
+	//		}
+	//	}
+	//}
 	//patch法向
 	m_FlowComplex->ResetTriNormalset();
 	m_FlowComplex->Reset2cellVisited();

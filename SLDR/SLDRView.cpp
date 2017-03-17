@@ -27,7 +27,6 @@
 #include "MainFrm.h"
 #include "ArcBall.h"    
 #include "CP_FlowComplex.h"
-#include "SurfaceOptimization.h"
 
 #include <fstream>
 #ifdef _DEBUG
@@ -98,6 +97,7 @@ BEGIN_MESSAGE_MAP(CSLDRView, CView)
 	ON_UPDATE_COMMAND_UI(ID_BUTTON_PREPROCESS, &CSLDRView::OnUpdateButtonPreprocess)
 	ON_COMMAND(ID_CHECK_TWOSIDE, &CSLDRView::OnCheckTwoside)
 	ON_UPDATE_COMMAND_UI(ID_CHECK_TWOSIDE, &CSLDRView::OnUpdateCheckTwoside)
+	ON_COMMAND(ID_BUTTON_OPTIMIZATION, &CSLDRView::OnButtonOptimization)
 END_MESSAGE_MAP()
 
 // CSLDRView 构造/析构
@@ -133,9 +133,10 @@ CSLDRView::CSLDRView()
 	shiftDown=false;
 	CtrlDown=false;
 	CKeyDown=false;
+	SKeyDown=false;
     which=0;
-	twoSide=false;
-	mSpecular=0.45;
+	twoSide=true;
+	mSpecular=0.15;
 	mShine=45;
 	mDiffuse=0.8;
 	light0=true;
@@ -189,8 +190,8 @@ void CSLDRView::ReSet()
 	showPreprocessEnable=false;
 
 	which=0;
-	twoSide=false;
-	mSpecular=0.45;
+	twoSide=true;
+	mSpecular=0.15;
 	mShine=45;
 	mDiffuse=0.8;
 	light0=true;
@@ -521,21 +522,52 @@ void CSLDRView::OnDraw(CDC* pDC)
 
 		if(showCycles)
 		{
+			//if(selectedpatch!=-1)
+			//{//展示Merge
+			//	CP_Patch *pPatch = pDoc->m_FlowComplex->m_patches[selectedpatch];
+			//	if(!SKeyDown){
+			//	for (unsigned int j = 0; j <(unsigned int)pPatch->patchsize; j++)
+			//	{
+			//		glColor4f(1.0,1.0,0.0,0.6);
+			//		CP_2cell *p2cell = pDoc->m_FlowComplex->m_2cells[pPatch->m_2cells[j]];
+			//		pDoc->m_FlowComplex->Draw2cell(*p2cell);
+			//	}
+			//	//pDoc->m_FlowComplex->DrawPatchBoundary(*pPatch,CtrlDown,CKeyDown,which,pMain->m_ctrlPaneFCCR->m_dialog.showRMF);
+			//
+			//	for (unsigned int j = pPatch->patchsize; j <pPatch->m_2cells.size(); j++)
+			//	{
+			//		glColor4f(0.0,0.0,1.0,0.6);
+			//		CP_2cell *p2cell = pDoc->m_FlowComplex->m_2cells[pPatch->m_2cells[j]];
+			//		pDoc->m_FlowComplex->Draw2cell(*p2cell);
+			//	}
+			//	}
+			//	if(pPatch->pridx!=-1&&SKeyDown){
+			//		for (unsigned int j = pPatch->patchsize; j <pPatch->m_2cells.size(); j++)
+			//		{
+			//			glColor4f(0.0,0.0,1.0,0.6);
+			//			CP_2cell *p2cell = pDoc->m_FlowComplex->m_2cells[pPatch->m_2cells[j]];
+			//			pDoc->m_FlowComplex->Draw2cell(*p2cell);
+			//		}
+			//	CP_Patch *pPatchr = pDoc->m_FlowComplex->m_patches[pPatch->pridx];
+			//	for (unsigned int j = 0; j <pPatchr->m_2cells.size(); j++)
+			//	{
+			//		glColor4f(0.24,1.0,0.24,0.6);
+			//		CP_2cell *p2cell = pDoc->m_FlowComplex->m_2cells[pPatchr->m_2cells[j]];
+			//		pDoc->m_FlowComplex->Draw2cell(*p2cell);
+			//	}
+			//	}
+			//}
 			if(selectedpatch!=-1)
 			{
 				CP_Patch *pPatch = pDoc->m_FlowComplex->m_patches[selectedpatch];
 				for (unsigned int j = 0; j <pPatch->m_2cells.size(); j++)
 				{
-					glColor4f(pDoc->r[2],pDoc->g[2],pDoc->b[2],1.0);
+					glColor4f(1.0,0.24,0.24,1.0);
 					CP_2cell *p2cell = pDoc->m_FlowComplex->m_2cells[pPatch->m_2cells[j]];
 					pDoc->m_FlowComplex->Draw2cell(*p2cell);
-					glColor4f(0.1,0.6,0.1,1.0);
-					glLineWidth(1.0f);
-					if(pMain->m_ctrlPaneFCCR->m_dialog.triboundary)
-						pDoc->m_FlowComplex->DrawTriangleBoundary(*p2cell);
 				}
-				pDoc->m_FlowComplex->DrawPatchBoundary(*pPatch,CtrlDown,CKeyDown,which,pMain->m_ctrlPaneFCCR->m_dialog.showRMF);
 			}
+
 			for(int i=0;i<pDoc->m_FlowComplex->oripatches;i++)
 			{
 				if(pDoc->m_FlowComplex->m_patches[i]->flag&&i!=selectedpatch){
@@ -555,7 +587,7 @@ void CSLDRView::OnDraw(CDC* pDC)
 						if(pMain->m_ctrlPaneFCCR->m_dialog._2cellboundary)
 							pDoc->m_FlowComplex->Draw2cellBoundary(*p2cell);
 					}//j
-					pDoc->m_FlowComplex->DrawPatchBoundary(*pPatch,CtrlDown,CKeyDown,which,pMain->m_ctrlPaneFCCR->m_dialog.showRMF);
+					//pDoc->m_FlowComplex->DrawPatchBoundary(*pPatch,CtrlDown,CKeyDown,which,pMain->m_ctrlPaneFCCR->m_dialog.showRMF);
 				}
 			}//i
 			for(unsigned int i=0;i<pDoc->m_FlowComplex->connectedPatches.size();++i){
@@ -582,6 +614,23 @@ void CSLDRView::OnDraw(CDC* pDC)
 			}
 		}//showThicken
 
+		if(pMain->m_ctrlPaneFCCR->m_dialog.showinteriorpatches)
+		{
+			for(unsigned int i=0;i<pDoc->m_FlowComplex->interior_patches.size();++i){
+				int _patch=pDoc->m_FlowComplex->interior_patches[i];
+				CP_Patch *pPatch = pDoc->m_FlowComplex->m_patches[_patch];
+				if(!pPatch->flag){
+					for (unsigned int j = 0; j <pPatch->m_2cells.size(); j++)
+					{
+						glColor4f(0.0,1.0,0.0,0.6);
+						CP_2cell *p2cell = pDoc->m_FlowComplex->m_2cells[pPatch->m_2cells[j]];
+						pDoc->m_FlowComplex->Draw2cell(*p2cell);
+					}
+					pDoc->m_FlowComplex->DrawPatchBoundary(*pPatch,true,CKeyDown,which,pMain->m_ctrlPaneFCCR->m_dialog.showRMF);
+				}
+			}
+		}
+
 		if(pMain->m_ctrlPaneFCCR->m_dialog.fccr.showIFCResult)
 		{
 			if(selectedpatch!=-1)
@@ -589,7 +638,9 @@ void CSLDRView::OnDraw(CDC* pDC)
 				CP_Patch *pPatch = pDoc->m_FlowComplex->m_patches[selectedpatch];
 				for (unsigned int j = 0; j <pPatch->m_2cells.size(); j++)
 				{
-					glColor4f(pDoc->r[2],pDoc->g[2],pDoc->b[2],1.0);
+					//glColor4f(1.0,1.0,0.0,1.0);
+					glColor4f(1.0,0.24,0.24,1.0);
+					//glColor4f(0.24,1.0,0.24,1.0);
 					CP_2cell *p2cell = pDoc->m_FlowComplex->m_2cells[pPatch->m_2cells[j]];
 					pDoc->m_FlowComplex->Draw2cell(*p2cell);
 					glColor4f(0.1,0.6,0.1,1.0);
@@ -598,21 +649,6 @@ void CSLDRView::OnDraw(CDC* pDC)
 						pDoc->m_FlowComplex->DrawTriangleBoundary(*p2cell);
 				}
 				pDoc->m_FlowComplex->DrawPatchBoundary(*pPatch,CtrlDown,CKeyDown,which,pMain->m_ctrlPaneFCCR->m_dialog.showRMF);
-			}
-
-			if(pMain->m_ctrlPaneFCCR->m_dialog.showinteriorpatches)
-			{
-				for(unsigned int i=0;i<pDoc->m_FlowComplex->interior_patches.size();++i){
-					int _patch=pDoc->m_FlowComplex->interior_patches[i];
-					CP_Patch *pPatch = pDoc->m_FlowComplex->m_patches[_patch];
-					for (unsigned int j = 0; j <pPatch->m_2cells.size(); j++)
-					{
-						glColor4f(1.0,0.5,0.5,0.6);
-						CP_2cell *p2cell = pDoc->m_FlowComplex->m_2cells[pPatch->m_2cells[j]];
-						pDoc->m_FlowComplex->Draw2cell(*p2cell);
-					}
-					pDoc->m_FlowComplex->DrawPatchBoundary(*pPatch,true,CKeyDown,which,pMain->m_ctrlPaneFCCR->m_dialog.showRMF);
-				}
 			}
 
 			for(unsigned int i=0;i<pDoc->m_FlowComplex->m_patches.size();i++)
@@ -637,8 +673,14 @@ void CSLDRView::OnDraw(CDC* pDC)
 								glColor4f(0.7,0.7,0.7,1.0);
 						}else{
 							if(pMain->m_ctrlPaneFCCR->m_dialog.fccr.IsProcess&&pMain->m_ctrlPaneFCCR->m_dialog.randomColor&&!pPatch->wrong)//错误的面片显示为白色
-								glColor4f(pDoc->r[pPatch->color],pDoc->g[pPatch->color],pDoc->b[pPatch->color],1.0);
+							{glColor4f(pDoc->r[pPatch->color],pDoc->g[pPatch->color],pDoc->b[pPatch->color],1.0);
+								//if(i<(unsigned int)pDoc->m_FlowComplex->origin)
+								//	glColor4f(0.24,1.0,0.24,1.0);
+								//else
+								//	glColor4f(1.0,0.24,0.24,1.0);
+							}
 							else
+								//glColor4f(1.0,0.24,0.24,1.0);
 								glColor4f(0.7,0.7,0.7,1.0);
 						}
 						pDoc->m_FlowComplex->Draw2cell(*p2cell);
@@ -652,10 +694,17 @@ void CSLDRView::OnDraw(CDC* pDC)
 							pDoc->m_FlowComplex->Draw2cellBoundary(*p2cell);
 					}//j
 
-					if(pMain->m_ctrlPaneFCCR->m_dialog.patchboundary)
-						pDoc->m_FlowComplex->DrawPatchBoundary(*pPatch);
 				}//flag
 			}//i
+
+			if(pMain->m_ctrlPaneFCCR->m_dialog.patchboundary)
+				for(unsigned int i=0;i<pDoc->m_FlowComplex->m_patches.size();i++)
+				{
+					CP_Patch *pPatch = pDoc->m_FlowComplex->m_patches[i];
+					if(pPatch->flag){
+						pDoc->m_FlowComplex->DrawPatchBoundary(*pPatch,CtrlDown,CKeyDown,which,pMain->m_ctrlPaneFCCR->m_dialog.showRMF);
+					}
+				}
 
 			if(pMain->m_ctrlPaneFCCR->m_dialog.selpatch!=-1)
 			{
@@ -667,7 +716,6 @@ void CSLDRView::OnDraw(CDC* pDC)
 				CP_2cell *p2cell=pDoc->m_FlowComplex->m_2cells[pDoc->m_FlowComplex->Locate2cell(pMain->m_ctrlPaneFCCR->m_dialog.sel2cell)];
 				pDoc->m_FlowComplex->Draw2cellBoundary(*p2cell);
 			}
-
 		}//showResult
 
 		//pruning
@@ -688,7 +736,7 @@ void CSLDRView::OnDraw(CDC* pDC)
 				CP_Patch *pPatch = pDoc->m_FlowComplex->m_patches[selectedpatch];
 				for (unsigned int j = 0; j <pPatch->m_triangle.size(); j++)
 				{
-					glColor4f(pDoc->r[2],pDoc->g[2],pDoc->b[2],1.0);
+					glColor4f(1.0,1.0,0.0,1.0);
 					CP_Triganle3D *pTri = pDoc->m_FlowComplex->tricells[pPatch->m_triangle[j]];
 					pDoc->m_FlowComplex->DrawTriangle(*pTri);
 				}
@@ -696,7 +744,6 @@ void CSLDRView::OnDraw(CDC* pDC)
 				glLineWidth(1.0f);
 				if(pMain->m_ctrlPaneFCCR->m_dialog.triboundary)
 					pDoc->m_FlowComplex->DrawTriangleBoundary(*pPatch);
-				pDoc->m_FlowComplex->DrawPatchBoundary(*pPatch,CtrlDown,CKeyDown,which,pMain->m_ctrlPaneFCCR->m_dialog.showRMF);
 			}
 
 			for(unsigned int i=0;i<pDoc->m_FlowComplex->m_patches.size();i++)
@@ -719,6 +766,8 @@ void CSLDRView::OnDraw(CDC* pDC)
 								glColor4f(0.7,0.7,0.7,1.0);
 						}
 						CP_Triganle3D *pTri = pDoc->m_FlowComplex->tricells[pPatch->m_triangle[j]];
+						if(pTri->flag)
+							glColor4f(0.7,0.0,0.0,1.0);
 						pDoc->m_FlowComplex->DrawTriangle(*pTri);
 					}
 					//边界
@@ -730,12 +779,30 @@ void CSLDRView::OnDraw(CDC* pDC)
 						pDoc->m_FlowComplex->DrawPatchBoundary(*pPatch);
 				}//flag
 			}//i
-
+			//for(unsigned int i=0;i<pDoc->m_FlowComplex->m_patches.size();++i){
+			//	CP_Patch *pPatch = pDoc->m_FlowComplex->m_patches[i];
+			//	if(pPatch->flag){
+			//		glColor3f(1.0, 0.0, 0.0);
+			//		glPointSize(6.0f);
+			//		for(unsigned int j=0;j<pPatch->m_triangle.size();++j){
+			//			CP_Triganle3D *tri=pDoc->m_FlowComplex->tricells[pPatch->m_triangle[j]];
+			//			for(int k=0;k<3;++k){
+			//				//if(tri->flag){
+			//				glBegin(GL_POINTS);//必须是加上s，要不然显示不了
+			//				glNormal3f(1.0f,1.0f,1.0f);
+			//				glVertex3f(pDoc->m_FlowComplex->m_0cells[tri->m_points[k]].m_newx, pDoc->m_FlowComplex->m_0cells[tri->m_points[k]].m_newy,pDoc->m_FlowComplex->m_0cells[tri->m_points[k]].m_newz);
+			//				glEnd();
+			//				//}
+			//			}
+			//		}//j
+			//	}
+			//}//i
 			for(unsigned int i=0;i<pDoc->m_FlowComplex->obt.size();++i){
 				glColor4f(1.0,0.3,0.3,1.0);
-				CP_Triganle3D *pTri = pDoc->m_FlowComplex->tricells[pDoc->m_FlowComplex->obt[i]];cout<<"mmmm"<<endl;
-				/*pDoc->m_FlowComplex->DrawTriangle(*pTri);
-				glBegin(GL_LINE_LOOP);
+				CP_Triganle3D *pTri = pDoc->m_FlowComplex->tricells[pDoc->m_FlowComplex->obt[i]];
+				pDoc->m_FlowComplex->DrawTriangle(*pTri);
+				//cout<<pTri->m_points[0]<<","<<pTri->m_points[1]<<","<<pTri->m_points[2]<<endl;
+				/*glBegin(GL_LINE_LOOP);
 				if(pMain->m_ctrlPaneFCCR->m_dialog.triboundary){
 					glLineWidth(2.0f);
 					glColor3f(0.0,1.0,0.0);
@@ -786,6 +853,26 @@ void CSLDRView::OnDraw(CDC* pDC)
 			}
 		}
 
+		if(selectedpatch!=-1)
+		{
+			CP_Patch *pPatch = pDoc->m_FlowComplex->m_patches[selectedpatch];
+			//if(!SKeyDown)
+			pDoc->m_FlowComplex->DrawPatchBoundary(*pPatch,CtrlDown,CKeyDown,which,pMain->m_ctrlPaneFCCR->m_dialog.showRMF);
+			//else
+			//	pDoc->m_FlowComplex->DrawPatchBoundary(*pDoc->m_FlowComplex->m_patches[pPatch->pridx],CtrlDown,CKeyDown,which,pMain->m_ctrlPaneFCCR->m_dialog.showRMF);
+		}
+
+		if(pMain->m_ctrlPaneFCCR->m_dialog.showinteriorpatches)
+		{
+			for(unsigned int i=0;i<pDoc->m_FlowComplex->interior_patches.size();++i){
+				int _patch=pDoc->m_FlowComplex->interior_patches[i];
+				CP_Patch *pPatch = pDoc->m_FlowComplex->m_patches[_patch];
+				if(!pPatch->flag){
+					pDoc->m_FlowComplex->DrawPatchBoundary(*pPatch,true,CKeyDown,which,pMain->m_ctrlPaneFCCR->m_dialog.showRMF);
+				}
+			}
+		}
+
 		if(pMain->m_ctrlPaneFCCR->m_dialog.edgeByDegree)
 		{//2cell只在边界处相交，因为在非边界相交的地方degree==1会被消去
 			glDepthMask(GL_FALSE);
@@ -794,27 +881,23 @@ void CSLDRView::OnDraw(CDC* pDC)
 			for (unsigned int i = 0; i <pDoc->m_FlowComplex->m_1cells.size(); i++)
 			{
 				CurveSegment* pcurve=pDoc->m_FlowComplex->m_1cells[i];
-				glLineWidth(3);
-				//if (pcurve->degree>2&&!pcurve->isBoundary)
-				if (pcurve->newdegree>2/*(int)pcurve->incidentpatch.size()>2&&pcurve->isBoundary==-1*/)
+				if (pcurve->newdegree>2||(pcurve->degree>2&&pDoc->m_FlowComplex->type==1)/*(int)pcurve->incidentpatch.size()>2&&pcurve->isBoundary==-1*/)
 				{ 
-					glColor3f(0.173, 0.51, 1.0);
+					glLineWidth(3);
+					glColor3f(0.0, 0.0, 1.0);
 					glBegin(GL_LINE_STRIP);
-					glNormal3f(0, 0, 1);
 					glVertex3d(pDoc->m_FlowComplex->m_0cells[pcurve->sp].m_x,pDoc->m_FlowComplex->m_0cells[pcurve->sp].m_y,pDoc->m_FlowComplex->m_0cells[pcurve->sp].m_z);
 					glVertex3d(pDoc->m_FlowComplex->m_0cells[pcurve->ep].m_x,pDoc->m_FlowComplex->m_0cells[pcurve->ep].m_y,pDoc->m_FlowComplex->m_0cells[pcurve->ep].m_z);
 					glEnd();
-				}else if(pcurve->newdegree==1){
-					glColor3f(1.0, 0.447, 0.463);
+				}else if(pcurve->newdegree==1||(pcurve->degree==1&&pDoc->m_FlowComplex->type==1)){
+					glLineWidth(3);
+					glColor3f(1.0, 0.0, 0.0);
 					glBegin(GL_LINE_STRIP);
-					glNormal3f(0, 0, 1);
 					glVertex3d(pDoc->m_FlowComplex->m_0cells[pcurve->sp].m_x,pDoc->m_FlowComplex->m_0cells[pcurve->sp].m_y,pDoc->m_FlowComplex->m_0cells[pcurve->sp].m_z);
 					glVertex3d(pDoc->m_FlowComplex->m_0cells[pcurve->ep].m_x,pDoc->m_FlowComplex->m_0cells[pcurve->ep].m_y,pDoc->m_FlowComplex->m_0cells[pcurve->ep].m_z);
 					glEnd();
 				}
-
 			}//i
-
 			glDepthMask(GL_TRUE);
 		}
 		drawData();
@@ -1070,6 +1153,8 @@ void CSLDRView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 	case VK_SHIFT: shiftDown=true;
 		break;
 	case 'C':    CKeyDown=true;
+		break;
+	case 'S':    SKeyDown=true;
 		break;
 	case 'K':    which--;
 		         if(which<0)which=0;
@@ -1340,7 +1425,39 @@ void CSLDRView::FindPatch(CPoint point)
 				glPopName();
 			}
 		}//i
-	}else if(showCycles){
+
+		/*if(pMain->m_ctrlPaneFCCR->m_dialog.showinteriorpatches)
+		{
+			for(unsigned int i=0;i<pDoc->m_FlowComplex->interior_patches.size();++i){
+				int _patch=pDoc->m_FlowComplex->interior_patches[i];
+				glPushName(_patch);
+				CP_Patch *pPatch = pDoc->m_FlowComplex->m_patches[_patch];
+				for (unsigned int j = 0; j <pPatch->m_2cells.size(); j++)
+				{
+					glColor4f(0.0,1.0,0.0,0.6);
+					CP_2cell *p2cell = pDoc->m_FlowComplex->m_2cells[pPatch->m_2cells[j]];
+					pDoc->m_FlowComplex->Draw2cell(*p2cell);
+				}
+				glPopName();
+			}
+		}*/
+	}else if(pMain->m_ctrlPaneFCCR->m_dialog.fccr.showOptResult)
+	{
+		for(unsigned int i=0;i<pDoc->m_FlowComplex->m_patches.size();i++)
+		{
+			CP_Patch *pPatch = pDoc->m_FlowComplex->m_patches[i];
+			if(pPatch->flag){
+				glPushName(i);
+				for (unsigned int j = 0; j <pPatch->m_triangle.size(); j++)
+				{
+					CP_Triganle3D *pTri = pDoc->m_FlowComplex->tricells[pPatch->m_triangle[j]];
+					pDoc->m_FlowComplex->DrawTriangle(*pTri);
+				}
+				glPopName();
+			}//flag
+		}//i
+	}//showOptResult
+	else if(showCycles){
 		for(int i=0;i<pDoc->m_FlowComplex->oripatches;i++)
 		{
 			if(pDoc->m_FlowComplex->m_patches[i]->flag){
@@ -1356,7 +1473,6 @@ void CSLDRView::FindPatch(CPoint point)
 			glPopName();
 		}
 	}
-	
 
 	glPopMatrix();
 	// SwapBuffers(dc.m_hDC);
@@ -1510,12 +1626,12 @@ void CSLDRView::OnLButtonDown(UINT nFlags, CPoint point)
 			selectedpoly=moveonpoly;
 			pMain->m_ctrlPaneFCCR->m_dialog.selpoly=selectedpoly;
 			cout<<selectedpoly<<":"<<endl;
-			int s=pDoc->m_FlowComplex->m_PolyLine[selectedpoly].s;
-			cout<<s<<":"<<pDoc->m_FlowComplex->m_0cells[s].m_x<<" "<<pDoc->m_FlowComplex->m_0cells[s].m_y<<" "<<pDoc->m_FlowComplex->m_0cells[s].m_z<<endl;
-			int e=pDoc->m_FlowComplex->m_PolyLine[selectedpoly].e;
-			cout<<e<<":"<<pDoc->m_FlowComplex->m_0cells[e].m_x<<" "<<pDoc->m_FlowComplex->m_0cells[e].m_y<<" "<<pDoc->m_FlowComplex->m_0cells[e].m_z<<endl;
+			//int s=pDoc->m_FlowComplex->m_PolyLine[selectedpoly].s;
+			//cout<<s<<":"<<pDoc->m_FlowComplex->m_0cells[s].m_x<<" "<<pDoc->m_FlowComplex->m_0cells[s].m_y<<" "<<pDoc->m_FlowComplex->m_0cells[s].m_z<<endl;
+			//int e=pDoc->m_FlowComplex->m_PolyLine[selectedpoly].e;
+			//cout<<e<<":"<<pDoc->m_FlowComplex->m_0cells[e].m_x<<" "<<pDoc->m_FlowComplex->m_0cells[e].m_y<<" "<<pDoc->m_FlowComplex->m_0cells[e].m_z<<endl;
 
-			pDoc->m_FlowComplex->GenerateCycle(selectedpoly);
+			//pDoc->m_FlowComplex->GenerateCycle(selectedpoly);
 		}
 
 		if(selected2cell!=-1)
@@ -1533,15 +1649,21 @@ void CSLDRView::OnLButtonDown(UINT nFlags, CPoint point)
 			pMain->m_ctrlPaneFCCR->m_dialog.SetTreePatch(selectedpatch);//2cell在集合中的下标，非标号
 			if(shiftDown){
 				pDoc->m_FlowComplex->temporaryfalse.push_back(selectedpatch);
-			    pDoc->m_FlowComplex->m_patches[selectedpatch]->flag=false;
+			    pDoc->m_FlowComplex->m_patches[selectedpatch]->flag=!pDoc->m_FlowComplex->m_patches[selectedpatch]->flag;
 			}
-			//pDoc->m_FlowComplex->PatchNormalConsensus(selectedpatch);
+			
 			cout<<selectedpatch<<endl;
-			for(unsigned int i=0;i<pDoc->m_FlowComplex->m_patches[selectedpatch]->m_boundary.size();++i){
-				if(pDoc->m_FlowComplex->m_patches[selectedpatch]->m_boundary[i]->isBoundary!=-1)
-				cout<<pDoc->m_FlowComplex->m_patches[selectedpatch]->m_boundary[i]->newdegree<<",";
-			}//i
-			cout<<endl;
+			//for(unsigned int i=0;i<pDoc->m_FlowComplex->m_patches[selectedpatch]->m_boundary.size();++i){
+			//	if(pDoc->m_FlowComplex->m_patches[selectedpatch]->m_boundary[i]->isBoundary!=-1)
+			//	cout<<pDoc->m_FlowComplex->m_patches[selectedpatch]->m_boundary[i]->newdegree<<",";
+			//}//i
+			//cout<<endl;
+			/*for(unsigned int j=0;j<pDoc->m_FlowComplex->m_patches[selectedpatch]->m_bcurve.size();++j){
+				int curve=pDoc->m_FlowComplex->m_patches[selectedpatch]->m_bcurve[j];
+				cout<<pDoc->m_FlowComplex->vec_curve_degree[curve]<<",";
+			}cout<<endl;*/
+			//cout<<pDoc->m_FlowComplex->m_patches[selectedpatch]->r.size()<<endl;
+			//pDoc->m_FlowComplex->interior_patches.push_back(selectedpatch);
 		}
 	}
 
@@ -1552,6 +1674,11 @@ void CSLDRView::OnLButtonDown(UINT nFlags, CPoint point)
 double dist(const CP_Point3D &x,const CP_Point3D &y)
 {
 	return sqrt((x.m_x - y.m_x)*(x.m_x - y.m_x) + (x.m_y - y.m_y)*(x.m_y - y.m_y) + (x.m_z - y.m_z)*(x.m_z - y.m_z));
+}
+
+double distsquare(const CP_Point3D &x,const CP_Point3D &y)
+{
+	return (x.m_x - y.m_x)*(x.m_x - y.m_x) + (x.m_y - y.m_y)*(x.m_y - y.m_y) + (x.m_z - y.m_z)*(x.m_z - y.m_z);
 }
 
 double Area(double a, double b, double c)
@@ -1605,12 +1732,21 @@ void CSLDRView::OnPolyline()
 			if(showInputP)
 			{
 				showInputP=false;
-				pMain->m_ctrlPaneFCCR->m_dialog.fccr.showIFCResult=true;
-				pMain->m_ctrlPaneFCCR->m_dialog.SetTreePatches();
+				if(pMain->m_ctrlPaneFCCR->m_dialog.fccr.IsOpt)
+					pMain->m_ctrlPaneFCCR->m_dialog.fccr.showOptResult=true;
+				else{
+					pMain->m_ctrlPaneFCCR->m_dialog.fccr.showIFCResult=true;
+					pMain->m_ctrlPaneFCCR->m_dialog.SetTreePatches();
+				}
 			}else
 			{
 				showInputP=true;
-				pMain->m_ctrlPaneFCCR->m_dialog.fccr.showIFCResult=false;
+				if(pMain->m_ctrlPaneFCCR->m_dialog.fccr.IsOpt)
+					pMain->m_ctrlPaneFCCR->m_dialog.fccr.showOptResult=false;
+				else{
+					pMain->m_ctrlPaneFCCR->m_dialog.fccr.showIFCResult=false;
+				}
+				
 			}
 		}
 	}else
@@ -1635,12 +1771,20 @@ void CSLDRView::OnFlowcomplex()
 		if(showFC)
 		{
 			showFC=false;
-			pMain->m_ctrlPaneFCCR->m_dialog.fccr.showIFCResult=true;
-			pMain->m_ctrlPaneFCCR->m_dialog.SetTreePatches();
+			if(pMain->m_ctrlPaneFCCR->m_dialog.fccr.IsOpt)
+				pMain->m_ctrlPaneFCCR->m_dialog.fccr.showOptResult=true;
+			else{
+				pMain->m_ctrlPaneFCCR->m_dialog.fccr.showIFCResult=true;
+				pMain->m_ctrlPaneFCCR->m_dialog.SetTreePatches();
+			}
 		}else
 		{
 			showFC=true;
-			pMain->m_ctrlPaneFCCR->m_dialog.fccr.showIFCResult=false;
+			if(pMain->m_ctrlPaneFCCR->m_dialog.fccr.IsOpt)
+				pMain->m_ctrlPaneFCCR->m_dialog.fccr.showOptResult=false;
+			else{
+				pMain->m_ctrlPaneFCCR->m_dialog.fccr.showIFCResult=false;
+			}
 		}
 	}
 	Invalidate(); 
@@ -1664,12 +1808,20 @@ void CSLDRView::OnSpreadAndMerge()
 		if(showTop)
 		{
 			showTop=false;
-			pMain->m_ctrlPaneFCCR->m_dialog.fccr.showIFCResult=true;
-			pMain->m_ctrlPaneFCCR->m_dialog.SetTreePatches();
+			if(pMain->m_ctrlPaneFCCR->m_dialog.fccr.IsOpt)
+				pMain->m_ctrlPaneFCCR->m_dialog.fccr.showOptResult=true;
+			else{
+				pMain->m_ctrlPaneFCCR->m_dialog.fccr.showIFCResult=true;
+				pMain->m_ctrlPaneFCCR->m_dialog.SetTreePatches();
+			}
 		}else
 		{
 			showTop=true;
-			pMain->m_ctrlPaneFCCR->m_dialog.fccr.showIFCResult=false;
+			if(pMain->m_ctrlPaneFCCR->m_dialog.fccr.IsOpt)
+				pMain->m_ctrlPaneFCCR->m_dialog.fccr.showOptResult=false;
+			else{
+				pMain->m_ctrlPaneFCCR->m_dialog.fccr.showIFCResult=false;
+			}
 		}
 	}
 	Invalidate(); 
@@ -1693,12 +1845,20 @@ void CSLDRView::OnFindingCycles()
 		if(showCycles)
 		{
 			showCycles=false;
-			pMain->m_ctrlPaneFCCR->m_dialog.fccr.showIFCResult=true;
-			pMain->m_ctrlPaneFCCR->m_dialog.SetTreePatches();
+			if(pMain->m_ctrlPaneFCCR->m_dialog.fccr.IsOpt)
+				pMain->m_ctrlPaneFCCR->m_dialog.fccr.showOptResult=true;
+			else{
+				pMain->m_ctrlPaneFCCR->m_dialog.fccr.showIFCResult=true;
+				pMain->m_ctrlPaneFCCR->m_dialog.SetTreePatches();
+			}
 		}else
 		{
 			showCycles=true;
-			pMain->m_ctrlPaneFCCR->m_dialog.fccr.showIFCResult=false;
+			if(pMain->m_ctrlPaneFCCR->m_dialog.fccr.IsOpt)
+				pMain->m_ctrlPaneFCCR->m_dialog.fccr.showOptResult=false;
+			else{
+				pMain->m_ctrlPaneFCCR->m_dialog.fccr.showIFCResult=false;
+			}
 		}
 	}
 	Invalidate(); 
@@ -1723,12 +1883,20 @@ void CSLDRView::OnPruning()
 		if(showPruning)
 		{
 			showPruning=false;
-			pMain->m_ctrlPaneFCCR->m_dialog.fccr.showIFCResult=true;
-			pMain->m_ctrlPaneFCCR->m_dialog.SetTreePatches();
+			if(pMain->m_ctrlPaneFCCR->m_dialog.fccr.IsOpt)
+				pMain->m_ctrlPaneFCCR->m_dialog.fccr.showOptResult=true;
+			else{
+				pMain->m_ctrlPaneFCCR->m_dialog.fccr.showIFCResult=true;
+				pMain->m_ctrlPaneFCCR->m_dialog.SetTreePatches();
+			}
 		}else
 		{
 			showPruning=true;
-			pMain->m_ctrlPaneFCCR->m_dialog.fccr.showIFCResult=false;
+			if(pMain->m_ctrlPaneFCCR->m_dialog.fccr.IsOpt)
+				pMain->m_ctrlPaneFCCR->m_dialog.fccr.showOptResult=false;
+			else{
+				pMain->m_ctrlPaneFCCR->m_dialog.fccr.showIFCResult=false;
+			}
 		}
 	}
 	Invalidate(); 
@@ -1753,6 +1921,8 @@ void CSLDRView::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)
 						break;
 	case 'C':           CKeyDown=false;
 		                break;
+	case 'S':           SKeyDown=false;
+		break;
 	}
 	
 	this->Invalidate();
@@ -1822,6 +1992,7 @@ void CSLDRView::OnSliderSpecular()
 	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
 	CMFCRibbonSlider* pSlider = DYNAMIC_DOWNCAST(CMFCRibbonSlider, pMain->m_wndRibbonBar.FindByID(ID_SLIDER_SPECULAR));
 	int position=pSlider->GetPos();
+	cout<<"specular:"<<position<<endl;
 	mSpecular=position/100.0;
 	Invalidate();
 }
@@ -1832,6 +2003,7 @@ void CSLDRView::OnSliderDiffuse()
 	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
 	CMFCRibbonSlider* pSlider = DYNAMIC_DOWNCAST(CMFCRibbonSlider, pMain->m_wndRibbonBar.FindByID(ID_SLIDER_Diffuse));
 	int position=pSlider->GetPos();
+	cout<<"diffuse:"<<position<<endl;
 	mDiffuse=position/100.0;
 	Invalidate();
 }
@@ -1842,6 +2014,7 @@ void CSLDRView::OnSliderShininess()
 	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
 	CMFCRibbonSlider* pSlider = DYNAMIC_DOWNCAST(CMFCRibbonSlider, pMain->m_wndRibbonBar.FindByID(ID_SLIDER_SHININESS));
 	int position=pSlider->GetPos();
+	cout<<"shininess:"<<position<<endl;
 	mShine=position;
 	Invalidate();
 }
@@ -2061,12 +2234,12 @@ void CSLDRView::OnButtonPreprocess()
 	CSLDRDoc* pDoc = GetDocument();
 	clock_t start,end;
 	start = clock();
-	SurfaceOptimization surface_optimization(pDoc->m_FlowComplex);
-	surface_optimization.ElimateDegenerateTriangles();
+	pMain->m_ctrlPaneFCCR->m_dialog.fccr.surface_optimization.ElimateDegenerateTriangles();
 	end = clock();
 	cout<<"time for preprocess: "<<(double)(end-start)/CLOCKS_PER_SEC<<endl;
 	pMain->m_ctrlPaneFCCR->m_dialog.fccr.showIFCResult=false;
 	pMain->m_ctrlPaneFCCR->m_dialog.fccr.showOptResult=true;
+	pMain->m_ctrlPaneFCCR->m_dialog.fccr.IsOpt=true;
 	Invalidate();
 }
 
@@ -2090,4 +2263,18 @@ void CSLDRView::OnUpdateCheckTwoside(CCmdUI *pCmdUI)
 {
 	// TODO: 在此添加命令更新用户界面处理程序代码
 	pCmdUI->SetCheck(twoSide);
+}
+
+
+void CSLDRView::OnButtonOptimization()
+{
+	// TODO: 在此添加命令处理程序代码
+	CMainFrame *pMain = (CMainFrame *)AfxGetMainWnd();
+	CSLDRDoc* pDoc = GetDocument();
+	clock_t start,end;
+	start = clock();
+	pMain->m_ctrlPaneFCCR->m_dialog.fccr.surface_optimization.FlipAndCollapseAfterRefine();
+	end = clock();
+	cout<<"time for refine: "<<(double)(end-start)/CLOCKS_PER_SEC<<endl;
+	Invalidate();
 }
